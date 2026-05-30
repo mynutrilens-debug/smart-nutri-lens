@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const DEMO_USER_ID = "00000000-0000-4000-8000-000000000001";
 
 const OnboardingInput = z.object({
   display_name: z.string().min(1).max(80).optional(),
@@ -49,10 +51,10 @@ function computeTargets(p: OnboardingPayload) {
 }
 
 export const saveOnboarding = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => OnboardingInput.parse(d))
-  .handler(async ({ context, data }) => {
-    const { supabase, userId } = context;
+  .handler(async ({ data }) => {
+    const supabase = supabaseAdmin;
+    const userId = DEMO_USER_ID;
     const t = computeTargets(data);
     const target_weight =
       data.target_weight_kg ??
@@ -64,7 +66,8 @@ export const saveOnboarding = createServerFn({ method: "POST" })
 
     const { error } = await supabase
       .from("profiles")
-      .update({
+      .upsert({
+        user_id: userId,
         display_name: data.display_name,
         gender: data.gender,
         age: data.age,
@@ -83,16 +86,15 @@ export const saveOnboarding = createServerFn({ method: "POST" })
         body_fat_pct: t.body_fat_pct,
         muscle_mass_pct: t.muscle_mass_pct,
         onboarded_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId);
+      }, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
     return { ok: true, targets: t, target_weight_kg: target_weight };
   });
 
 export const generateAiPlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context;
+  .handler(async () => {
+    const supabase = supabaseAdmin;
+    const userId = DEMO_USER_ID;
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
     if (!p) throw new Error("Profile not found");
 
