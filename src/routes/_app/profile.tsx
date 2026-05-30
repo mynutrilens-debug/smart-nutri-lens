@@ -1,10 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dashboardQuery } from "@/lib/queries";
 import { logWeight, updateProfile } from "@/lib/weight.functions";
-import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Target, Scale, Loader2, Save, User } from "lucide-react";
+import { Target, Scale, Loader2, Save, User } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/profile")({
@@ -12,7 +11,6 @@ export const Route = createFileRoute("/_app/profile")({
 });
 
 function Profile() {
-  const navigate = useNavigate();
   const qc = useQueryClient();
   const { data } = useSuspenseQuery(dashboardQuery);
   const p = data.profile;
@@ -32,11 +30,6 @@ function Profile() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["dashboard"] }); toast.success("Weight logged"); },
     onError: (e: any) => toast.error(e.message),
   });
-
-  async function logout() {
-    await supabase.auth.signOut();
-    navigate({ to: "/login", replace: true });
-  }
 
   return (
     <div className="px-5 pt-12 pb-8 space-y-5">
@@ -89,10 +82,6 @@ function Profile() {
           {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save goals
         </button>
       </section>
-
-      <button onClick={logout} className="w-full glass rounded-2xl py-3 flex items-center justify-center gap-2 text-sm font-medium text-destructive">
-        <LogOut className="h-4 w-4" /> Sign out
-      </button>
     </div>
   );
 }
