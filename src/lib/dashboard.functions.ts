@@ -1,12 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const DEMO_USER_ID = "00000000-0000-4000-8000-000000000001";
 
 export const getDashboard = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context;
+  .handler(async () => {
+    const supabase = supabaseAdmin;
+    const userId = DEMO_USER_ID;
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 30);
+
+    const existingProfile = await supabase.from("profiles").select("user_id").eq("user_id", userId).maybeSingle();
+    if (!existingProfile.data) {
+      await supabase.from("profiles").insert({ user_id: userId, display_name: "Athlete" });
+    }
 
     const [profile, todayFoods, todayWorkouts, weights, insight] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
