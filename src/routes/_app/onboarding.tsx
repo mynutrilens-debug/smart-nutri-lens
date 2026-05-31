@@ -181,7 +181,7 @@ function Onboarding() {
           <div className="mt-4 space-y-2">
             {ACTIVITY.map((a) => (
               <button key={a.v} onClick={() => setActivity(a.v)}
-                className={`w-full text-left glass rounded-2xl p-4 border transition-all ${activity === a.v ? "border-[oklch(0.72_0.22_240)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.15)]" : "border-white/10"}`}>
+                className={`w-full text-left glass rounded-2xl p-4 border-2 transition-all ${activity === a.v ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-semibold">{a.l}</div>
