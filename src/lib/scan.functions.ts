@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-const DEMO_USER_ID = "00000000-0000-4000-8000-000000000001";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ScanInput = z.object({
   image_base64: z.string().min(50),
@@ -26,6 +24,7 @@ Return STRICT JSON: { "name": string, "meal_type": "breakfast"|"lunch"|"dinner"|
 Estimate portion based on visible cues. If ambiguous, pick the most likely common serving. No prose, only JSON.`;
 
 export const analyzeFood = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ScanInput.parse(d))
   .handler(async ({ data }): Promise<Analysis> => {
     const key = process.env.GEMINI_API_KEY;
@@ -69,9 +68,9 @@ export const analyzeFood = createServerFn({ method: "POST" })
   });
 
 export const generateInsight = createServerFn({ method: "POST" })
-  .handler(async () => {
-    const supabase = supabaseAdmin;
-    const userId = DEMO_USER_ID;
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const [foods, profile] = await Promise.all([
       supabase.from("food_logs").select("name,calories,protein_g,carbs_g,fat_g,meal_type").eq("user_id", userId).gte("logged_at", today.toISOString()),

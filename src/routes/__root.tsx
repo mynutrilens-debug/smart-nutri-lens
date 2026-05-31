@@ -81,6 +81,15 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
+    // Ensure every visitor has a Supabase session (anonymous if not signed in)
+    // so RLS-protected server functions can authenticate the request.
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) console.error("Anonymous sign-in failed", error);
+      }
+    })();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       router.invalidate();
       queryClient.invalidateQueries();
@@ -95,3 +104,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+

@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-const DEMO_USER_ID = "00000000-0000-4000-8000-000000000001";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const OnboardingInput = z.object({
   display_name: z.string().min(1).max(80).optional(),
@@ -21,7 +19,6 @@ const OnboardingInput = z.object({
 export type OnboardingPayload = z.infer<typeof OnboardingInput>;
 
 function computeTargets(p: OnboardingPayload) {
-  // Mifflin–St Jeor
   const bmr =
     p.gender === "male"
       ? 10 * p.weight_kg + 6.25 * p.height_cm - 5 * p.age + 5
@@ -51,10 +48,10 @@ function computeTargets(p: OnboardingPayload) {
 }
 
 export const saveOnboarding = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => OnboardingInput.parse(d))
-  .handler(async ({ data }) => {
-    const supabase = supabaseAdmin;
-    const userId = DEMO_USER_ID;
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
     const t = computeTargets(data);
     const target_weight =
       data.target_weight_kg ??
@@ -92,9 +89,9 @@ export const saveOnboarding = createServerFn({ method: "POST" })
   });
 
 export const generateAiPlan = createServerFn({ method: "POST" })
-  .handler(async () => {
-    const supabase = supabaseAdmin;
-    const userId = DEMO_USER_ID;
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
     if (!p) throw new Error("Profile not found");
 
