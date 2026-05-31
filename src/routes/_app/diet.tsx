@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { foodsQuery } from "@/lib/queries";
+import { useSuspenseQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { foodsQuery, dashboardQuery } from "@/lib/queries";
 import { deleteFood } from "@/lib/food.functions";
-import { Camera, Sunrise, Sun, Moon, Cookie, Trash2 } from "lucide-react";
+import { generateAiPlan } from "@/lib/onboarding.functions";
+import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/diet")({
