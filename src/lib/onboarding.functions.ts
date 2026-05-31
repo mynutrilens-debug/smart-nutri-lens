@@ -98,26 +98,52 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
-    const prompt = `Create a personalized 7-day diet plan and 7-day workout plan for this user. Return STRICT JSON.
+    const heightM = (p.height_cm ?? 170) / 100;
+    const bmi = Number(((p.weight_kg ?? 70) / (heightM * heightM)).toFixed(1));
+    const bmiCat = bmi < 18.5 ? "underweight" : bmi < 25 ? "normal" : bmi < 30 ? "overweight" : "obese";
 
-User profile:
-- Gender: ${p.gender}, Age: ${p.age}, Height: ${p.height_cm}cm, Weight: ${p.weight_kg}kg
+    const prompt = `You are a certified nutrition and fitness coach. Build a PERSONALIZED daily diet plan. Return STRICT JSON only.
+
+USER PROFILE
+- Gender: ${p.gender}, Age: ${p.age}
+- Height: ${p.height_cm}cm, Weight: ${p.weight_kg}kg, BMI: ${bmi} (${bmiCat})
 - Goal: ${p.physique_goal}, Activity: ${p.activity_level}
 - Diet preference: ${p.diet_preference}
-- Allergies: ${(p.allergies ?? []).join(", ") || "none"}
+- Allergies (STRICTLY AVOID): ${(p.allergies ?? []).join(", ") || "none"}
 - Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
-- Daily targets: ${p.daily_calorie_goal} kcal, P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g
+- Daily targets: ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g
 
-Return ONLY JSON in this shape:
+RULES
+- Tailor calories/macros to BMI + goal (deficit for weight/fat loss, surplus for muscle gain, balanced for maintenance/recomp).
+- Affordable, practical, locally available foods matching diet preference.
+- Provide PORTION guidance (grams or household measures) for EVERY item.
+- Include shake recommendations tuned to goal:
+  * muscle_gain / underweight → high-cal mass shakes (banana + oats + peanut butter + milk + whey)
+  * weight_loss / fat_loss → low-cal detox / protein (green tea, honey-lemon water, cucumber-mint, whey + water)
+  * maintenance / recomp → balanced protein smoothies
+- Never include allergens. Respect medical conditions.
+
+Return ONLY this JSON (no markdown):
 {
-  "summary": "1-2 sentence motivating coach summary",
-  "diet": [
-    { "day": "Mon", "meals": [{ "name": "Breakfast", "items": "…", "calories": 0, "protein_g": 0 }] }
+  "summary": "1-2 sentence coach summary referencing BMI & goal",
+  "bmi": ${bmi},
+  "bmi_category": "${bmiCat}",
+  "daily_targets": { "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
+  "meals": {
+    "breakfast":    { "items": "…with portions…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
+    "pre_workout":  { "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "timing": "30-45 min before" },
+    "post_workout": { "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "timing": "within 30 min after" },
+    "lunch":        { "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
+    "snack":        { "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
+    "dinner":       { "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 }
+  },
+  "shakes": [
+    { "name": "", "ingredients": "", "calories": 0, "protein_g": 0, "when": "morning|pre|post|evening" }
   ],
+  "tips": ["3-5 short, goal-specific tips"],
   "workout": [
     { "day": "Mon", "focus": "Push", "exercises": [{ "name": "Bench Press", "sets": 4, "reps": "8-10" }] }
-  ],
-  "tips": ["3-5 short tips tailored to allergies/medical/diet"]
+  ]
 }`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
