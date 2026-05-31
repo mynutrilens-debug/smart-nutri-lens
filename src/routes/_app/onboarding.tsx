@@ -181,7 +181,7 @@ function Onboarding() {
           <div className="mt-4 space-y-2">
             {ACTIVITY.map((a) => (
               <button key={a.v} onClick={() => setActivity(a.v)}
-                className={`w-full text-left glass rounded-2xl p-4 border transition-all ${activity === a.v ? "border-[oklch(0.72_0.22_240)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.15)]" : "border-white/10"}`}>
+                className={`w-full text-left glass rounded-2xl p-4 border-2 transition-all ${activity === a.v ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-semibold">{a.l}</div>
@@ -202,7 +202,7 @@ function Onboarding() {
           <div className="mt-4 grid grid-cols-2 gap-3">
             {GOALS.map((g) => (
               <button key={g.v} onClick={() => setGoal(g.v)}
-                className={`glass rounded-2xl p-4 text-left border transition-all ${goal === g.v ? "border-[oklch(0.72_0.22_240)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.15)]" : "border-white/10"}`}>
+                className={`glass rounded-2xl p-4 text-left border-2 transition-all ${goal === g.v ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
                 <div className="text-2xl">{g.emoji}</div>
                 <div className="mt-1.5 font-semibold text-sm">{g.l}</div>
               </button>
@@ -294,7 +294,7 @@ function Eyebrow({ icon: Icon, children }: any) {
 function Choice({ active, onClick, icon: Icon, label }: any) {
   return (
     <button onClick={onClick}
-      className={`glass rounded-2xl p-4 flex flex-col items-center gap-2 border transition-all ${active ? "border-[oklch(0.72_0.22_240)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.15)]" : "border-white/10"}`}>
+      className={`glass rounded-2xl p-4 flex flex-col items-center gap-2 border-2 transition-all ${active ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
       <Icon className="h-6 w-6" />
       <span className="text-sm font-medium">{label}</span>
     </button>

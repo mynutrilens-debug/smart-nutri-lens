@@ -12,6 +12,7 @@ const tabs: Tab[] = [
 
 export function BottomNav() {
   const { pathname } = useLocation();
+  if (pathname === "/onboarding" || pathname === "/" || pathname === "/login") return null;
   return (
     <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[min(420px,calc(100vw-32px))]">
       <div className="glass-strong rounded-[28px] px-3 py-2.5 flex items-center justify-between shadow-2xl">
