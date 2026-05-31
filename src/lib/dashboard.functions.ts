@@ -1,12 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-const DEMO_USER_ID = "00000000-0000-4000-8000-000000000001";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getDashboard = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const supabase = supabaseAdmin;
-    const userId = DEMO_USER_ID;
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 30);
 
