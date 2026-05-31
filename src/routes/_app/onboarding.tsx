@@ -202,7 +202,7 @@ function Onboarding() {
           <div className="mt-4 grid grid-cols-2 gap-3">
             {GOALS.map((g) => (
               <button key={g.v} onClick={() => setGoal(g.v)}
-                className={`glass rounded-2xl p-4 text-left border transition-all ${goal === g.v ? "border-[oklch(0.72_0.22_240)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.15)]" : "border-white/10"}`}>
+                className={`glass rounded-2xl p-4 text-left border-2 transition-all ${goal === g.v ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
                 <div className="text-2xl">{g.emoji}</div>
                 <div className="mt-1.5 font-semibold text-sm">{g.l}</div>
               </button>
