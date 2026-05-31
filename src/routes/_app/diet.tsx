@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { foodsQuery } from "@/lib/queries";
+import { useSuspenseQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { foodsQuery, dashboardQuery } from "@/lib/queries";
 import { deleteFood } from "@/lib/food.functions";
-import { Camera, Sunrise, Sun, Moon, Cookie, Trash2 } from "lucide-react";
+import { generateAiPlan } from "@/lib/onboarding.functions";
+import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/diet")({
@@ -18,6 +19,7 @@ const mealMeta: Record<string, { label: string; icon: any; color: string }> = {
 
 function Diet() {
   const { data } = useSuspenseQuery(foodsQuery);
+  const { data: dash } = useQuery(dashboardQuery);
   const qc = useQueryClient();
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const todays = data.filter(f => new Date(f.logged_at) >= today);
@@ -37,6 +39,26 @@ function Diet() {
       toast.success("Removed");
     },
   });
+
+  const genPlan = useMutation({
+    mutationFn: () => generateAiPlan(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Personalized plan ready");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not generate plan"),
+  });
+
+  const plan: any = dash?.profile?.ai_plan;
+  const meals = plan?.meals ?? null;
+  const mealOrder: { k: string; label: string; icon: any; color: string }[] = [
+    { k: "breakfast", label: "Breakfast", icon: Sunrise, color: "oklch(0.82 0.16 80)" },
+    { k: "pre_workout", label: "Pre-workout", icon: Zap, color: "oklch(0.78 0.18 60)" },
+    { k: "post_workout", label: "Post-workout", icon: Dumbbell, color: "oklch(0.78 0.2 160)" },
+    { k: "lunch", label: "Lunch", icon: Sun, color: "oklch(0.84 0.18 145)" },
+    { k: "snack", label: "Snack", icon: Cookie, color: "oklch(0.7 0.18 25)" },
+    { k: "dinner", label: "Dinner", icon: Moon, color: "oklch(0.74 0.22 295)" },
+  ];
 
   const grouped = (["breakfast", "lunch", "dinner", "snack"] as const).map(t => ({
     type: t,
@@ -68,6 +90,94 @@ function Diet() {
           </div>
         ))}
       </div>
+
+      <section className="glass rounded-3xl p-5 space-y-4 animate-slide-up" style={{ animationDelay: ".08s" }}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Sparkles className="h-4 w-4 text-primary" /> Personalized AI plan
+            </div>
+            {plan?.summary && <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{plan.summary}</p>}
+            {plan?.bmi && (
+              <div className="flex gap-2 mt-2 text-[10px]">
+                <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">BMI {plan.bmi}</span>
+                <span className="px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground uppercase tracking-wider">{plan.bmi_category}</span>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => genPlan.mutate()}
+            disabled={genPlan.isPending}
+            className="shrink-0 h-10 px-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-semibold glow-ring flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+          >
+            {genPlan.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {plan ? "Regenerate" : "Generate"}
+          </button>
+        </div>
+
+        {meals && (
+          <div className="space-y-2">
+            {mealOrder.map(m => {
+              const meal = meals[m.k];
+              if (!meal) return null;
+              const Icon = m.icon;
+              return (
+                <div key={m.k} className="rounded-2xl bg-white/5 border border-white/5 p-3">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="h-7 w-7 rounded-lg flex items-center justify-center" style={{ background: `${m.color}25` }}>
+                      <Icon className="h-3.5 w-3.5" style={{ color: m.color }} />
+                    </div>
+                    <span className="text-xs font-semibold">{m.label}</span>
+                    {meal.timing && <span className="text-[10px] text-muted-foreground">· {meal.timing}</span>}
+                    <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">{meal.calories} kcal</span>
+                  </div>
+                  <p className="text-xs text-foreground/85 leading-relaxed">{meal.items}</p>
+                  <div className="text-[10px] text-muted-foreground tabular-nums mt-1.5">
+                    {Math.round(Number(meal.protein_g ?? 0))}P · {Math.round(Number(meal.carbs_g ?? 0))}C · {Math.round(Number(meal.fat_g ?? 0))}F
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {Array.isArray(plan?.shakes) && plan.shakes.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 text-xs font-semibold mb-2"><GlassWater className="h-3.5 w-3.5 text-accent" /> Recommended shakes</div>
+            <div className="space-y-2">
+              {plan.shakes.map((s: any, i: number) => (
+                <div key={i} className="rounded-2xl bg-gradient-to-r from-accent/10 to-primary/10 border border-white/5 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold">{s.name}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.when}</span>
+                  </div>
+                  <p className="text-[11px] text-foreground/80 mt-1 leading-relaxed">{s.ingredients}</p>
+                  <div className="text-[10px] text-muted-foreground tabular-nums mt-1">{s.calories} kcal · {s.protein_g}g protein</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {Array.isArray(plan?.tips) && plan.tips.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 text-xs font-semibold mb-2"><Lightbulb className="h-3.5 w-3.5 text-primary" /> Tips</div>
+            <ul className="space-y-1.5">
+              {plan.tips.map((t: string, i: number) => (
+                <li key={i} className="text-[11px] text-muted-foreground leading-relaxed pl-3 relative">
+                  <span className="absolute left-0 top-1.5 h-1 w-1 rounded-full bg-primary" />{t}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {!plan && !genPlan.isPending && (
+          <p className="text-xs text-muted-foreground text-center py-2">Tap Generate to get a personalized plan based on your BMI, goal & preferences.</p>
+        )}
+      </section>
+
+
 
       <div className="space-y-5">
         {grouped.map((g, gi) => {
