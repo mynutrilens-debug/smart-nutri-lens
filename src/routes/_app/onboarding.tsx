@@ -148,8 +148,8 @@ function Onboarding() {
             className="mt-1 w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-[oklch(0.72_0.22_240)]/60" />
 
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <Choice active={gender === "male"} onClick={() => setGender("male")} icon={User} label="Male" />
-            <Choice active={gender === "female"} onClick={() => setGender("female")} icon={User} label="Female" />
+            <Choice active={gender === "male"} onClick={() => setGender("male")} icon={User} label="Male" ariaLabel="Select male" />
+            <Choice active={gender === "female"} onClick={() => setGender("female")} icon={User} label="Female" ariaLabel="Select female" />
           </div>
 
           <label className="block mt-6 text-xs text-muted-foreground">Age</label>
