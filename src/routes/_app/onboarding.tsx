@@ -201,9 +201,9 @@ function Onboarding() {
           <h2 className="text-2xl font-bold">What's your physique goal?</h2>
           <div className="mt-4 grid grid-cols-2 gap-3">
             {GOALS.map((g) => (
-              <button key={g.v} onClick={() => setGoal(g.v)}
-                className={`glass rounded-2xl p-4 text-left border-2 transition-all ${goal === g.v ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
-                <div className="text-2xl">{g.emoji}</div>
+              <button key={g.v} onClick={() => setGoal(g.v)} aria-pressed={goal === g.v}
+                className={`relative glass rounded-2xl p-4 text-left border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] ${goal === g.v ? "z-10 border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
+                <div className="text-2xl" aria-hidden="true">{g.emoji}</div>
                 <div className="mt-1.5 font-semibold text-sm">{g.l}</div>
               </button>
             ))}
