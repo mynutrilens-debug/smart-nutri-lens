@@ -19,6 +19,7 @@ const mealMeta: Record<string, { label: string; icon: any; color: string }> = {
 
 function Diet() {
   const { data } = useSuspenseQuery(foodsQuery);
+  const { data: dash } = useQuery(dashboardQuery);
   const qc = useQueryClient();
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const todays = data.filter(f => new Date(f.logged_at) >= today);
@@ -38,6 +39,26 @@ function Diet() {
       toast.success("Removed");
     },
   });
+
+  const genPlan = useMutation({
+    mutationFn: () => generateAiPlan(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Personalized plan ready");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not generate plan"),
+  });
+
+  const plan: any = dash?.profile?.ai_plan;
+  const meals = plan?.meals ?? null;
+  const mealOrder: { k: string; label: string; icon: any; color: string }[] = [
+    { k: "breakfast", label: "Breakfast", icon: Sunrise, color: "oklch(0.82 0.16 80)" },
+    { k: "pre_workout", label: "Pre-workout", icon: Zap, color: "oklch(0.78 0.18 60)" },
+    { k: "post_workout", label: "Post-workout", icon: Dumbbell, color: "oklch(0.78 0.2 160)" },
+    { k: "lunch", label: "Lunch", icon: Sun, color: "oklch(0.84 0.18 145)" },
+    { k: "snack", label: "Snack", icon: Cookie, color: "oklch(0.7 0.18 25)" },
+    { k: "dinner", label: "Dinner", icon: Moon, color: "oklch(0.74 0.22 295)" },
+  ];
 
   const grouped = (["breakfast", "lunch", "dinner", "snack"] as const).map(t => ({
     type: t,
