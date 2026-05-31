@@ -291,11 +291,11 @@ function Eyebrow({ icon: Icon, children }: any) {
     </div>
   );
 }
-function Choice({ active, onClick, icon: Icon, label }: any) {
+function Choice({ active, onClick, icon: Icon, label, ariaLabel }: any) {
   return (
-    <button onClick={onClick}
-      className={`glass rounded-2xl p-4 flex flex-col items-center gap-2 border-2 transition-all ${active ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
-      <Icon className="h-6 w-6" />
+    <button onClick={onClick} aria-pressed={active} aria-label={ariaLabel}
+      className={`relative glass rounded-2xl p-4 flex flex-col items-center gap-2 border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] ${active ? "z-10 border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
+      <Icon className="h-6 w-6" aria-hidden="true" />
       <span className="text-sm font-medium">{label}</span>
     </button>
   );
