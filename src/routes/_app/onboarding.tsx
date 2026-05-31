@@ -294,7 +294,7 @@ function Eyebrow({ icon: Icon, children }: any) {
 function Choice({ active, onClick, icon: Icon, label }: any) {
   return (
     <button onClick={onClick}
-      className={`glass rounded-2xl p-4 flex flex-col items-center gap-2 border transition-all ${active ? "border-[oklch(0.72_0.22_240)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.15)]" : "border-white/10"}`}>
+      className={`glass rounded-2xl p-4 flex flex-col items-center gap-2 border-2 transition-all ${active ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
       <Icon className="h-6 w-6" />
       <span className="text-sm font-medium">{label}</span>
     </button>
