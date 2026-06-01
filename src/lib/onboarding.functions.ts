@@ -11,7 +11,9 @@ const OnboardingInput = z.object({
   target_weight_kg: z.number().min(30).max(250).optional(),
   activity_level: z.enum(["sedentary", "light", "moderate", "active", "athlete"]),
   physique_goal: z.enum(["weight_loss", "fat_loss", "muscle_gain", "maintenance", "recomp"]),
-  diet_preference: z.string().min(1).max(40),
+  diet_preference: z.string().min(1).max(60),
+  region: z.string().max(60).optional().nullable(),
+  cuisine: z.string().max(60).optional().nullable(),
   allergies: z.array(z.string().max(40)).max(20).default([]),
   medical_conditions: z.array(z.string().max(60)).max(20).default([]),
 });
