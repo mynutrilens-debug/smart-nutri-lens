@@ -76,6 +76,8 @@ export const saveOnboarding = createServerFn({ method: "POST" })
         activity_level: data.activity_level,
         physique_goal: data.physique_goal,
         diet_preference: data.diet_preference,
+        region: data.region ?? null,
+        cuisine: data.cuisine ?? null,
         allergies: data.allergies,
         medical_conditions: data.medical_conditions,
         daily_calorie_goal: t.calories,
