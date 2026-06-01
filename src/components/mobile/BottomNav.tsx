@@ -15,25 +15,25 @@ export function BottomNav() {
   if (pathname === "/onboarding" || pathname === "/" || pathname === "/login") return null;
   return (
     <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[min(420px,calc(100vw-32px))]">
-      <div className="glass-strong rounded-[28px] px-3 py-2.5 flex items-center justify-between shadow-2xl">
+      <div className="rounded-full px-2 py-2 flex items-center justify-between backdrop-blur-xl bg-black/40 border border-white/[0.06] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]">
         {tabs.map(t => {
           const active = pathname === t.to;
           const Icon = t.icon;
           if (t.center) {
             return (
-              <Link key={t.to} to={t.to} className="-mt-7">
-                <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-ring active:scale-95 transition ${active ? "animate-pulse-glow" : ""}`}>
-                  <Icon className="h-6 w-6 text-primary-foreground" strokeWidth={2.5} />
+              <Link key={t.to} to={t.to} className="-mt-5">
+                <div className="h-11 w-11 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[0_8px_24px_-6px_oklch(0.72_0.22_240/60%)] active:scale-95 transition">
+                  <Icon className="h-5 w-5 text-primary-foreground" strokeWidth={2.4} />
                 </div>
               </Link>
             );
           }
           return (
             <Link key={t.to} to={t.to}
-              className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all ${active ? "text-primary" : "text-muted-foreground"}`}>
-              {active && <span className="absolute -top-1 left-1/2 -translate-x-1/2 h-1 w-6 rounded-full bg-primary glow-ring" />}
-              <Icon className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`} strokeWidth={active ? 2.5 : 2} />
+              className={`relative flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-full transition-all ${active ? "text-foreground" : "text-muted-foreground/70"}`}>
+              <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.4 : 1.8} />
               <span className="text-[10px] font-medium tracking-wide">{t.label}</span>
+              {active && <span className="absolute -bottom-0.5 h-0.5 w-5 rounded-full bg-primary" />}
             </Link>
           );
         })}
