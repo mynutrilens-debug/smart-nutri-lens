@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { foodsQuery, dashboardQuery } from "@/lib/queries";
-import { deleteFood } from "@/lib/food.functions";
+import { deleteFood, logFood } from "@/lib/food.functions";
 import { generateAiPlan } from "@/lib/onboarding.functions";
-import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb } from "lucide-react";
+import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/diet")({
@@ -16,6 +16,13 @@ const mealMeta: Record<string, { label: string; icon: any; color: string }> = {
   dinner: { label: "Dinner", icon: Moon, color: "oklch(0.74 0.22 295)" },
   snack: { label: "Snacks", icon: Cookie, color: "oklch(0.7 0.18 25)" },
 };
+
+function meal_name(key: string, meal: any) {
+  if (meal?.name) return String(meal.name).slice(0, 200);
+  const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const first = String(meal?.items ?? "").split(/[,.•·]/)[0]?.trim();
+  return first ? `${label}: ${first.slice(0, 160)}` : label;
+}
 
 function Diet() {
   const { data } = useSuspenseQuery(foodsQuery);
@@ -47,6 +54,31 @@ function Diet() {
       toast.success("Personalized plan ready");
     },
     onError: (e: any) => toast.error(e.message ?? "Could not generate plan"),
+  });
+
+  const logMeal = useMutation({
+    mutationFn: (input: { mealKey: string; meal: any }) => {
+      const map: Record<string, "breakfast" | "lunch" | "dinner" | "snack"> = {
+        breakfast: "breakfast", lunch: "lunch", dinner: "dinner",
+        snack: "snack", pre_workout: "snack", post_workout: "snack",
+      };
+      const name = meal_name(input.mealKey, input.meal);
+      return logFood({ data: {
+        name,
+        meal_type: map[input.mealKey] ?? "snack",
+        calories: Math.round(Number(input.meal.calories ?? 0)),
+        protein_g: Math.round(Number(input.meal.protein_g ?? 0)),
+        carbs_g: Math.round(Number(input.meal.carbs_g ?? 0)),
+        fat_g: Math.round(Number(input.meal.fat_g ?? 0)),
+        notes: (input.meal.items ?? "").toString().slice(0, 500),
+      }});
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["foods"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Logged to dashboard");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not log"),
   });
 
   const plan: any = dash?.profile?.ai_plan;
@@ -131,9 +163,19 @@ function Diet() {
                     {meal.timing && <span className="text-[10px] text-muted-foreground">· {meal.timing}</span>}
                     <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">{meal.calories} kcal</span>
                   </div>
+                  {meal.name && <p className="text-[11px] font-semibold text-foreground/95 mb-0.5">{meal.name}</p>}
                   <p className="text-xs text-foreground/85 leading-relaxed">{meal.items}</p>
-                  <div className="text-[10px] text-muted-foreground tabular-nums mt-1.5">
-                    {Math.round(Number(meal.protein_g ?? 0))}P · {Math.round(Number(meal.carbs_g ?? 0))}C · {Math.round(Number(meal.fat_g ?? 0))}F
+                  <div className="flex items-center justify-between gap-2 mt-2">
+                    <div className="text-[10px] text-muted-foreground tabular-nums">
+                      {Math.round(Number(meal.protein_g ?? 0))}P · {Math.round(Number(meal.carbs_g ?? 0))}C · {Math.round(Number(meal.fat_g ?? 0))}F
+                    </div>
+                    <button
+                      onClick={() => logMeal.mutate({ mealKey: m.k, meal })}
+                      disabled={logMeal.isPending}
+                      className="h-7 px-2.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-60"
+                    >
+                      <Plus className="h-3 w-3" /> Log
+                    </button>
                   </div>
                 </div>
               );

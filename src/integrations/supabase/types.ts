@@ -93,6 +93,7 @@ export type Database = {
           body_fat_pct: number | null
           carbs_goal_g: number
           created_at: string
+          cuisine: string | null
           daily_calorie_goal: number
           diet_preference: string | null
           display_name: string | null
@@ -105,6 +106,7 @@ export type Database = {
           onboarded_at: string | null
           physique_goal: string | null
           protein_goal_g: number
+          region: string | null
           streak_count: number
           target_weight_kg: number | null
           updated_at: string
@@ -120,6 +122,7 @@ export type Database = {
           body_fat_pct?: number | null
           carbs_goal_g?: number
           created_at?: string
+          cuisine?: string | null
           daily_calorie_goal?: number
           diet_preference?: string | null
           display_name?: string | null
@@ -132,6 +135,7 @@ export type Database = {
           onboarded_at?: string | null
           physique_goal?: string | null
           protein_goal_g?: number
+          region?: string | null
           streak_count?: number
           target_weight_kg?: number | null
           updated_at?: string
@@ -147,6 +151,7 @@ export type Database = {
           body_fat_pct?: number | null
           carbs_goal_g?: number
           created_at?: string
+          cuisine?: string | null
           daily_calorie_goal?: number
           diet_preference?: string | null
           display_name?: string | null
@@ -159,6 +164,7 @@ export type Database = {
           onboarded_at?: string | null
           physique_goal?: string | null
           protein_goal_g?: number
+          region?: string | null
           streak_count?: number
           target_weight_kg?: number | null
           updated_at?: string

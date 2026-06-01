@@ -34,7 +34,13 @@ const GOALS: { v: Goal; l: string; emoji: string }[] = [
   { v: "maintenance", l: "Maintenance", emoji: "🌿" },
 ];
 
-const DIETS = ["Indian", "Italian", "American", "Chinese", "Mediterranean", "Japanese", "Mexican", "Vegan", "Keto"];
+const DIETS = [
+  "Non-Veg (No Beef)", "Non-Veg", "Vegetarian", "Eggetarian", "Vegan",
+  "Keto", "Diabetic-Friendly", "High-Protein", "Low-Carb", "Mediterranean",
+  "Jain", "Pescatarian",
+];
+const REGIONS = ["India", "Global", "Middle East", "East Asia", "Europe", "Americas"];
+const INDIAN_CUISINES = ["Maharashtrian", "Kerala", "Tamil", "Rajasthani", "Punjabi", "Bengali", "Gujarati", "South Indian", "North Indian", "Hyderabadi", "Goan"];
 const COMMON_ALLERGIES = ["Peanuts", "Tree nuts", "Dairy", "Eggs", "Gluten", "Soy", "Shellfish", "Fish"];
 const COMMON_MEDICAL = ["Diabetes", "Hypertension", "PCOS", "Thyroid", "Cholesterol", "Asthma", "None"];
 
@@ -59,7 +65,9 @@ function Onboarding() {
   const [weight, setWeight] = useState(72);
   const [activity, setActivity] = useState<Activity>("moderate");
   const [goal, setGoal] = useState<Goal>("muscle_gain");
-  const [diet, setDiet] = useState("Indian");
+  const [diet, setDiet] = useState("Non-Veg (No Beef)");
+  const [region, setRegion] = useState("India");
+  const [cuisine, setCuisine] = useState("Maharashtrian");
   const [allergies, setAllergies] = useState<string[]>([]);
   const [medical, setMedical] = useState<string[]>([]);
 
@@ -105,7 +113,10 @@ function Onboarding() {
         display_name: name || undefined,
         gender, age, height_cm: heightCm, weight_kg: weightKg,
         activity_level: activity, physique_goal: goal,
-        diet_preference: diet, allergies, medical_conditions: medical,
+        diet_preference: diet,
+        region,
+        cuisine: region === "India" ? cuisine : "",
+        allergies, medical_conditions: medical,
       }});
       // Fire and forget — plan can finish in background
       generateAiPlan().catch(() => {});
@@ -215,6 +226,24 @@ function Onboarding() {
         <Card>
           <Eyebrow icon={Apple}>Diet & allergies</Eyebrow>
           <h2 className="text-2xl font-bold">Your food world</h2>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Region</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {REGIONS.map((r) => (
+              <Chip key={r} active={region === r} onClick={() => setRegion(r)}>{r}</Chip>
+            ))}
+          </div>
+
+          {region === "India" && (
+            <>
+              <label className="block mt-5 text-xs text-muted-foreground">Regional cuisine</label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {INDIAN_CUISINES.map((c) => (
+                  <Chip key={c} active={cuisine === c} onClick={() => setCuisine(c)}>{c}</Chip>
+                ))}
+              </div>
+            </>
+          )}
 
           <label className="block mt-5 text-xs text-muted-foreground">Diet preference</label>
           <div className="mt-2 flex flex-wrap gap-2">

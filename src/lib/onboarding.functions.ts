@@ -11,7 +11,9 @@ const OnboardingInput = z.object({
   target_weight_kg: z.number().min(30).max(250).optional(),
   activity_level: z.enum(["sedentary", "light", "moderate", "active", "athlete"]),
   physique_goal: z.enum(["weight_loss", "fat_loss", "muscle_gain", "maintenance", "recomp"]),
-  diet_preference: z.string().min(1).max(40),
+  diet_preference: z.string().min(1).max(60),
+  region: z.string().max(60).optional().nullable(),
+  cuisine: z.string().max(60).optional().nullable(),
   allergies: z.array(z.string().max(40)).max(20).default([]),
   medical_conditions: z.array(z.string().max(60)).max(20).default([]),
 });
@@ -74,6 +76,8 @@ export const saveOnboarding = createServerFn({ method: "POST" })
         activity_level: data.activity_level,
         physique_goal: data.physique_goal,
         diet_preference: data.diet_preference,
+        region: data.region ?? null,
+        cuisine: data.cuisine ?? null,
         allergies: data.allergies,
         medical_conditions: data.medical_conditions,
         daily_calorie_goal: t.calories,
@@ -102,45 +106,55 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const bmi = Number(((p.weight_kg ?? 70) / (heightM * heightM)).toFixed(1));
     const bmiCat = bmi < 18.5 ? "underweight" : bmi < 25 ? "normal" : bmi < 30 ? "overweight" : "obese";
 
+    const region = (p as any).region || "Global";
+    const cuisine = (p as any).cuisine || "";
+    const cuisineLine = region.toLowerCase() === "india"
+      ? `- Region: India · Sub-cuisine focus: ${cuisine || "balanced pan-Indian"} (use authentic local staples — e.g. Maharashtrian: poha, bhakri, varan-bhaat, misal; Kerala: appam, puttu, fish curry, sambhar; Tamil: idli, dosa, sambar, rasam; Rajasthani: dal-baati, gatte ki sabzi, khichdi; Punjabi: roti, dal, sarson, paneer; Bengali: macher jhol, luchi; Gujarati: thepla, dhokla; South Indian: ragi, millets). Use household measures (katori, roti count, glass).`
+      : `- Region: ${region}${cuisine ? ` · Cuisine: ${cuisine}` : ""}`;
+
     const prompt = `You are a certified nutrition and fitness coach. Build a PERSONALIZED daily diet plan. Return STRICT JSON only.
 
 USER PROFILE
 - Gender: ${p.gender}, Age: ${p.age}
 - Height: ${p.height_cm}cm, Weight: ${p.weight_kg}kg, BMI: ${bmi} (${bmiCat})
 - Goal: ${p.physique_goal}, Activity: ${p.activity_level}
-- Diet preference: ${p.diet_preference}
+- Diet preference: ${p.diet_preference} (honor strictly — e.g. "Non-Veg (No Beef)" excludes beef; "Vegan" excludes all animal products incl. dairy/eggs/honey; "Vegetarian" excludes meat/fish/eggs unless eggetarian; "Keto" <30g net carbs/day; "Diabetic-Friendly" low-GI, no refined sugar; "High-Protein" ≥30% calories from protein)
+${cuisineLine}
 - Allergies (STRICTLY AVOID): ${(p.allergies ?? []).join(", ") || "none"}
 - Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
 - Daily targets: ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g
 
 RULES
 - Tailor calories/macros to BMI + goal (deficit for weight/fat loss, surplus for muscle gain, balanced for maintenance/recomp).
-- Affordable, practical, locally available foods matching diet preference.
-- Provide PORTION guidance (grams or household measures) for EVERY item.
+- Use AUTHENTIC region/cuisine dishes by name. Affordable, locally available foods.
+- Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
 - Include shake recommendations tuned to goal:
   * muscle_gain / underweight → high-cal mass shakes (banana + oats + peanut butter + milk + whey)
-  * weight_loss / fat_loss → low-cal detox / protein (green tea, honey-lemon water, cucumber-mint, whey + water)
+  * weight_loss / fat_loss → low-cal detox / protein (green tea, honey-lemon water, cucumber-mint, jeera water, whey + water)
   * maintenance / recomp → balanced protein smoothies
-- Never include allergens. Respect medical conditions.
+  * diabetic-friendly → unsweetened, low-GI options only
+- Never include allergens. Respect medical conditions and diet preference strictly.
 
 Return ONLY this JSON (no markdown):
 {
-  "summary": "1-2 sentence coach summary referencing BMI & goal",
+  "summary": "1-2 sentence coach summary referencing BMI, goal & cuisine",
   "bmi": ${bmi},
   "bmi_category": "${bmiCat}",
+  "region": "${region}",
+  "cuisine": "${cuisine}",
   "daily_targets": { "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
   "meals": {
-    "breakfast":    { "items": "…with portions…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
-    "pre_workout":  { "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "timing": "30-45 min before" },
-    "post_workout": { "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "timing": "within 30 min after" },
-    "lunch":        { "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
-    "snack":        { "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
-    "dinner":       { "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 }
+    "breakfast":    { "name": "dish name", "items": "…with portions…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
+    "pre_workout":  { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "timing": "30-45 min before" },
+    "post_workout": { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "timing": "within 30 min after" },
+    "lunch":        { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
+    "snack":        { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
+    "dinner":       { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 }
   },
   "shakes": [
     { "name": "", "ingredients": "", "calories": 0, "protein_g": 0, "when": "morning|pre|post|evening" }
   ],
-  "tips": ["3-5 short, goal-specific tips"],
+  "tips": ["3-5 short, goal & cuisine specific tips"],
   "workout": [
     { "day": "Mon", "focus": "Push", "exercises": [{ "name": "Bench Press", "sets": 4, "reps": "8-10" }] }
   ]
