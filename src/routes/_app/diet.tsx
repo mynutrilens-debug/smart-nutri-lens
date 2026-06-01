@@ -49,6 +49,31 @@ function Diet() {
     onError: (e: any) => toast.error(e.message ?? "Could not generate plan"),
   });
 
+  const logMeal = useMutation({
+    mutationFn: (input: { mealKey: string; meal: any }) => {
+      const map: Record<string, "breakfast" | "lunch" | "dinner" | "snack"> = {
+        breakfast: "breakfast", lunch: "lunch", dinner: "dinner",
+        snack: "snack", pre_workout: "snack", post_workout: "snack",
+      };
+      const name = meal_name(input.mealKey, input.meal);
+      return logFood({ data: {
+        name,
+        meal_type: map[input.mealKey] ?? "snack",
+        calories: Math.round(Number(input.meal.calories ?? 0)),
+        protein_g: Math.round(Number(input.meal.protein_g ?? 0)),
+        carbs_g: Math.round(Number(input.meal.carbs_g ?? 0)),
+        fat_g: Math.round(Number(input.meal.fat_g ?? 0)),
+        notes: (input.meal.items ?? "").toString().slice(0, 500),
+      }});
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["foods"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Logged to dashboard");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not log"),
+  });
+
   const plan: any = dash?.profile?.ai_plan;
   const meals = plan?.meals ?? null;
   const mealOrder: { k: string; label: string; icon: any; color: string }[] = [
