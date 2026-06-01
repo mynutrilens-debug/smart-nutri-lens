@@ -34,7 +34,13 @@ const GOALS: { v: Goal; l: string; emoji: string }[] = [
   { v: "maintenance", l: "Maintenance", emoji: "🌿" },
 ];
 
-const DIETS = ["Indian", "Italian", "American", "Chinese", "Mediterranean", "Japanese", "Mexican", "Vegan", "Keto"];
+const DIETS = [
+  "Non-Veg (No Beef)", "Non-Veg", "Vegetarian", "Eggetarian", "Vegan",
+  "Keto", "Diabetic-Friendly", "High-Protein", "Low-Carb", "Mediterranean",
+  "Jain", "Pescatarian",
+];
+const REGIONS = ["India", "Global", "Middle East", "East Asia", "Europe", "Americas"];
+const INDIAN_CUISINES = ["Maharashtrian", "Kerala", "Tamil", "Rajasthani", "Punjabi", "Bengali", "Gujarati", "South Indian", "North Indian", "Hyderabadi", "Goan"];
 const COMMON_ALLERGIES = ["Peanuts", "Tree nuts", "Dairy", "Eggs", "Gluten", "Soy", "Shellfish", "Fish"];
 const COMMON_MEDICAL = ["Diabetes", "Hypertension", "PCOS", "Thyroid", "Cholesterol", "Asthma", "None"];
 
