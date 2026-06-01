@@ -65,7 +65,9 @@ function Onboarding() {
   const [weight, setWeight] = useState(72);
   const [activity, setActivity] = useState<Activity>("moderate");
   const [goal, setGoal] = useState<Goal>("muscle_gain");
-  const [diet, setDiet] = useState("Indian");
+  const [diet, setDiet] = useState("Non-Veg (No Beef)");
+  const [region, setRegion] = useState("India");
+  const [cuisine, setCuisine] = useState("Maharashtrian");
   const [allergies, setAllergies] = useState<string[]>([]);
   const [medical, setMedical] = useState<string[]>([]);
 
