@@ -17,6 +17,13 @@ const mealMeta: Record<string, { label: string; icon: any; color: string }> = {
   snack: { label: "Snacks", icon: Cookie, color: "oklch(0.7 0.18 25)" },
 };
 
+function meal_name(key: string, meal: any) {
+  if (meal?.name) return String(meal.name).slice(0, 200);
+  const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const first = String(meal?.items ?? "").split(/[,.•·]/)[0]?.trim();
+  return first ? `${label}: ${first.slice(0, 160)}` : label;
+}
+
 function Diet() {
   const { data } = useSuspenseQuery(foodsQuery);
   const { data: dash } = useQuery(dashboardQuery);
