@@ -156,9 +156,19 @@ function Diet() {
                     {meal.timing && <span className="text-[10px] text-muted-foreground">· {meal.timing}</span>}
                     <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">{meal.calories} kcal</span>
                   </div>
+                  {meal.name && <p className="text-[11px] font-semibold text-foreground/95 mb-0.5">{meal.name}</p>}
                   <p className="text-xs text-foreground/85 leading-relaxed">{meal.items}</p>
-                  <div className="text-[10px] text-muted-foreground tabular-nums mt-1.5">
-                    {Math.round(Number(meal.protein_g ?? 0))}P · {Math.round(Number(meal.carbs_g ?? 0))}C · {Math.round(Number(meal.fat_g ?? 0))}F
+                  <div className="flex items-center justify-between gap-2 mt-2">
+                    <div className="text-[10px] text-muted-foreground tabular-nums">
+                      {Math.round(Number(meal.protein_g ?? 0))}P · {Math.round(Number(meal.carbs_g ?? 0))}C · {Math.round(Number(meal.fat_g ?? 0))}F
+                    </div>
+                    <button
+                      onClick={() => logMeal.mutate({ mealKey: m.k, meal })}
+                      disabled={logMeal.isPending}
+                      className="h-7 px-2.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-60"
+                    >
+                      <Plus className="h-3 w-3" /> Log
+                    </button>
                   </div>
                 </div>
               );
