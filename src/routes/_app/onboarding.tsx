@@ -113,7 +113,10 @@ function Onboarding() {
         display_name: name || undefined,
         gender, age, height_cm: heightCm, weight_kg: weightKg,
         activity_level: activity, physique_goal: goal,
-        diet_preference: diet, allergies, medical_conditions: medical,
+        diet_preference: diet,
+        region,
+        cuisine: region === "India" ? cuisine : "",
+        allergies, medical_conditions: medical,
       }});
       // Fire and forget — plan can finish in background
       generateAiPlan().catch(() => {});
