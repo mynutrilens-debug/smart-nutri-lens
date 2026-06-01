@@ -227,6 +227,24 @@ function Onboarding() {
           <Eyebrow icon={Apple}>Diet & allergies</Eyebrow>
           <h2 className="text-2xl font-bold">Your food world</h2>
 
+          <label className="block mt-5 text-xs text-muted-foreground">Region</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {REGIONS.map((r) => (
+              <Chip key={r} active={region === r} onClick={() => setRegion(r)}>{r}</Chip>
+            ))}
+          </div>
+
+          {region === "India" && (
+            <>
+              <label className="block mt-5 text-xs text-muted-foreground">Regional cuisine</label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {INDIAN_CUISINES.map((c) => (
+                  <Chip key={c} active={cuisine === c} onClick={() => setCuisine(c)}>{c}</Chip>
+                ))}
+              </div>
+            </>
+          )}
+
           <label className="block mt-5 text-xs text-muted-foreground">Diet preference</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {DIETS.map((d) => (
