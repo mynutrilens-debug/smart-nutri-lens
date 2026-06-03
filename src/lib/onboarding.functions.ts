@@ -157,22 +157,10 @@ Return ONLY this JSON (no markdown):
     { "day": "Mon", "focus": "Push", "exercises": [{ "name": "Bench Press", "sets": 4, "reps": "8-10" }] }
   ]
 }`;
-
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are a certified nutrition and fitness coach. Output only valid JSON, no markdown." },
-          { role: "user", content: prompt },
-        ],
-      }),
+    const text = await callGeminiJson({
+      system: "You are a certified nutrition and fitness coach. Output only valid JSON, no markdown.",
+      user: prompt,
     });
-    if (!res.ok) throw new Error(`AI error ${res.status}`);
-    const json = (await res.json()) as any;
-    let text: string = json?.choices?.[0]?.message?.content ?? "{}";
-    text = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
     let plan: any;
     try { plan = JSON.parse(text); } catch { throw new Error("Plan parse failed"); }
 
