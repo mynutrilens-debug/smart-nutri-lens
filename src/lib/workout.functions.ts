@@ -53,8 +53,6 @@ export const generateAiWorkout = createServerFn({ method: "POST" })
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
     if (!p) throw new Error("Profile not found");
 
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const heightM = (p.height_cm ?? 170) / 100;
     const bmi = Number(((p.weight_kg ?? 70) / (heightM * heightM)).toFixed(1));
