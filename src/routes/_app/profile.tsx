@@ -1,13 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dashboardQuery } from "@/lib/queries";
 import { logWeight, updateProfile } from "@/lib/weight.functions";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Flame, Scale, Loader2, Save, Sparkles, TrendingDown, TrendingUp, Target,
-  Droplets, Activity, Trophy, Heart, ChevronRight, Plus, Minus, Edit3, Check,
+  Droplets, Activity, Trophy, Plus, Minus, Edit3, Check, LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
+import { MacroRings } from "@/components/mobile/MacroRings";
+import { TransformationRing } from "@/components/mobile/TransformationRing";
 
 export const Route = createFileRoute("/_app/profile")({
   component: Profile,
