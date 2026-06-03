@@ -98,28 +98,10 @@ Return ONLY this JSON:
   ],
   "tips": ["3-4 short coaching tips"]
 }`;
-
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are an elite strength coach. Output only valid JSON, no markdown." },
-          { role: "user", content: prompt },
-        ],
-      }),
+    const text = await callGeminiJson({
+      system: "You are an elite strength coach. Output only valid JSON, no markdown.",
+      user: prompt,
     });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      if (res.status === 429) throw new Error("Rate limit reached on AI gateway. Please wait a moment and try again.");
-      if (res.status === 402) throw new Error("AI credits exhausted. Add credits in Settings → Workspace → Usage.");
-      if (res.status === 403) throw new Error("AI gateway access denied (403). The LOVABLE_API_KEY may be missing scope or the model is unavailable for this workspace.");
-      throw new Error(`AI error ${res.status}: ${body.slice(0, 200)}`);
-    }
-    const json = (await res.json()) as any;
-    let text: string = json?.choices?.[0]?.message?.content ?? "{}";
-    text = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
     let plan: any;
     try { plan = JSON.parse(text); } catch { throw new Error("Workout plan parse failed"); }
 
