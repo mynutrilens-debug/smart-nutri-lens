@@ -89,38 +89,37 @@ function Profile() {
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">Week {weeksIn} of 12 · {bmiLabel}</p>
           </div>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              toast.success("Signed out");
+              navigate({ to: "/login" });
+            }}
+            className="h-9 w-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 active:scale-95 transition"
+            aria-label="Sign out"
+          >
+            <LogOut className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
             <Flame className="h-3.5 w-3.5 text-amber-400" />
             <span className="text-xs font-bold tabular-nums text-amber-200">{p?.streak_count ?? 0}</span>
           </div>
         </div>
 
-        {/* Weight transformation */}
-        <div className="relative mt-5 grid grid-cols-3 items-end gap-2">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Start</p>
-            <p className="text-xl font-semibold tabular-nums mt-0.5">{startWeight.toFixed(1)}<span className="text-xs text-muted-foreground ml-0.5">kg</span></p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Now</p>
-            <p className="text-3xl font-bold tabular-nums mt-0.5 neon-text leading-none">{currentWeight.toFixed(1)}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">kg</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Target</p>
-            <p className="text-xl font-semibold tabular-nums mt-0.5 text-emerald-300">{targetWeight.toFixed(1)}<span className="text-xs text-muted-foreground ml-0.5">kg</span></p>
-          </div>
-        </div>
-        <div className="relative mt-3">
-          <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all" style={{ width: `${transformPct}%` }} />
-          </div>
-          <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
-            <span>{transformPct}% transformed</span>
-            <span className={bmiTone}>BMI {bmi.toFixed(1)} · {bmiLabel}</span>
-          </div>
+        {/* Transformation ring */}
+        <div className="relative mt-4 pb-8">
+          <TransformationRing
+            startWeight={startWeight}
+            currentWeight={currentWeight}
+            targetWeight={targetWeight}
+            bmi={bmi}
+            bmiLabel={bmiLabel}
+            week={weeksIn}
+            totalWeeks={12}
+          />
         </div>
       </header>
+
 
       {/* ── Health score ring ───────────────────────────────── */}
       <section className="rounded-[24px] border border-white/[0.06] bg-white/[0.02] p-5 animate-slide-up" style={{ animationDelay: ".04s" }}>
