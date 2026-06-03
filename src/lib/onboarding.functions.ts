@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { callGeminiJson } from "@/lib/ai-gemini.server";
 
 const OnboardingInput = z.object({
   display_name: z.string().min(1).max(80).optional(),
@@ -99,8 +100,6 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
     if (!p) throw new Error("Profile not found");
 
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const heightM = (p.height_cm ?? 170) / 100;
     const bmi = Number(((p.weight_kg ?? 70) / (heightM * heightM)).toFixed(1));
@@ -159,22 +158,10 @@ Return ONLY this JSON (no markdown):
     { "day": "Mon", "focus": "Push", "exercises": [{ "name": "Bench Press", "sets": 4, "reps": "8-10" }] }
   ]
 }`;
-
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are a certified nutrition and fitness coach. Output only valid JSON, no markdown." },
-          { role: "user", content: prompt },
-        ],
-      }),
+    const text = await callGeminiJson({
+      system: "You are a certified nutrition and fitness coach. Output only valid JSON, no markdown.",
+      user: prompt,
     });
-    if (!res.ok) throw new Error(`AI error ${res.status}`);
-    const json = (await res.json()) as any;
-    let text: string = json?.choices?.[0]?.message?.content ?? "{}";
-    text = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
     let plan: any;
     try { plan = JSON.parse(text); } catch { throw new Error("Plan parse failed"); }
 
