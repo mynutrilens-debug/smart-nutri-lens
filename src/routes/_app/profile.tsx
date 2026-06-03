@@ -20,6 +20,7 @@ type Macro = "calories" | "protein" | "carbs" | "fat";
 
 function Profile() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { data } = useSuspenseQuery(dashboardQuery);
   const p = data.profile;
 
