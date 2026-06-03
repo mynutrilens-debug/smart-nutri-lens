@@ -5,6 +5,7 @@ import { deleteFood, logFood } from "@/lib/food.functions";
 import { generateAiPlan } from "@/lib/onboarding.functions";
 import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { MacroRings } from "@/components/mobile/MacroRings";
 
 export const Route = createFileRoute("/_app/diet")({
   component: Diet,
