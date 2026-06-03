@@ -1,13 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dashboardQuery } from "@/lib/queries";
 import { logWeight, updateProfile } from "@/lib/weight.functions";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Flame, Scale, Loader2, Save, Sparkles, TrendingDown, TrendingUp, Target,
-  Droplets, Activity, Trophy, Heart, ChevronRight, Plus, Minus, Edit3, Check,
+  Droplets, Activity, Trophy, Plus, Minus, Edit3, Check, LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
+import { MacroRings } from "@/components/mobile/MacroRings";
+import { TransformationRing } from "@/components/mobile/TransformationRing";
 
 export const Route = createFileRoute("/_app/profile")({
   component: Profile,
@@ -17,6 +20,7 @@ type Macro = "calories" | "protein" | "carbs" | "fat";
 
 function Profile() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { data } = useSuspenseQuery(dashboardQuery);
   const p = data.profile;
 
@@ -85,38 +89,37 @@ function Profile() {
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">Week {weeksIn} of 12 · {bmiLabel}</p>
           </div>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              toast.success("Signed out");
+              navigate({ to: "/login" });
+            }}
+            className="h-9 w-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 active:scale-95 transition"
+            aria-label="Sign out"
+          >
+            <LogOut className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
             <Flame className="h-3.5 w-3.5 text-amber-400" />
             <span className="text-xs font-bold tabular-nums text-amber-200">{p?.streak_count ?? 0}</span>
           </div>
         </div>
 
-        {/* Weight transformation */}
-        <div className="relative mt-5 grid grid-cols-3 items-end gap-2">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Start</p>
-            <p className="text-xl font-semibold tabular-nums mt-0.5">{startWeight.toFixed(1)}<span className="text-xs text-muted-foreground ml-0.5">kg</span></p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Now</p>
-            <p className="text-3xl font-bold tabular-nums mt-0.5 neon-text leading-none">{currentWeight.toFixed(1)}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">kg</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Target</p>
-            <p className="text-xl font-semibold tabular-nums mt-0.5 text-emerald-300">{targetWeight.toFixed(1)}<span className="text-xs text-muted-foreground ml-0.5">kg</span></p>
-          </div>
-        </div>
-        <div className="relative mt-3">
-          <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all" style={{ width: `${transformPct}%` }} />
-          </div>
-          <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
-            <span>{transformPct}% transformed</span>
-            <span className={bmiTone}>BMI {bmi.toFixed(1)} · {bmiLabel}</span>
-          </div>
+        {/* Transformation ring */}
+        <div className="relative mt-4 pb-8">
+          <TransformationRing
+            startWeight={startWeight}
+            currentWeight={currentWeight}
+            targetWeight={targetWeight}
+            bmi={bmi}
+            bmiLabel={bmiLabel}
+            week={weeksIn}
+            totalWeeks={12}
+          />
         </div>
       </header>
+
 
       {/* ── Health score ring ───────────────────────────────── */}
       <section className="rounded-[24px] border border-white/[0.06] bg-white/[0.02] p-5 animate-slide-up" style={{ animationDelay: ".04s" }}>
@@ -205,10 +208,17 @@ function Profile() {
         <p className="text-[11px] text-muted-foreground mt-2">{Math.round(waterPct)}% of daily hydration goal</p>
       </section>
 
-      {/* ── Macro cards ─────────────────────────────────────── */}
+      {/* ── Macro rings (Apple Fitness style) ───────────────── */}
+      <MacroRings
+        totals={data.totals}
+        goals={{ calories: cal, protein, carbs, fat }}
+        insight={data.insight?.content ?? `${Math.max(0, cal - data.totals.calories)} kcal & ${Math.max(0, protein - Math.round(data.totals.protein))}g protein left today.`}
+      />
+
+      {/* ── Macro goal editor ───────────────────────────────── */}
       <section className="space-y-3 animate-slide-up" style={{ animationDelay: ".18s" }}>
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-sm font-semibold">Daily targets</h2>
+          <h2 className="text-sm font-semibold">Adjust goals</h2>
           {(cal !== (p?.daily_calorie_goal ?? cal) || protein !== (p?.protein_goal_g ?? protein) || carbs !== (p?.carbs_goal_g ?? carbs) || fat !== (p?.fat_goal_g ?? fat)) && (
             <button disabled={save.isPending} onClick={() => save.mutate()} className="text-xs font-semibold text-primary flex items-center gap-1">
               {save.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />} Save
@@ -220,21 +230,6 @@ function Profile() {
           <MacroCard label="Protein" value={protein} unit="g" consumed={Math.round(data.totals.protein)} accent="from-rose-400 to-pink-400" editing={editing === "protein"} onEdit={() => setEditing(editing === "protein" ? null : "protein")} onChange={v => setProtein(v)} min={30} max={400} step={5} />
           <MacroCard label="Carbs" value={carbs} unit="g" consumed={Math.round(data.totals.carbs)} accent="from-violet-400 to-fuchsia-400" editing={editing === "carbs"} onEdit={() => setEditing(editing === "carbs" ? null : "carbs")} onChange={v => setCarbs(v)} min={30} max={800} step={5} />
           <MacroCard label="Fat" value={fat} unit="g" consumed={Math.round(data.totals.fat)} accent="from-emerald-400 to-teal-400" editing={editing === "fat"} onEdit={() => setEditing(editing === "fat" ? null : "fat")} onChange={v => setFat(v)} min={20} max={300} step={2} />
-        </div>
-      </section>
-
-      {/* ── Weekly progress ─────────────────────────────────── */}
-      <section className="rounded-[24px] border border-white/[0.06] bg-white/[0.02] p-4 animate-slide-up" style={{ animationDelay: ".22s" }}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Heart className="h-4 w-4 text-rose-300" />
-            <h2 className="text-sm font-semibold">This week</h2>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <ProgressTile label="Meal adherence" pct={adherencePct} tone="emerald" />
-          <ProgressTile label="Body transform" pct={transformPct} tone="primary" />
         </div>
       </section>
     </div>

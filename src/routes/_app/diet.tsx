@@ -5,6 +5,7 @@ import { deleteFood, logFood } from "@/lib/food.functions";
 import { generateAiPlan } from "@/lib/onboarding.functions";
 import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { MacroRings } from "@/components/mobile/MacroRings";
 
 export const Route = createFileRoute("/_app/diet")({
   component: Diet,
@@ -109,19 +110,17 @@ function Diet() {
         </Link>
       </header>
 
-      <div className="glass rounded-3xl p-5 grid grid-cols-4 gap-2 text-center animate-slide-up" style={{ animationDelay: ".05s" }}>
-        {[
-          { l: "kcal", v: totals.calories },
-          { l: "Protein", v: `${Math.round(totals.protein)}g` },
-          { l: "Carbs", v: `${Math.round(totals.carbs)}g` },
-          { l: "Fat", v: `${Math.round(totals.fat)}g` },
-        ].map((m, i) => (
-          <div key={m.l} className={i === 0 ? "" : "border-l border-white/10"}>
-            <div className="text-lg font-bold tabular-nums">{m.v}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{m.l}</div>
-          </div>
-        ))}
-      </div>
+      <MacroRings
+        totals={totals}
+        goals={{
+          calories: dash?.profile?.daily_calorie_goal ?? 2200,
+          protein: dash?.profile?.protein_goal_g ?? 140,
+          carbs: dash?.profile?.carbs_goal_g ?? 250,
+          fat: dash?.profile?.fat_goal_g ?? 70,
+        }}
+        insight={dash?.insight?.content ?? null}
+      />
+
 
       <section className="glass rounded-3xl p-5 space-y-4 animate-slide-up" style={{ animationDelay: ".08s" }}>
         <div className="flex items-start justify-between gap-3">
