@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { callGeminiJson } from "@/lib/ai-gemini.server";
 
 const WorkoutInput = z.object({
   name: z.string().min(1).max(200),
