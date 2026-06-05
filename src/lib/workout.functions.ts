@@ -102,6 +102,7 @@ Return ONLY this JSON:
     const text = await callGeminiJson({
       system: "You are an elite strength coach. Output only valid JSON, no markdown.",
       user: prompt,
+      model: "gemini-2.5-flash-lite",
     });
     let plan: any;
     try { plan = JSON.parse(text); } catch { throw new Error("Workout plan parse failed"); }
