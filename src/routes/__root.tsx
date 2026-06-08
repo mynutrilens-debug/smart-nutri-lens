@@ -10,6 +10,7 @@ import {
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { initNative } from "@/lib/native";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -81,6 +82,8 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
+    // Initialize Capacitor native plugins (no-op on web)
+    initNative();
     // Ensure every visitor has a Supabase session (anonymous if not signed in)
     // so RLS-protected server functions can authenticate the request.
     (async () => {
