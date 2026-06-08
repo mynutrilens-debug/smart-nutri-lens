@@ -14,7 +14,7 @@ export function BottomNav() {
   const { pathname } = useLocation();
   if (pathname === "/onboarding" || pathname === "/" || pathname === "/login") return null;
   return (
-    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[min(420px,calc(100vw-32px))]">
+    <nav className="fixed left-1/2 -translate-x-1/2 z-40 w-[min(420px,calc(100vw-32px))]" style={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
       <div className="rounded-full px-2 py-2 flex items-center justify-between backdrop-blur-xl bg-black/40 border border-white/[0.06] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]">
         {tabs.map(t => {
           const active = pathname === t.to;
