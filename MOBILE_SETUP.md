@@ -28,16 +28,39 @@ This project is now Capacitor-ready for **iOS** (App Store) and **Android** (Pla
 
 `capacitor.config.ts` points `server.url` at the Lovable preview URL, so the installed app live-loads your latest Lovable changes — no rebuild needed while iterating.
 
-## Producing release builds
+## Fully in-app (no browser redirect)
 
-Before shipping to the stores, **remove the `server` block** in `capacitor.config.ts` so the app bundles `dist/` instead of loading from the web:
+`capacitor.config.ts` no longer has a `server.url`, so the installed app
+loads the bundled `dist/` assets and runs **entirely inside the native
+shell** — no WebView redirect to lovable.app, no external browser.
 
-```ts
-// delete this block for release:
-server: { url: '...', cleartext: true },
+Every time you change the web code, rebuild and re-sync:
+
+```
+bun run build && bunx cap sync
 ```
 
-Then:
+Then run in the simulator/device from Xcode or Android Studio.
+
+### Optional: hot reload while developing
+
+If you want live reload against the Lovable preview during development,
+temporarily add this back into `capacitor.config.ts`:
+
+```ts
+server: {
+  url: 'https://<your-preview>.lovable.app',
+  cleartext: true,
+  androidScheme: 'https',
+  iosScheme: 'capacitor',
+},
+```
+
+**Remove the `url`** before building any release artifact, or the store
+build will load remote HTML instead of behaving like a native app.
+
+## Producing release builds
+
 ```
 bun run build && bunx cap sync
 ```

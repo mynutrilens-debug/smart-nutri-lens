@@ -17,9 +17,15 @@ const config: CapacitorConfig = {
   appName: 'MyNutriLens',
   webDir: 'dist',
   bundledWebRuntime: false,
+  // NOTE: No `server.url` here on purpose. The native shell loads the
+  // bundled `dist/` web assets directly so the app runs fully in-app
+  // (no external browser, no WebView redirect to lovable.app).
+  // For hot-reload during dev only, you can temporarily add:
+  //   server: { url: 'https://<your-preview>.lovable.app', cleartext: true }
+  // but REMOVE it before building a release APK/AAB/IPA.
   server: {
-    url: 'https://a8555e4f-4709-484f-bbe8-46b15a0bd553.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
+    androidScheme: 'https',
+    iosScheme: 'capacitor',
   },
   ios: {
     contentInset: 'always',
