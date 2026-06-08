@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { initNative } from "@/lib/native";
+import { SplashOverlay } from "@/components/SplashOverlay";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -103,6 +104,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <SplashOverlay />
       <Toaster theme="dark" position="top-center" richColors closeButton />
     </QueryClientProvider>
   );
