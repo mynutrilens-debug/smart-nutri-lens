@@ -30,15 +30,14 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 600,
-      launchAutoHide: false, // we hide manually after React mounts for a smooth crossfade
+      launchShowDuration: 1500,
+      launchAutoHide: true,
       backgroundColor: '#0b0b14',
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true,
-      fadeOutDuration: 400,
     },
     StatusBar: {
       style: 'DARK',
