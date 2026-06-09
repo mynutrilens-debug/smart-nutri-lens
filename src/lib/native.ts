@@ -133,6 +133,25 @@ export async function signInWithNativeOAuth(provider: Provider) {
   return true;
 }
 
+export async function pickNativeFoodImage(source: 'camera' | 'photos') {
+  if (!isNative()) return null;
+  const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+  const photo = await Camera.getPhoto({
+    source: source === 'camera' ? CameraSource.Camera : CameraSource.Photos,
+    resultType: CameraResultType.DataUrl,
+    quality: 86,
+    correctOrientation: true,
+    allowEditing: false,
+  });
+  if (!photo.dataUrl) return null;
+  const mime = `image/${photo.format === 'png' ? 'png' : 'jpeg'}`;
+  return {
+    b64: photo.dataUrl.split(',')[1],
+    preview: photo.dataUrl,
+    mime,
+  };
+}
+
 export async function hapticTap() {
   if (!isNative()) return;
   try {
