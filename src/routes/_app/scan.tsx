@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Camera, Upload, Sparkles, Loader2, Check, X, Image as ImageIcon } from "lucide-react";
 import { analyzeFood } from "@/lib/scan.functions";
 import { logFood, listFoods } from "@/lib/food.functions";
+import { hapticTap, pickNativeFoodImage } from "@/lib/native";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/scan")({ component: Scan });
@@ -63,6 +64,22 @@ function Scan() {
     analyzeMut.mutate({ image_base64: b64, mime_type: mime });
   }
 
+  async function pickImage(source: "camera" | "photos") {
+    await hapticTap();
+    try {
+      const nativeImage = await pickNativeFoodImage(source);
+      if (nativeImage) {
+        setPreview(nativeImage.preview);
+        setAnalysis(null);
+        analyzeMut.mutate({ image_base64: nativeImage.b64, mime_type: nativeImage.mime });
+        return;
+      }
+      (source === "camera" ? camRef : fileRef).current?.click();
+    } catch (e: any) {
+      if (e?.message && !/cancel/i.test(e.message)) toast.error(e.message);
+    }
+  }
+
   return (
     <div className="px-5 pt-12 pb-8 space-y-5">
       <header className="animate-slide-up">
@@ -110,11 +127,11 @@ function Scan() {
       {/* Actions */}
       {!analysis && (
         <div className="grid grid-cols-2 gap-3 animate-slide-up" style={{ animationDelay: ".1s" }}>
-          <button onClick={() => camRef.current?.click()}
+          <button onClick={() => pickImage("camera")}
             className="py-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold flex items-center justify-center gap-2 glow-ring active:scale-[.98]">
             <Camera className="h-5 w-5" /> Camera
           </button>
-          <button onClick={() => fileRef.current?.click()}
+          <button onClick={() => pickImage("photos")}
             className="py-4 rounded-2xl glass font-semibold flex items-center justify-center gap-2 active:scale-[.98]">
             <Upload className="h-5 w-5" /> Upload
           </button>
