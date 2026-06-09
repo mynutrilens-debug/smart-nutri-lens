@@ -24,10 +24,6 @@ This project is now Capacitor-ready for **iOS** (App Store) and **Android** (Pla
    bunx cap open android
    ```
 
-## Hot reload during development
-
-`capacitor.config.ts` points `server.url` at the Lovable preview URL, so the installed app live-loads your latest Lovable changes — no rebuild needed while iterating.
-
 ## Fully in-app (no browser redirect)
 
 `capacitor.config.ts` no longer has a `server.url`, so the installed app
@@ -91,7 +87,9 @@ bunx @capacitor/assets generate
 
 - `capacitor.config.ts` — appId `com.mynutrilens.app`, name **MyNutriLens**, dark splash/status bar, keyboard resize, iOS safe-area handling
 - `src/lib/native.ts` — initializes StatusBar, hides SplashScreen, listens to Keyboard + hardware Back button (no-op on web)
+- Native Google auth now uses the Capacitor Browser plus `com.mynutrilens.app://auth-callback` deep links, then returns into `/home` inside the app
+- Android/iOS native projects are generated under `android/` and `ios/`, with camera permissions and URL schemes registered
 - `src/routes/__root.tsx` — calls `initNative()` on mount
 - `src/styles.css` — safe-area insets for notch/home-indicator, 16px input font (prevents iOS zoom), keyboard-open body class
 - `src/components/mobile/BottomNav.tsx` — sits above iOS home indicator
-- Camera scanning already uses `<input type="file" capture="environment">` which works natively on both platforms
+- Camera scanning uses Capacitor Camera on native builds and keeps the existing file-input fallback for web
