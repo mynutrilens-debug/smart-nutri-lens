@@ -8,10 +8,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 //   4. bun run build && bunx cap sync
 //   5. bunx cap open ios   /   bunx cap open android
 //
-// The `server.url` below points to the Lovable sandbox preview so the native
-// shell hot-loads the latest web build during development. REMOVE the entire
-// `server` block before producing a Play Store / App Store release build so
-// the app ships with bundled assets from `dist/`.
+// Native release builds load bundled assets from `dist/` directly.
+// Do not add `server.url` for Play Store / App Store builds.
 const config: CapacitorConfig = {
   appId: 'com.mynutrilens.app',
   appName: 'MyNutriLens',
@@ -20,9 +18,6 @@ const config: CapacitorConfig = {
   // NOTE: No `server.url` here on purpose. The native shell loads the
   // bundled `dist/` web assets directly so the app runs fully in-app
   // (no external browser, no WebView redirect to lovable.app).
-  // For hot-reload during dev only, you can temporarily add:
-  //   server: { url: 'https://<your-preview>.lovable.app', cleartext: true }
-  // but REMOVE it before building a release APK/AAB/IPA.
   server: {
     androidScheme: 'https',
     iosScheme: 'capacitor',

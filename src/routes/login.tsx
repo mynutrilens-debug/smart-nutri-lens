@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthRedirectUrl, signInWithNativeOAuth } from "@/lib/native";
 
 import { toast } from "sonner";
 import {
@@ -24,7 +25,7 @@ function Login() {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email, password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: getAuthRedirectUrl("/home") },
         });
         if (error) throw error;
         toast.success("Welcome — check your email to confirm.");
@@ -41,9 +42,11 @@ function Login() {
   async function google() {
     setLoading(true);
     try {
+      const openedNative = await signInWithNativeOAuth("google");
+      if (openedNative) return;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/home` },
+        options: { redirectTo: getAuthRedirectUrl("/home") },
       });
       if (error) throw error;
     } catch (err: any) {
