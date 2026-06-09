@@ -83,7 +83,16 @@ function RootComponent() {
   const router = useRouter();
   useEffect(() => {
     // Initialize Capacitor native plugins (no-op on web)
-    initNative();
+    initNative({
+      onAuthRedirect: () => {
+        router.navigate({ to: "/home", replace: true });
+        router.invalidate();
+        queryClient.invalidateQueries();
+      },
+      onOpenPath: path => {
+        router.navigate({ to: path as never, replace: true });
+      },
+    });
     // Ensure every visitor has a Supabase session (anonymous if not signed in)
     // so RLS-protected server functions can authenticate the request.
     (async () => {
