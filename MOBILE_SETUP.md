@@ -1,8 +1,34 @@
-# MyNutriLens — Native Mobile (Capacitor) Setup
+# MyNutriLens — PWA + Native Mobile (Capacitor) Setup
 
-This project is now Capacitor-ready for **iOS** (App Store) and **Android** (Play Store) with package ID `com.mynutrilens.app`.
+The web app is now an installable Progressive Web App **and** ready to be packaged as a native iOS/Android binary via Capacitor (`com.mynutrilens.app`). The same `dist/` bundle powers both — no separate codebases.
 
-> Lovable's cloud sandbox cannot run Xcode or Android Studio. You'll do the native build on your own Mac (iOS) or any machine with Android Studio (Android). The web app keeps working exactly as before.
+## What's wired (PWA)
+
+- **Installable** — `public/manifest.webmanifest`, maskable icons (`/icon-192.png`, `/icon-512.png`, `/apple-touch-icon.png`), Apple `mobile-web-app-capable` meta, dark theme color, app shortcuts to **Scan** and **Today**.
+- **Offline-ready app shell** — `vite-plugin-pwa` generates `/sw.js` (Workbox). Navigations use `NetworkFirst`, assets `CacheFirst`. Registration is guarded so the worker **never** runs in Lovable preview, iframes, dev, or with `?sw=off`.
+- **Install prompt** — `<InstallPwaPrompt />` listens for `beforeinstallprompt` and shows an in-app "Install MyNutriLens" CTA (auto-dismissed for 14 days).
+- **Push notifications (Web)** — Firebase Cloud Messaging via `public/firebase-messaging-sw.js`. On sign-in we request permission and persist the FCM token in `push_subscriptions` (RLS-scoped per user). Set `VITE_FIREBASE_*` build secrets to activate; without them push silently no-ops.
+- **Push notifications (Native)** — `@capacitor/push-notifications` requests permission and stores the device token under the same `push_subscriptions` row (platform `android` / `ios`).
+- **Server config endpoint** — `GET /api/public/firebase-config` returns the public Firebase config to the messaging worker.
+
+## Required env vars for Web Push (optional)
+
+Add as Lovable build secrets (Workspace Settings → Build Secrets), then publish:
+
+```
+VITE_FIREBASE_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN
+VITE_FIREBASE_PROJECT_ID
+VITE_FIREBASE_STORAGE_BUCKET
+VITE_FIREBASE_MESSAGING_SENDER_ID
+VITE_FIREBASE_APP_ID
+```
+
+Without these, web push is disabled cleanly. Native push works independently via `google-services.json` (Android) and APNs (iOS).
+
+## Capacitor — native iOS + Android
+
+
 
 ## One-time local setup
 

@@ -10,8 +10,14 @@ import {
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { initNative } from "@/lib/native";
+import { initNative, isNative, registerNativePush } from "@/lib/native";
+import { registerPwaServiceWorker } from "@/lib/pwa";
+import { requestWebPushToken } from "@/lib/firebase";
+import { savePushToken } from "@/lib/push.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { InstallPwaPrompt } from "@/components/InstallPwaPrompt";
 import appCss from "../styles.css?url";
+
 
 function NotFoundComponent() {
   return (
@@ -60,8 +66,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/NvXmWflG9WSzgjbby16jDCyV6Nh1/social-images/social-1780470924083-Gemini_Generated_Image_975xdh975xdh975x_(2).webp" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "MyNutriLens" },
+      { name: "application-name", content: "MyNutriLens" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+    ],
+
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -81,6 +100,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const persistPushToken = useServerFn(savePushToken);
+
   useEffect(() => {
     // Initialize Capacitor native plugins (no-op on web)
     initNative({
@@ -93,6 +114,21 @@ function RootComponent() {
         router.navigate({ to: path as never, replace: true });
       },
     });
+
+    // Register the PWA service worker (guards against Lovable preview & dev).
+    void registerPwaServiceWorker().catch(() => {});
+
+    // Listen for in-app navigation from the messaging service worker.
+    const onSwMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; url?: string } | undefined;
+      if (data?.type === "mynutrilens:navigate" && data.url) {
+        router.navigate({ to: data.url as never, replace: true });
+      }
+    };
+    if (typeof navigator !== "undefined" && navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener("message", onSwMessage);
+    }
+
     // Ensure every visitor has a Supabase session (anonymous if not signed in)
     // so RLS-protected server functions can authenticate the request.
     (async () => {
@@ -102,18 +138,55 @@ function RootComponent() {
         if (error) console.error("Anonymous sign-in failed", error);
       }
     })();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+
+    // Register push tokens (native + web) once we have a real user.
+    const tryRegisterPush = async (userId: string | undefined) => {
+      if (!userId) return;
+      try {
+        if (isNative()) {
+          const native = await registerNativePush();
+          if (native?.token) {
+            await persistPushToken({ data: { token: native.token, platform: native.platform } });
+          }
+          return;
+        }
+        const webToken = await requestWebPushToken();
+        if (webToken) {
+          await persistPushToken({ data: { token: webToken, platform: "web" } });
+        }
+      } catch (err) {
+        console.warn("[push] registration skipped", err);
+      }
+    };
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user && !data.user.is_anonymous) void tryRegisterPush(data.user.id);
+    }).catch(() => {});
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
-      queryClient.invalidateQueries();
+      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+      if (event === "SIGNED_IN" && session?.user && !session.user.is_anonymous) {
+        void tryRegisterPush(session.user.id);
+      }
     });
-    return () => subscription.unsubscribe();
-  }, [router, queryClient]);
+
+    return () => {
+      subscription.unsubscribe();
+      if (typeof navigator !== "undefined" && navigator.serviceWorker) {
+        navigator.serviceWorker.removeEventListener("message", onSwMessage);
+      }
+    };
+  }, [router, queryClient, persistPushToken]);
 
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <InstallPwaPrompt />
       <Toaster theme="dark" position="top-center" richColors closeButton />
     </QueryClientProvider>
   );
 }
+
 

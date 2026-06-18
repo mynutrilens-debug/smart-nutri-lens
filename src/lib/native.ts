@@ -159,3 +159,35 @@ export async function hapticTap() {
     await Haptics.impact({ style: ImpactStyle.Light });
   } catch {}
 }
+
+/**
+ * Register the device for Capacitor native push (FCM on Android, APNs on iOS).
+ * Returns the device token once received, or null if push isn't available.
+ */
+export async function registerNativePush(): Promise<{ token: string; platform: 'android' | 'ios' } | null> {
+  if (!isNative()) return null;
+  try {
+    const { PushNotifications } = await import('@capacitor/push-notifications');
+    const perm = await PushNotifications.requestPermissions();
+    if (perm.receive !== 'granted') return null;
+    return await new Promise(resolve => {
+      let settled = false;
+      const finish = (value: { token: string; platform: 'android' | 'ios' } | null) => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
+      PushNotifications.addListener('registration', token => {
+        const platform = (Capacitor.getPlatform() === 'ios' ? 'ios' : 'android') as 'android' | 'ios';
+        finish({ token: token.value, platform });
+      });
+      PushNotifications.addListener('registrationError', () => finish(null));
+      PushNotifications.register().catch(() => finish(null));
+      setTimeout(() => finish(null), 8000);
+    });
+  } catch (e) {
+    console.warn('[native] push registration skipped', e);
+    return null;
+  }
+}
+

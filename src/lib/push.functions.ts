@@ -12,14 +12,15 @@ export const savePushToken = createServerFn({ method: "POST" })
   }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { error } = await supabase.from("push_subscriptions").upsert({
+    const row = {
       user_id: userId,
       token: data.token,
       platform: data.platform,
       last_seen_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id,token" });
-
+    };
+    const { error } = await (supabase.from("push_subscriptions") as any)
+      .upsert(row, { onConflict: "user_id,token" });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
