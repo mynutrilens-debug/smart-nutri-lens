@@ -165,9 +165,8 @@ function Onboarding() {
           </div>
 
           <label className="block mt-6 text-xs text-muted-foreground">Age</label>
-          <div className="mt-1 flex items-center gap-3 glass rounded-2xl px-4 py-3">
-            <input type="range" min={13} max={90} value={age} onChange={(e) => setAge(+e.target.value)} className="flex-1 accent-[oklch(0.72_0.22_240)]" />
-            <span className="text-xl font-bold tabular-nums w-12 text-right">{age}</span>
+          <div className="mt-1 glass rounded-2xl p-2">
+            <WheelPicker min={13} max={90} value={age} onChange={setAge} unit="yrs" />
           </div>
         </Card>
       )}
