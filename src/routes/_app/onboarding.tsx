@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import bodyMale from "@/assets/body-male.jpg";
 import bodyFemale from "@/assets/body-female.jpg";
+import { WheelPicker } from "@/components/mobile/WheelPicker";
 
 export const Route = createFileRoute("/_app/onboarding")({ component: Onboarding });
 
@@ -164,9 +165,8 @@ function Onboarding() {
           </div>
 
           <label className="block mt-6 text-xs text-muted-foreground">Age</label>
-          <div className="mt-1 flex items-center gap-3 glass rounded-2xl px-4 py-3">
-            <input type="range" min={13} max={90} value={age} onChange={(e) => setAge(+e.target.value)} className="flex-1 accent-[oklch(0.72_0.22_240)]" />
-            <span className="text-xl font-bold tabular-nums w-12 text-right">{age}</span>
+          <div className="mt-1 glass rounded-2xl p-2">
+            <WheelPicker min={13} max={90} value={age} onChange={setAge} unit="yrs" />
           </div>
         </Card>
       )}
@@ -192,13 +192,17 @@ function Onboarding() {
           <div className="mt-4 space-y-2">
             {ACTIVITY.map((a) => (
               <button key={a.v} onClick={() => setActivity(a.v)} aria-pressed={activity === a.v}
-                className={`relative w-full text-left glass rounded-2xl p-4 border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] ${activity === a.v ? "z-10 border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
+                className={`relative w-full text-left glass rounded-2xl p-4 border-2 transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] ${activity === a.v ? "z-10 border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.22)] shadow-[0_0_0_4px_oklch(0.72_0.22_240/0.18),0_12px_30px_-12px_oklch(0.72_0.22_240/0.8)]" : "border-white/10 hover:border-white/20"}`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-semibold">{a.l}</div>
                     <div className="text-xs text-muted-foreground">{a.d}</div>
                   </div>
-                  {activity === a.v && <Check className="h-5 w-5 text-[oklch(0.72_0.22_240)]" aria-hidden="true" />}
+                  {activity === a.v && (
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[oklch(0.72_0.22_240)] text-primary-foreground shadow-md animate-scale-in">
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
+                    </span>
+                  )}
                 </div>
               </button>
             ))}
@@ -213,8 +217,13 @@ function Onboarding() {
           <div className="mt-4 grid grid-cols-2 gap-3">
             {GOALS.map((g) => (
               <button key={g.v} onClick={() => setGoal(g.v)} aria-pressed={goal === g.v}
-                className={`relative glass rounded-2xl p-4 text-left border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] ${goal === g.v ? "z-10 border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
-                <div className="text-2xl" aria-hidden="true">{g.emoji}</div>
+                className={`relative glass rounded-2xl p-4 text-left border-2 transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.97] ${goal === g.v ? "z-10 -translate-y-0.5 scale-[1.02] border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.22)] shadow-[0_0_0_4px_oklch(0.72_0.22_240/0.18),0_12px_30px_-12px_oklch(0.72_0.22_240/0.8)]" : "border-white/10 hover:border-white/20"}`}>
+                {goal === g.v && (
+                  <span className="absolute top-2 right-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[oklch(0.72_0.22_240)] text-primary-foreground shadow-md animate-scale-in">
+                    <Check className="h-3 w-3" strokeWidth={3} />
+                  </span>
+                )}
+                <div className={`text-2xl transition-transform ${goal === g.v ? "scale-110" : ""}`} aria-hidden="true">{g.emoji}</div>
                 <div className="mt-1.5 font-semibold text-sm">{g.l}</div>
               </button>
             ))}
@@ -323,8 +332,13 @@ function Eyebrow({ icon: Icon, children }: any) {
 function Choice({ active, onClick, icon: Icon, label, ariaLabel }: any) {
   return (
     <button onClick={onClick} aria-pressed={active} aria-label={ariaLabel}
-      className={`relative glass rounded-2xl p-4 flex flex-col items-center gap-2 border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] ${active ? "z-10 border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
-      <Icon className="h-6 w-6" aria-hidden="true" />
+      className={`relative glass rounded-2xl p-4 flex flex-col items-center gap-2 border-2 transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.97] ${active ? "z-10 -translate-y-0.5 scale-[1.02] border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.22)] shadow-[0_0_0_4px_oklch(0.72_0.22_240/0.18),0_12px_30px_-12px_oklch(0.72_0.22_240/0.8)]" : "border-white/10 hover:border-white/20"}`}>
+      {active && (
+        <span className="absolute top-2 right-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[oklch(0.72_0.22_240)] text-primary-foreground shadow-md animate-scale-in">
+          <Check className="h-3 w-3" strokeWidth={3} />
+        </span>
+      )}
+      <Icon className={`h-6 w-6 transition-transform ${active ? "text-[oklch(0.82_0.16_215)] scale-110" : ""}`} aria-hidden="true" />
       <span className="text-sm font-medium">{label}</span>
     </button>
   );
@@ -345,14 +359,20 @@ function UnitField({ label, unit, setUnit, units, value, onChange, min, max, ste
         <div className="flex gap-1 bg-white/5 rounded-full p-1">
           {units.map((u: string) => (
             <button key={u} onClick={() => setUnit(u)}
-              className={`px-3 py-0.5 text-xs rounded-full ${unit === u ? "bg-white/15 text-foreground" : "text-muted-foreground"}`}>{u}</button>
+              className={`px-3 py-0.5 text-xs rounded-full transition-all ${unit === u ? "bg-white/15 text-foreground" : "text-muted-foreground"}`}>{u}</button>
           ))}
         </div>
       </div>
-      <div className="glass rounded-2xl px-4 py-3 flex items-center gap-3">
-        <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(+e.target.value)}
-          className="flex-1 accent-[oklch(0.72_0.22_240)]" />
-        <span className="text-xl font-bold tabular-nums w-20 text-right">{value} <span className="text-xs text-muted-foreground">{unit}</span></span>
+      <div className="glass rounded-2xl p-2">
+        <WheelPicker
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={onChange}
+          unit={unit}
+          formatter={step < 1 ? (v: number) => v.toFixed(1) : undefined}
+        />
       </div>
     </div>
   );
