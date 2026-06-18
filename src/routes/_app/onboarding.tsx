@@ -54,10 +54,11 @@ function Onboarding() {
   const { data: dash } = useQuery(dashboardQuery);
   const profile = dash?.profile;
 
-  // If already onboarded, skip to home
+  const { edit } = Route.useSearch();
+  // If already onboarded and not in edit mode, skip to home
   useEffect(() => {
-    if (profile?.onboarded_at) navigate({ to: "/home", replace: true });
-  }, [profile?.onboarded_at, navigate]);
+    if (profile?.onboarded_at && !edit) navigate({ to: "/home", replace: true });
+  }, [profile?.onboarded_at, edit, navigate]);
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState(profile?.display_name ?? "");
