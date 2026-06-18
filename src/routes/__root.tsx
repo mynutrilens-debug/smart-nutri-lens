@@ -100,6 +100,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const persistPushToken = useServerFn(savePushToken);
+
   useEffect(() => {
     // Initialize Capacitor native plugins (no-op on web)
     initNative({
@@ -112,6 +114,21 @@ function RootComponent() {
         router.navigate({ to: path as never, replace: true });
       },
     });
+
+    // Register the PWA service worker (guards against Lovable preview & dev).
+    void registerPwaServiceWorker().catch(() => {});
+
+    // Listen for in-app navigation from the messaging service worker.
+    const onSwMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; url?: string } | undefined;
+      if (data?.type === "mynutrilens:navigate" && data.url) {
+        router.navigate({ to: data.url as never, replace: true });
+      }
+    };
+    if (typeof navigator !== "undefined" && navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener("message", onSwMessage);
+    }
+
     // Ensure every visitor has a Supabase session (anonymous if not signed in)
     // so RLS-protected server functions can authenticate the request.
     (async () => {
@@ -121,18 +138,55 @@ function RootComponent() {
         if (error) console.error("Anonymous sign-in failed", error);
       }
     })();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+
+    // Register push tokens (native + web) once we have a real user.
+    const tryRegisterPush = async (userId: string | undefined) => {
+      if (!userId) return;
+      try {
+        if (isNative()) {
+          const native = await registerNativePush();
+          if (native?.token) {
+            await persistPushToken({ data: { token: native.token, platform: native.platform } });
+          }
+          return;
+        }
+        const webToken = await requestWebPushToken();
+        if (webToken) {
+          await persistPushToken({ data: { token: webToken, platform: "web" } });
+        }
+      } catch (err) {
+        console.warn("[push] registration skipped", err);
+      }
+    };
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user && !data.user.is_anonymous) void tryRegisterPush(data.user.id);
+    }).catch(() => {});
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
-      queryClient.invalidateQueries();
+      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+      if (event === "SIGNED_IN" && session?.user && !session.user.is_anonymous) {
+        void tryRegisterPush(session.user.id);
+      }
     });
-    return () => subscription.unsubscribe();
-  }, [router, queryClient]);
+
+    return () => {
+      subscription.unsubscribe();
+      if (typeof navigator !== "undefined" && navigator.serviceWorker) {
+        navigator.serviceWorker.removeEventListener("message", onSwMessage);
+      }
+    };
+  }, [router, queryClient, persistPushToken]);
 
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <InstallPwaPrompt />
       <Toaster theme="dark" position="top-center" richColors closeButton />
     </QueryClientProvider>
   );
 }
+
 
