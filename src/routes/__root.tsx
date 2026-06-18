@@ -10,8 +10,14 @@ import {
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { initNative } from "@/lib/native";
+import { initNative, isNative, registerNativePush } from "@/lib/native";
+import { registerPwaServiceWorker } from "@/lib/pwa";
+import { requestWebPushToken } from "@/lib/firebase";
+import { savePushToken } from "@/lib/push.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { InstallPwaPrompt } from "@/components/InstallPwaPrompt";
 import appCss from "../styles.css?url";
+
 
 function NotFoundComponent() {
   return (
