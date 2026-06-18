@@ -129,15 +129,9 @@ function RootComponent() {
       navigator.serviceWorker.addEventListener("message", onSwMessage);
     }
 
-    // Ensure every visitor has a Supabase session (anonymous if not signed in)
-    // so RLS-protected server functions can authenticate the request.
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        const { error } = await supabase.auth.signInAnonymously();
-        if (error) console.error("Anonymous sign-in failed", error);
-      }
-    })();
+    // Note: we intentionally do NOT auto sign-in anonymously here — the
+    // welcome page (/) and /login own the unauthenticated experience, and
+    // the /_app shell gates everything behind a real user session.
 
     // Register push tokens (native + web) once we have a real user.
     const tryRegisterPush = async (userId: string | undefined) => {
