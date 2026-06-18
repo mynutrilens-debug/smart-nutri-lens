@@ -23,12 +23,17 @@ function Login() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email, password,
           options: { emailRedirectTo: getAuthRedirectUrl("/home") },
         });
         if (error) throw error;
-        toast.success("Welcome — check your email to confirm.");
+        if (data.session) {
+          // Email confirmations off → straight into the app.
+          navigate({ to: "/home", replace: true });
+        } else {
+          toast.success("Welcome — check your email to confirm.");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
