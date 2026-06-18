@@ -6,7 +6,7 @@ import { logWeight, updateProfile } from "@/lib/weight.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Flame, Scale, Loader2, Save, Sparkles, TrendingDown, TrendingUp, Target,
-  Droplets, Activity, Trophy, Plus, Minus, Edit3, Check, LogOut,
+  Droplets, Activity, Trophy, Plus, Minus, Edit3, Check, LogOut, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MacroRings } from "@/components/mobile/MacroRings";
