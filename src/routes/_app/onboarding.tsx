@@ -345,14 +345,20 @@ function UnitField({ label, unit, setUnit, units, value, onChange, min, max, ste
         <div className="flex gap-1 bg-white/5 rounded-full p-1">
           {units.map((u: string) => (
             <button key={u} onClick={() => setUnit(u)}
-              className={`px-3 py-0.5 text-xs rounded-full ${unit === u ? "bg-white/15 text-foreground" : "text-muted-foreground"}`}>{u}</button>
+              className={`px-3 py-0.5 text-xs rounded-full transition-all ${unit === u ? "bg-white/15 text-foreground" : "text-muted-foreground"}`}>{u}</button>
           ))}
         </div>
       </div>
-      <div className="glass rounded-2xl px-4 py-3 flex items-center gap-3">
-        <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(+e.target.value)}
-          className="flex-1 accent-[oklch(0.72_0.22_240)]" />
-        <span className="text-xl font-bold tabular-nums w-20 text-right">{value} <span className="text-xs text-muted-foreground">{unit}</span></span>
+      <div className="glass rounded-2xl p-2">
+        <WheelPicker
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={onChange}
+          unit={unit}
+          formatter={step < 1 ? (v: number) => v.toFixed(1) : undefined}
+        />
       </div>
     </div>
   );
