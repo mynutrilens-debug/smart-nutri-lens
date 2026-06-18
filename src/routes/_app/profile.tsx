@@ -6,7 +6,7 @@ import { logWeight, updateProfile } from "@/lib/weight.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Flame, Scale, Loader2, Save, Sparkles, TrendingDown, TrendingUp, Target,
-  Droplets, Activity, Trophy, Plus, Minus, Edit3, Check, LogOut,
+  Droplets, Activity, Trophy, Plus, Minus, Edit3, Check, LogOut, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MacroRings } from "@/components/mobile/MacroRings";
@@ -89,6 +89,13 @@ function Profile() {
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">Week {weeksIn} of 12 · {bmiLabel}</p>
           </div>
+          <button
+            onClick={() => navigate({ to: "/onboarding", search: { edit: 1 } as any })}
+            className="h-9 w-9 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center hover:bg-primary/25 active:scale-95 transition"
+            aria-label="Edit profile"
+          >
+            <Pencil className="h-3.5 w-3.5 text-primary" />
+          </button>
           <button
             onClick={async () => {
               await supabase.auth.signOut();
