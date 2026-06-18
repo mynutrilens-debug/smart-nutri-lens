@@ -192,13 +192,17 @@ function Onboarding() {
           <div className="mt-4 space-y-2">
             {ACTIVITY.map((a) => (
               <button key={a.v} onClick={() => setActivity(a.v)} aria-pressed={activity === a.v}
-                className={`relative w-full text-left glass rounded-2xl p-4 border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] ${activity === a.v ? "z-10 border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)] shadow-[0_0_0_3px_oklch(0.72_0.22_240/0.25)]" : "border-white/10"}`}>
+                className={`relative w-full text-left glass rounded-2xl p-4 border-2 transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] ${activity === a.v ? "z-10 border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.22)] shadow-[0_0_0_4px_oklch(0.72_0.22_240/0.18),0_12px_30px_-12px_oklch(0.72_0.22_240/0.8)]" : "border-white/10 hover:border-white/20"}`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-semibold">{a.l}</div>
                     <div className="text-xs text-muted-foreground">{a.d}</div>
                   </div>
-                  {activity === a.v && <Check className="h-5 w-5 text-[oklch(0.72_0.22_240)]" aria-hidden="true" />}
+                  {activity === a.v && (
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[oklch(0.72_0.22_240)] text-primary-foreground shadow-md animate-scale-in">
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
+                    </span>
+                  )}
                 </div>
               </button>
             ))}
