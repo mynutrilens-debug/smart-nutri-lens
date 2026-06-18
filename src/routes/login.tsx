@@ -88,7 +88,7 @@ function Login() {
             <Zap className="h-3 w-3" /> AI Powered
           </div>
           <h1 className="mt-3 text-[36px] leading-[1.05] font-bold tracking-tight">
-            Transform Your Body <br />with <span className="neon-text">Electric AI</span>
+            Transform Your Body <br />with <span className="neon-text">MyNutriLens</span>
           </h1>
           <p className="mt-3 text-sm text-foreground/70 max-w-[320px] mx-auto">
             Scan meals, get diet plans & workouts instantly. Save ₹10–15k/month.
