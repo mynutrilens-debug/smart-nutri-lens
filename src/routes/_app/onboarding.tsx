@@ -13,7 +13,10 @@ import bodyMale from "@/assets/body-male.jpg";
 import bodyFemale from "@/assets/body-female.jpg";
 import { WheelPicker } from "@/components/mobile/WheelPicker";
 
-export const Route = createFileRoute("/_app/onboarding")({ component: Onboarding });
+export const Route = createFileRoute("/_app/onboarding")({
+  component: Onboarding,
+  validateSearch: (s: Record<string, unknown>) => ({ edit: s.edit ? 1 : undefined }),
+});
 
 type Gender = "male" | "female";
 type Activity = "sedentary" | "light" | "moderate" | "active" | "athlete";
