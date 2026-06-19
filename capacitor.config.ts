@@ -15,10 +15,12 @@ const config: CapacitorConfig = {
   appName: 'MyNutriLens',
   webDir: 'dist',
   bundledWebRuntime: false,
-  // NOTE: No `server.url` here on purpose. The native shell loads the
-  // bundled `dist/` web assets directly so the app runs fully in-app
-  // (no external browser, no WebView redirect to lovable.app).
+  // Native shell loads the published web app directly. This avoids needing
+  // a static `dist/index.html` (TanStack Start is SSR) and keeps the app
+  // always up-to-date without rebuilding the native binary for web changes.
   server: {
+    url: 'https://app.mynutrilens.com',
+    cleartext: false,
     androidScheme: 'https',
     iosScheme: 'capacitor',
   },
