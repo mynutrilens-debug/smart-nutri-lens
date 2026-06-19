@@ -123,9 +123,10 @@ function Login() {
               <button key={m} onClick={() => setMode(m)}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   mode===m
-                    ? "bg-gradient-to-r from-[oklch(0.82_0.16_215)] to-[oklch(0.62_0.26_260)] text-white shadow-[0_8px_30px_-10px_oklch(0.72_0.22_240/0.9)]"
+                    ? "bg-gradient-to-r from-[oklch(0.85_0.20_140)] to-[oklch(0.62_0.18_160)] text-[oklch(0.10_0.02_160)] shadow-[0_8px_30px_-10px_oklch(0.78_0.20_150/0.9)]"
                     : "text-muted-foreground"
                 }`}>
+
                 {m === "signin" ? "Sign in" : "Sign up"}
               </button>
             ))}
