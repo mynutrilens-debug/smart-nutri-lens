@@ -147,7 +147,8 @@ function Login() {
             </div>
 
             <button disabled={loading} type="submit"
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[oklch(0.82_0.16_215)] via-[oklch(0.72_0.22_240)] to-[oklch(0.62_0.26_260)] text-white font-semibold shadow-[0_14px_40px_-12px_oklch(0.72_0.22_240/0.95)] flex items-center justify-center gap-2 active:scale-[.98] transition">
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[oklch(0.85_0.20_140)] via-[oklch(0.78_0.20_150)] to-[oklch(0.62_0.18_160)] text-[oklch(0.10_0.02_160)] font-bold shadow-[0_14px_40px_-12px_oklch(0.78_0.20_150/0.95)] flex items-center justify-center gap-2 active:scale-[.98] transition">
+
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {mode === "signin" ? "Start My Journey" : "Start My Transformation"}
             </button>
