@@ -5,9 +5,10 @@ import { getAuthRedirectUrl, signInWithNativeOAuth } from "@/lib/native";
 
 import { toast } from "sonner";
 import {
-  Mail, Lock, Loader2, Sparkles, Flame, Dumbbell, Bot, CheckCircle2, Zap,
+  Mail, Lock, Loader2, Sparkles, Flame, Dumbbell, CheckCircle2, Salad, Leaf,
 } from "lucide-react";
-import heroBg from "@/assets/fitness-hero.jpg";
+import heroBg from "@/assets/fitness-hero-dark.jpg";
+
 
 export const Route = createFileRoute("/login")({ component: Login });
 
@@ -66,35 +67,46 @@ function Login() {
       <div className="relative h-[58vh] min-h-[440px] w-full overflow-hidden">
         <img
           src={heroBg}
-          alt="Neon-lit fitness studio"
-          className="absolute inset-0 h-full w-full object-cover scale-110 animate-hero-pan"
+          alt="Dark gym, athlete with emerald neon ring"
+          className="absolute inset-0 h-full w-full object-cover scale-105 animate-hero-pan"
         />
-        {/* Cinematic gradient veil */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[oklch(0.10_0.03_245/0.35)] via-[oklch(0.10_0.03_245/0.55)] to-[oklch(0.08_0.03_245)]" />
-        {/* Neon blue glow accents */}
-        <div className="pointer-events-none absolute -top-24 -left-20 h-80 w-80 rounded-full bg-[oklch(0.72_0.22_240/0.55)] blur-3xl" />
-        <div className="pointer-events-none absolute -top-10 -right-16 h-72 w-72 rounded-full bg-[oklch(0.82_0.16_215/0.45)] blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-72 w-[120%] bg-gradient-to-t from-[oklch(0.08_0.03_245)] to-transparent" />
+        {/* Cinematic dark wash */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-[oklch(0.07_0.01_160)]" />
+        {/* Emerald glow */}
+        <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full bg-[oklch(0.78_0.20_150/0.30)] blur-[80px]" />
+        <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-72 w-[120%] bg-gradient-to-t from-[oklch(0.07_0.01_160)] to-transparent" />
 
-        {/* Floating automation chips over image */}
-        <FloatChip className="top-10 left-5 animate-float [animation-duration:7s]" icon={<CheckCircle2 className="h-3.5 w-3.5 text-[oklch(0.82_0.16_215)]" />} text="+25g Protein" />
-        <FloatChip className="top-20 right-5 animate-float-b [animation-duration:8.5s] [animation-delay:-2s]" icon={<Flame className="h-3.5 w-3.5 text-[oklch(0.78_0.2_60)]" />} text="2751 kcal 🔥" />
-        <FloatChip className="top-44 left-8 animate-float [animation-duration:9s] [animation-delay:-4s]" icon={<Dumbbell className="h-3.5 w-3.5 text-[oklch(0.72_0.22_240)]" />} text="Workout Ready 💪" />
-        <FloatChip className="top-56 right-6 animate-float-b [animation-duration:7.5s] [animation-delay:-1.2s]" icon={<Bot className="h-3.5 w-3.5 text-[oklch(0.62_0.26_260)]" />} text="AI Diet Plan 🤖" />
-
-        {/* Headline overlay */}
-        <div className="absolute inset-x-0 bottom-10 px-6 text-center animate-slide-up">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[oklch(0.72_0.22_240/0.18)] border border-[oklch(0.72_0.22_240/0.5)] backdrop-blur-md text-[10px] uppercase tracking-[0.2em] text-[oklch(0.92_0.08_215)]">
-            <Zap className="h-3 w-3" /> AI Powered
+        {/* Brand */}
+        <div className="absolute top-6 left-5 flex items-center gap-2 animate-slide-up">
+          <div className="h-7 w-7 rounded-lg bg-[oklch(0.78_0.20_150/0.15)] border border-[oklch(0.78_0.20_150/0.4)] flex items-center justify-center">
+            <Leaf className="h-4 w-4 text-[oklch(0.85_0.20_140)]" />
           </div>
-          <h1 className="mt-3 text-[36px] leading-[1.05] font-bold tracking-tight">
-            Transform Your Body <br />with <span className="neon-text">MyNutriLens</span>
+          <span className="text-[15px] font-bold tracking-tight">
+            <span className="text-white">my</span>
+            <span className="text-[oklch(0.85_0.20_140)]">nutrilens</span>
+          </span>
+        </div>
+
+        {/* Floating chips */}
+        <FloatChip className="top-20 left-4 animate-float" icon={<CheckCircle2 className="h-3.5 w-3.5 text-[oklch(0.85_0.20_140)]" />} text="+25g Protein" />
+        <FloatChip className="top-24 right-4 animate-float-b [animation-delay:-2s]" icon={<Flame className="h-3.5 w-3.5 text-[oklch(0.78_0.18_60)]" />} text="2,751 kcal 🔥" />
+        <FloatChip className="top-48 left-6 animate-float [animation-delay:-4s]" icon={<Dumbbell className="h-3.5 w-3.5 text-[oklch(0.85_0.20_140)]" />} text="Workout Ready 💪" />
+        <FloatChip className="top-52 right-5 animate-float-b [animation-delay:-1.2s]" icon={<Salad className="h-3.5 w-3.5 text-[oklch(0.85_0.20_140)]" />} text="Personalized Plan" />
+
+        {/* Headline */}
+        <div className="absolute inset-x-0 bottom-10 px-6 text-center animate-slide-up">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[oklch(0.78_0.20_150/0.12)] border border-[oklch(0.78_0.20_150/0.4)] backdrop-blur-md text-[10px] uppercase tracking-[0.2em] text-[oklch(0.92_0.10_145)]">
+            <Leaf className="h-3 w-3" /> Real Food. Real Results.
+          </div>
+          <h1 className="mt-3 text-[34px] leading-[1.05] font-extrabold tracking-tight text-white">
+            Transform Your Body<br />with <span className="text-[oklch(0.85_0.20_140)]">mynutrilens</span>
           </h1>
-          <p className="mt-3 text-sm text-foreground/70 max-w-[320px] mx-auto">
-            Scan meals, get diet plans & workouts instantly. Save ₹10–15k/month.
+          <p className="mt-3 text-sm text-white/65 max-w-[320px] mx-auto">
+            Scan meals, get diet plans & workouts instantly.
           </p>
         </div>
       </div>
+
 
       <div className="relative px-6 pb-10 -mt-6">
         <div className="flex flex-wrap justify-center gap-2 mb-6">
@@ -111,9 +123,10 @@ function Login() {
               <button key={m} onClick={() => setMode(m)}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   mode===m
-                    ? "bg-gradient-to-r from-[oklch(0.82_0.16_215)] to-[oklch(0.62_0.26_260)] text-white shadow-[0_8px_30px_-10px_oklch(0.72_0.22_240/0.9)]"
+                    ? "bg-gradient-to-r from-[oklch(0.85_0.20_140)] to-[oklch(0.62_0.18_160)] text-[oklch(0.10_0.02_160)] shadow-[0_8px_30px_-10px_oklch(0.78_0.20_150/0.9)]"
                     : "text-muted-foreground"
                 }`}>
+
                 {m === "signin" ? "Sign in" : "Sign up"}
               </button>
             ))}
@@ -134,7 +147,8 @@ function Login() {
             </div>
 
             <button disabled={loading} type="submit"
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[oklch(0.82_0.16_215)] via-[oklch(0.72_0.22_240)] to-[oklch(0.62_0.26_260)] text-white font-semibold shadow-[0_14px_40px_-12px_oklch(0.72_0.22_240/0.95)] flex items-center justify-center gap-2 active:scale-[.98] transition">
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[oklch(0.85_0.20_140)] via-[oklch(0.78_0.20_150)] to-[oklch(0.62_0.18_160)] text-[oklch(0.10_0.02_160)] font-bold shadow-[0_14px_40px_-12px_oklch(0.78_0.20_150/0.95)] flex items-center justify-center gap-2 active:scale-[.98] transition">
+
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {mode === "signin" ? "Start My Journey" : "Start My Transformation"}
             </button>

@@ -1,8 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Flame, Salad, Dumbbell, Target, ArrowRight, ShieldCheck, Star } from "lucide-react";
-import welcomeHero from "@/assets/welcome-hero.jpg";
+import {
+  Sparkles, Flame, Salad, Dumbbell, ArrowRight, ShieldCheck, Star,
+  ScanLine, Target, Zap, CheckCircle2, Leaf,
+} from "lucide-react";
+import heroBg from "@/assets/fitness-hero-dark.jpg";
 
 export const Route = createFileRoute("/")({ component: Welcome });
 
@@ -23,67 +26,106 @@ function Welcome() {
   return (
     <div className="app-shell relative overflow-hidden">
       {/* HERO */}
-      <div className="relative h-[68vh] min-h-[520px] w-full overflow-hidden">
+      <div className="relative h-[78vh] min-h-[600px] w-full overflow-hidden">
         <img
-          src={welcomeHero}
-          alt="MyNutriLens — scan meals and get instant nutrition"
-          width={1024}
+          src={heroBg}
+          alt="MyNutriLens — transform your body"
+          width={896}
           height={1280}
-          className="absolute inset-0 h-full w-full object-cover scale-110 animate-hero-pan"
+          className="absolute inset-0 h-full w-full object-cover scale-105 animate-hero-pan"
         />
-        {/* cinematic gradient wash */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[oklch(0.10_0.03_245/0.15)] via-[oklch(0.10_0.03_245/0.45)] to-[oklch(0.08_0.03_245)]" />
-        <div className="pointer-events-none absolute -top-24 -left-20 h-80 w-80 rounded-full bg-[oklch(0.72_0.22_240/0.55)] blur-3xl animate-orb-drift" />
-        <div className="pointer-events-none absolute top-40 -right-16 h-72 w-72 rounded-full bg-[oklch(0.82_0.16_215/0.45)] blur-3xl animate-orb-drift" />
+        {/* dark wash for legibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-[oklch(0.07_0.01_160)]" />
+        {/* emerald glow accents */}
+        <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full bg-[oklch(0.78_0.20_150/0.35)] blur-[80px] animate-orb-drift" />
 
-        {/* Brand badge */}
-        <div className="absolute inset-x-0 top-8 px-6 flex items-center justify-center animate-slide-up">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-strong border border-white/15">
-            <div className="h-5 w-5 rounded-md bg-gradient-to-br from-[oklch(0.82_0.16_215)] to-[oklch(0.62_0.26_260)] flex items-center justify-center">
-              <Sparkles className="h-3 w-3 text-white" />
+        {/* Brand */}
+        <div className="absolute inset-x-0 top-6 px-5 flex items-center justify-between animate-slide-up">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-[oklch(0.78_0.20_150/0.15)] border border-[oklch(0.78_0.20_150/0.4)] flex items-center justify-center">
+              <Leaf className="h-4 w-4 text-[oklch(0.85_0.20_140)]" />
             </div>
-            <span className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/90">MyNutriLens</span>
+            <span className="text-[15px] font-bold tracking-tight">
+              <span className="text-white">my</span>
+              <span className="text-[oklch(0.85_0.20_140)]">nutrilens</span>
+            </span>
+          </div>
+          <div className="glass-strong rounded-2xl pl-2 pr-3 py-1.5 flex items-center gap-1.5 border border-white/10">
+            <Flame className="h-3.5 w-3.5 text-[oklch(0.78_0.18_60)]" />
+            <div className="leading-none">
+              <div className="text-[12px] font-bold text-white">2,751 <span className="text-[9px] font-medium text-white/60">kcal</span></div>
+              <div className="text-[8px] uppercase tracking-wider text-white/50 mt-0.5">Burned today</div>
+            </div>
           </div>
         </div>
 
         {/* Floating stat pills */}
-        <StatPill className="left-3 top-[28%] animate-float" icon={<Salad className="h-3.5 w-3.5 text-[oklch(0.84_0.18_145)]" />} label="Protein tracked" value="128g" />
-        <StatPill className="right-3 top-[22%] animate-float-b" icon={<Flame className="h-3.5 w-3.5 text-[oklch(0.78_0.18_45)]" />} label="Calories analyzed" value="1,840" />
-        <StatPill className="left-4 top-[52%] animate-float-b" icon={<Dumbbell className="h-3.5 w-3.5 text-[oklch(0.72_0.22_240)]" />} label="Plan ready" value="Day 1" />
-        <StatPill className="right-4 top-[58%] animate-float" icon={<Target className="h-3.5 w-3.5 text-[oklch(0.82_0.16_215)]" />} label="Goal progress" value="68%" />
+        <FloatChip
+          className="left-3 top-[18%] animate-float"
+          icon={<CheckCircle2 className="h-3.5 w-3.5 text-[oklch(0.85_0.20_140)]" />}
+          title="+25g Protein"
+          sub="Goal hit!"
+        />
+        <FloatChip
+          className="left-3 top-[46%] animate-float-b"
+          icon={<Dumbbell className="h-3.5 w-3.5 text-[oklch(0.85_0.20_140)]" />}
+          title="Workout Ready"
+          sub="Let's crush it"
+          emoji="💪"
+        />
+        <FloatChip
+          className="right-3 top-[50%] animate-float"
+          icon={<Salad className="h-3.5 w-3.5 text-[oklch(0.85_0.20_140)]" />}
+          title="Personalized Plan"
+          sub="Made for you"
+        />
 
         {/* Headline */}
         <div className="absolute inset-x-0 bottom-6 px-6 text-center animate-slide-up">
-          <h1 className="text-[42px] leading-[1.02] font-bold tracking-tight">
-            Your Pocket <span className="neon-text">Nutritionist</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[oklch(0.78_0.20_150/0.12)] border border-[oklch(0.78_0.20_150/0.4)] backdrop-blur-md mb-4">
+            <Leaf className="h-3 w-3 text-[oklch(0.85_0.20_140)]" />
+            <span className="text-[11px] font-medium text-[oklch(0.92_0.10_145)]">Real Food. Real Results.</span>
+          </div>
+          <h1 className="text-[40px] leading-[1.02] font-extrabold tracking-tight text-white">
+            Transform Your Body
+            <br />
+            with <span className="text-[oklch(0.85_0.20_140)]">mynutrilens</span>
           </h1>
-          <p className="mt-3 text-[13.5px] text-foreground/80 max-w-[330px] mx-auto leading-relaxed">
-            Track every calorie, follow AI diet plans, and crush workouts — all from one beautiful app.
+          <p className="mt-3 text-[13px] text-white/65 max-w-[330px] mx-auto leading-relaxed">
+            Real food tracking. Personalized nutrition.
+            <br />Workouts that fit you. Results that stay.
           </p>
         </div>
       </div>
 
+      {/* Stat strip */}
+      <div className="px-5 pt-6 grid grid-cols-3 gap-3">
+        <StatCard icon={<ScanLine className="h-4 w-4 text-[oklch(0.85_0.20_140)]" />} value="10K+" label="Meals Scanned" />
+        <StatCard icon={<Target className="h-4 w-4 text-[oklch(0.85_0.20_140)]" />} value="87%" label="Hit Their Goals" />
+        <StatCard icon={<Zap className="h-4 w-4 text-[oklch(0.85_0.20_140)]" />} value="Instant" label="Insights" />
+      </div>
+
       {/* Trust strip */}
-      <div className="px-6 pt-5 flex items-center justify-center gap-4 text-[11px] text-muted-foreground animate-slide-up">
-        <div className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-[oklch(0.84_0.18_145)]" /> Private & secure</div>
+      <div className="px-6 pt-5 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-[oklch(0.85_0.20_140)]" /> Private & secure</div>
         <div className="h-3 w-px bg-white/15" />
-        <div className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-[oklch(0.82_0.16_215)] fill-[oklch(0.82_0.16_215)]" /> 4.9 loved by 50k+</div>
+        <div className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-[oklch(0.85_0.20_140)] fill-[oklch(0.85_0.20_140)]" /> 4.9 · 50k+ users</div>
       </div>
 
       {/* Feature cards */}
-      <div className="relative px-6 pt-5 pb-8 space-y-3">
-        <Feature delay="0ms" icon={<Flame className="h-4 w-4 text-[oklch(0.78_0.18_45)]" />} title="Calorie tracking that just works" text="Snap a photo. Get macros, calories and portion in seconds." />
-        <Feature delay="80ms" icon={<Salad className="h-4 w-4 text-[oklch(0.84_0.18_145)]" />} title="AI diet plans, tuned to you" text="Daily meals around your body, goals, allergies and taste." />
-        <Feature delay="160ms" icon={<Dumbbell className="h-4 w-4 text-[oklch(0.72_0.22_240)]" />} title="Smart workouts" text="Sessions that adapt as you get stronger every week." />
+      <div className="relative px-5 pt-5 pb-6 space-y-3">
+        <Feature delay="0ms" icon={<Flame className="h-4 w-4 text-[oklch(0.78_0.18_60)]" />} title="Calorie tracking that just works" text="Snap a photo. Get macros, calories and portion in seconds." />
+        <Feature delay="80ms" icon={<Salad className="h-4 w-4 text-[oklch(0.85_0.20_140)]" />} title="AI diet plans, tuned to you" text="Daily meals around your body, goals, allergies and taste." />
+        <Feature delay="160ms" icon={<Dumbbell className="h-4 w-4 text-[oklch(0.78_0.20_150)]" />} title="Smart workouts" text="Sessions that adapt as you get stronger every week." />
       </div>
 
       {/* CTAs */}
-      <div className="px-6 pb-10 space-y-3">
+      <div className="px-5 pb-10 space-y-3">
         <Link
           to="/login"
-          className="group relative w-full py-4 rounded-2xl bg-gradient-to-r from-[oklch(0.82_0.16_215)] via-[oklch(0.72_0.22_240)] to-[oklch(0.62_0.26_260)] text-white font-semibold shadow-[0_18px_50px_-12px_oklch(0.72_0.22_240/0.95)] flex items-center justify-center gap-2 active:scale-[.98] transition overflow-hidden animate-pulse-cta"
+          className="group relative w-full py-4 rounded-2xl bg-gradient-to-r from-[oklch(0.85_0.20_140)] via-[oklch(0.78_0.20_150)] to-[oklch(0.62_0.18_160)] text-[oklch(0.10_0.02_160)] font-bold shadow-[0_18px_50px_-12px_oklch(0.78_0.20_150/0.9)] flex items-center justify-center gap-2 active:scale-[.98] transition overflow-hidden animate-pulse-cta"
         >
-          <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+          <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
           <Sparkles className="h-4 w-4" />
           Start My Journey
           <ArrowRight className="h-4 w-4 transition-transform group-active:translate-x-0.5" />
@@ -99,11 +141,10 @@ function Welcome() {
         </p>
       </div>
 
-      {/* Local styles for new animations */}
       <style>{`
         @keyframes pulse-cta {
-          0%, 100% { box-shadow: 0 18px 50px -12px oklch(0.72 0.22 240 / 0.85), 0 0 0 0 oklch(0.72 0.22 240 / 0.55); }
-          50%      { box-shadow: 0 18px 60px -10px oklch(0.72 0.22 240 / 0.95), 0 0 0 14px oklch(0.72 0.22 240 / 0); }
+          0%, 100% { box-shadow: 0 18px 50px -12px oklch(0.78 0.20 150 / 0.85), 0 0 0 0 oklch(0.78 0.20 150 / 0.55); }
+          50%      { box-shadow: 0 18px 60px -10px oklch(0.78 0.20 150 / 0.95), 0 0 0 14px oklch(0.78 0.20 150 / 0); }
         }
         .animate-pulse-cta { animation: pulse-cta 2.6s ease-out infinite; }
         @keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
@@ -113,20 +154,32 @@ function Welcome() {
   );
 }
 
-function StatPill({
-  icon, label, value, className = "",
-}: { icon: React.ReactNode; label: string; value: string; className?: string }) {
+function FloatChip({
+  className = "", icon, title, sub, emoji,
+}: { className?: string; icon: React.ReactNode; title: string; sub: string; emoji?: string }) {
   return (
     <div className={`absolute z-10 ${className}`}>
-      <div className="glass-strong rounded-2xl pl-2.5 pr-3 py-2 flex items-center gap-2 border border-white/15 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.8)]">
-        <div className="h-7 w-7 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-center">
+      <div className="glass-strong rounded-2xl pl-2.5 pr-3.5 py-2 flex items-center gap-2.5 border border-[oklch(0.78_0.20_150/0.35)] shadow-[0_10px_30px_-12px_rgba(0,0,0,0.8)]">
+        <div className="h-7 w-7 rounded-full bg-[oklch(0.78_0.20_150/0.15)] border border-[oklch(0.78_0.20_150/0.4)] flex items-center justify-center shrink-0">
           {icon}
         </div>
         <div className="leading-tight">
-          <div className="text-[10px] uppercase tracking-wider text-white/60">{label}</div>
-          <div className="text-[13px] font-semibold text-white">{value}</div>
+          <div className="text-[12px] font-semibold text-white flex items-center gap-1">{title}{emoji && <span>{emoji}</span>}</div>
+          <div className="text-[10px] text-[oklch(0.85_0.20_140)]">{sub}</div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
+  return (
+    <div className="glass rounded-2xl p-3 flex flex-col items-start gap-1.5 border-white/10">
+      <div className="h-9 w-9 rounded-full bg-[oklch(0.78_0.20_150/0.12)] border border-[oklch(0.78_0.20_150/0.35)] flex items-center justify-center">
+        {icon}
+      </div>
+      <div className="text-base font-bold text-white leading-none">{value}</div>
+      <div className="text-[10px] text-muted-foreground leading-tight">{label}</div>
     </div>
   );
 }
@@ -136,7 +189,7 @@ function Feature({
 }: { icon: React.ReactNode; title: string; text: string; delay?: string }) {
   return (
     <div
-      className="glass rounded-2xl p-4 flex items-start gap-3 border-white/10 fade-up hover:border-white/20 hover:bg-white/[0.04] transition"
+      className="glass rounded-2xl p-4 flex items-start gap-3 border-white/10 fade-up hover:border-[oklch(0.78_0.20_150/0.3)] hover:bg-white/[0.04] transition"
       style={{ animationDelay: delay }}
     >
       <div className="h-9 w-9 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
