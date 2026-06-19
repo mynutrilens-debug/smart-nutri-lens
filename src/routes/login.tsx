@@ -5,9 +5,10 @@ import { getAuthRedirectUrl, signInWithNativeOAuth } from "@/lib/native";
 
 import { toast } from "sonner";
 import {
-  Mail, Lock, Loader2, Sparkles, Flame, Dumbbell, Bot, CheckCircle2, Zap,
+  Mail, Lock, Loader2, Sparkles, Flame, Dumbbell, CheckCircle2, Salad, Leaf,
 } from "lucide-react";
-import heroBg from "@/assets/fitness-hero.jpg";
+import heroBg from "@/assets/fitness-hero-dark.jpg";
+
 
 export const Route = createFileRoute("/login")({ component: Login });
 
