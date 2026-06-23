@@ -111,9 +111,37 @@ export function MacroRings({
                 <span className="text-lg font-bold tabular-nums">{r.consumed}</span>
                 <span className="text-[10px] text-muted-foreground">/ {r.goal} {r.unit}</span>
               </div>
-              <p className="text-[10px] text-foreground/60 mt-0.5">
-                {remaining > 0 ? <><span className="tabular-nums font-medium text-foreground/80">{remaining}</span> {r.unit} left</> : <span className="text-emerald-300">Goal reached</span>}
-              </p>
+              <div className="mt-1.5">
+                {remaining > 0 ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums"
+                    style={{
+                      background: `linear-gradient(135deg, ${r.from}22, ${r.to}22)`,
+                      color: r.glow,
+                      border: `1px solid ${r.glow}55`,
+                      boxShadow: `0 0 12px ${r.glow}55, inset 0 0 6px ${r.glow}33`,
+                    }}
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ background: r.glow, boxShadow: `0 0 6px ${r.glow}` }}
+                    />
+                    {remaining} {r.unit} left
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                    style={{
+                      background: "linear-gradient(135deg, #10b98122, #5eead422)",
+                      color: "#5eead4",
+                      border: "1px solid #34d39955",
+                      boxShadow: "0 0 12px #34d39955",
+                    }}
+                  >
+                    ✓ Goal reached
+                  </span>
+                )}
+              </div>
             </div>
           );
         })}
