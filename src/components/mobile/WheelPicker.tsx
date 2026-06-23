@@ -24,8 +24,8 @@ export function WheelPicker({
   value,
   onChange,
   unit,
-  visible = 2,
-  itemHeight = 44,
+  visible = 1,
+  itemHeight = 40,
   formatter,
 }: WheelPickerProps) {
   const ref = useRef<HTMLDivElement>(null);
