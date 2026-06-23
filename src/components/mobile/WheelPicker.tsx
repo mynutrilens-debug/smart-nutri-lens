@@ -24,8 +24,8 @@ export function WheelPicker({
   value,
   onChange,
   unit,
-  visible = 2,
-  itemHeight = 44,
+  visible = 1,
+  itemHeight = 40,
   formatter,
 }: WheelPickerProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -95,12 +95,12 @@ export function WheelPicker({
 
   return (
     <div
-      className="relative w-full select-none"
+      className="relative w-full select-none overflow-hidden"
       style={{ height: totalHeight }}
     >
       {/* Center highlight band */}
       <div
-        className="pointer-events-none absolute left-2 right-2 rounded-xl border border-[oklch(0.72_0.22_240/0.55)] bg-[oklch(0.72_0.22_240/0.10)] shadow-[0_0_24px_-6px_oklch(0.72_0.22_240/0.6)]"
+        className="pointer-events-none absolute left-2 right-2 rounded-xl border border-[var(--primary)]/55 bg-[var(--primary)]/10 shadow-[0_0_24px_-6px_var(--primary)]"
         style={{ top: visible * itemHeight, height: itemHeight }}
       />
       {/* Top fade */}
@@ -142,8 +142,8 @@ export function WheelPicker({
               style={{ height: itemHeight, scrollSnapAlign: "center" }}
               className={`flex items-center justify-center tabular-nums transition-all duration-150 ${
                 isActive
-                  ? "text-2xl font-bold text-foreground scale-110"
-                  : "text-base text-muted-foreground/60"
+                  ? "text-xl font-bold text-[var(--primary)] scale-110"
+                  : "text-sm text-muted-foreground/60"
               }`}
             >
               {formatter ? formatter(v) : v}
