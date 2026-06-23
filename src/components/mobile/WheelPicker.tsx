@@ -142,8 +142,8 @@ export function WheelPicker({
               style={{ height: itemHeight, scrollSnapAlign: "center" }}
               className={`flex items-center justify-center tabular-nums transition-all duration-150 ${
                 isActive
-                  ? "text-2xl font-bold text-foreground scale-110"
-                  : "text-base text-muted-foreground/60"
+                  ? "text-xl font-bold text-[var(--primary)] scale-110"
+                  : "text-sm text-muted-foreground/60"
               }`}
             >
               {formatter ? formatter(v) : v}
