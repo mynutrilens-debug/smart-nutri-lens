@@ -295,7 +295,7 @@ function Onboarding() {
       )}
 
       {/* Nav */}
-      <div className="fixed bottom-0 left-0 right-0 px-5 pb-6 pt-3 bg-gradient-to-t from-background via-background/95 to-transparent">
+      <div className="fixed bottom-0 left-0 right-0 z-50 px-5 pt-3 bg-gradient-to-t from-background via-background/95 to-transparent" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}>
         <div className="max-w-md mx-auto flex gap-3">
           {step > 0 && (
             <button onClick={back} className="glass rounded-2xl px-5 py-3.5 flex items-center gap-1.5 text-sm">
@@ -304,12 +304,12 @@ function Onboarding() {
           )}
           {step < TOTAL ? (
             <button onClick={next}
-              className="flex-1 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 text-primary-foreground bg-gradient-to-r from-[oklch(0.82_0.16_215)] to-[oklch(0.62_0.26_260)] glow-ring">
+              className="flex-1 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 text-primary-foreground bg-[var(--gradient-hero)] glow-ring">
               Continue <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
             <button disabled={save.isPending} onClick={() => save.mutate()}
-              className="flex-1 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 text-primary-foreground bg-gradient-to-r from-[oklch(0.82_0.16_215)] to-[oklch(0.62_0.26_260)] glow-ring disabled:opacity-70">
+              className="flex-1 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 text-primary-foreground bg-[var(--gradient-hero)] glow-ring disabled:opacity-70">
               {save.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Building your plan…</> : <><Zap className="h-4 w-4" /> Let's Start My Journey</>}
             </button>
           )}
