@@ -88,6 +88,7 @@ export type Database = {
           activity_level: string | null
           age: number | null
           ai_plan: Json | null
+          ai_plan_generated_at: string | null
           allergies: string[] | null
           avatar_url: string | null
           body_fat_pct: number | null
@@ -117,6 +118,7 @@ export type Database = {
           activity_level?: string | null
           age?: number | null
           ai_plan?: Json | null
+          ai_plan_generated_at?: string | null
           allergies?: string[] | null
           avatar_url?: string | null
           body_fat_pct?: number | null
@@ -146,6 +148,7 @@ export type Database = {
           activity_level?: string | null
           age?: number | null
           ai_plan?: Json | null
+          ai_plan_generated_at?: string | null
           allergies?: string[] | null
           avatar_url?: string | null
           body_fat_pct?: number | null

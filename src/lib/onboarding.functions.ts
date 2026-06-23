@@ -95,11 +95,27 @@ export const saveOnboarding = createServerFn({ method: "POST" })
 
 export const generateAiPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => {
+    const parsed = z.object({ force: z.boolean().optional() }).safeParse(d ?? {});
+    return parsed.success ? parsed.data : { force: false };
+  })
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
     if (!p) throw new Error("Profile not found");
 
+    // Once-per-day gate: if a plan was generated today, return the cached plan.
+    const existingPlan = (p as any).ai_plan;
+    const lastGen = (p as any).ai_plan_generated_at as string | null | undefined;
+    if (!data?.force && existingPlan && lastGen) {
+      const last = new Date(lastGen);
+      const now = new Date();
+      const sameDay =
+        last.getUTCFullYear() === now.getUTCFullYear() &&
+        last.getUTCMonth() === now.getUTCMonth() &&
+        last.getUTCDate() === now.getUTCDate();
+      if (sameDay) return existingPlan;
+    }
 
     const heightM = (p.height_cm ?? 170) / 100;
     const bmi = Number(((p.weight_kg ?? 70) / (heightM * heightM)).toFixed(1));
@@ -122,6 +138,7 @@ ${cuisineLine}
 - Allergies (STRICTLY AVOID): ${(p.allergies ?? []).join(", ") || "none"}
 - Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
 - Daily targets: ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g
+- Plan date (vary dishes day-to-day): ${new Date().toISOString().slice(0, 10)}
 
 RULES
 - Tailor calories/macros to BMI + goal (deficit for weight/fat loss, surplus for muscle gain, balanced for maintenance/recomp).
@@ -166,6 +183,9 @@ Return ONLY this JSON (no markdown):
     let plan: any;
     try { plan = JSON.parse(text); } catch { throw new Error("Plan parse failed"); }
 
-    await supabase.from("profiles").update({ ai_plan: plan }).eq("user_id", userId);
+    await supabase
+      .from("profiles")
+      .update({ ai_plan: plan, ai_plan_generated_at: new Date().toISOString() } as any)
+      .eq("user_id", userId);
     return plan;
   });

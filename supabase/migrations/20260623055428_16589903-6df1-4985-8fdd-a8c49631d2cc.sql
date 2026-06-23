@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS ai_plan_generated_at TIMESTAMPTZ;
