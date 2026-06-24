@@ -15,9 +15,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWorkoutRouteImport } from './routes/_app/workout'
 import { Route as AppScanRouteImport } from './routes/_app/scan'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
+import { Route as AppPricingRouteImport } from './routes/_app/pricing'
 import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
 import { Route as AppHomeRouteImport } from './routes/_app/home'
 import { Route as AppDietRouteImport } from './routes/_app/diet'
+import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
 import { Route as ApiPublicFirebaseConfigRouteImport } from './routes/api/public/firebase-config'
 
 const LoginRoute = LoginRouteImport.update({
@@ -49,6 +51,11 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPricingRoute = AppPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppOnboardingRoute = AppOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -64,6 +71,12 @@ const AppDietRoute = AppDietRouteImport.update({
   path: '/diet',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicRazorpayWebhookRoute =
+  ApiPublicRazorpayWebhookRouteImport.update({
+    id: '/api/public/razorpay-webhook',
+    path: '/api/public/razorpay-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicFirebaseConfigRoute = ApiPublicFirebaseConfigRouteImport.update({
   id: '/api/public/firebase-config',
   path: '/api/public/firebase-config',
@@ -76,10 +89,12 @@ export interface FileRoutesByFullPath {
   '/diet': typeof AppDietRoute
   '/home': typeof AppHomeRoute
   '/onboarding': typeof AppOnboardingRoute
+  '/pricing': typeof AppPricingRoute
   '/profile': typeof AppProfileRoute
   '/scan': typeof AppScanRoute
   '/workout': typeof AppWorkoutRoute
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
+  '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -87,10 +102,12 @@ export interface FileRoutesByTo {
   '/diet': typeof AppDietRoute
   '/home': typeof AppHomeRoute
   '/onboarding': typeof AppOnboardingRoute
+  '/pricing': typeof AppPricingRoute
   '/profile': typeof AppProfileRoute
   '/scan': typeof AppScanRoute
   '/workout': typeof AppWorkoutRoute
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
+  '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -100,10 +117,12 @@ export interface FileRoutesById {
   '/_app/diet': typeof AppDietRoute
   '/_app/home': typeof AppHomeRoute
   '/_app/onboarding': typeof AppOnboardingRoute
+  '/_app/pricing': typeof AppPricingRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/scan': typeof AppScanRoute
   '/_app/workout': typeof AppWorkoutRoute
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
+  '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -113,10 +132,12 @@ export interface FileRouteTypes {
     | '/diet'
     | '/home'
     | '/onboarding'
+    | '/pricing'
     | '/profile'
     | '/scan'
     | '/workout'
     | '/api/public/firebase-config'
+    | '/api/public/razorpay-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -124,10 +145,12 @@ export interface FileRouteTypes {
     | '/diet'
     | '/home'
     | '/onboarding'
+    | '/pricing'
     | '/profile'
     | '/scan'
     | '/workout'
     | '/api/public/firebase-config'
+    | '/api/public/razorpay-webhook'
   id:
     | '__root__'
     | '/'
@@ -136,10 +159,12 @@ export interface FileRouteTypes {
     | '/_app/diet'
     | '/_app/home'
     | '/_app/onboarding'
+    | '/_app/pricing'
     | '/_app/profile'
     | '/_app/scan'
     | '/_app/workout'
     | '/api/public/firebase-config'
+    | '/api/public/razorpay-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -147,6 +172,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiPublicFirebaseConfigRoute: typeof ApiPublicFirebaseConfigRoute
+  ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -193,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/pricing': {
+      id: '/_app/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof AppPricingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/onboarding': {
       id: '/_app/onboarding'
       path: '/onboarding'
@@ -214,6 +247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDietRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/razorpay-webhook': {
+      id: '/api/public/razorpay-webhook'
+      path: '/api/public/razorpay-webhook'
+      fullPath: '/api/public/razorpay-webhook'
+      preLoaderRoute: typeof ApiPublicRazorpayWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/firebase-config': {
       id: '/api/public/firebase-config'
       path: '/api/public/firebase-config'
@@ -228,6 +268,7 @@ interface AppRouteChildren {
   AppDietRoute: typeof AppDietRoute
   AppHomeRoute: typeof AppHomeRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
+  AppPricingRoute: typeof AppPricingRoute
   AppProfileRoute: typeof AppProfileRoute
   AppScanRoute: typeof AppScanRoute
   AppWorkoutRoute: typeof AppWorkoutRoute
@@ -237,6 +278,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDietRoute: AppDietRoute,
   AppHomeRoute: AppHomeRoute,
   AppOnboardingRoute: AppOnboardingRoute,
+  AppPricingRoute: AppPricingRoute,
   AppProfileRoute: AppProfileRoute,
   AppScanRoute: AppScanRoute,
   AppWorkoutRoute: AppWorkoutRoute,
@@ -249,17 +291,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   ApiPublicFirebaseConfigRoute: ApiPublicFirebaseConfigRoute,
+  ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

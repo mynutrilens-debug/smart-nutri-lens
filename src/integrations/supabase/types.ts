@@ -83,6 +83,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          raw_event: Json | null
+          razorpay_order_id: string
+          razorpay_payment_id: string | null
+          razorpay_signature: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          raw_event?: Json | null
+          razorpay_order_id: string
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          raw_event?: Json | null
+          razorpay_order_id?: string
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activity_level: string | null
@@ -206,6 +248,63 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          amount_paid: number | null
+          created_at: string
+          currency: string | null
+          current_period_expires_at: string | null
+          current_period_started_at: string | null
+          id: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_subscription_id: string | null
+          silver_plans_used: number
+          status: Database["public"]["Enums"]["subscription_status"]
+          trial_expires_at: string
+          trial_started_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          created_at?: string
+          currency?: string | null
+          current_period_expires_at?: string | null
+          current_period_started_at?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_subscription_id?: string | null
+          silver_plans_used?: number
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_expires_at?: string
+          trial_started_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number | null
+          created_at?: string
+          currency?: string | null
+          current_period_expires_at?: string | null
+          current_period_started_at?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_subscription_id?: string | null
+          silver_plans_used?: number
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_expires_at?: string
+          trial_started_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       weight_entries: {
         Row: {
           id: string
@@ -271,7 +370,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      subscription_plan: "trial" | "silver" | "gold" | "platinum" | "expired"
+      subscription_status: "active" | "expired" | "cancelled" | "pending"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -398,6 +498,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      subscription_plan: ["trial", "silver", "gold", "platinum", "expired"],
+      subscription_status: ["active", "expired", "cancelled", "pending"],
+    },
   },
 } as const
