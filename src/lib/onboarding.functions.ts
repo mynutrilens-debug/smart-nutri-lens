@@ -197,5 +197,13 @@ Return ONLY this JSON (no markdown):
       .from("profiles")
       .update({ ai_plan: plan, ai_plan_generated_at: new Date().toISOString() } as any)
       .eq("user_id", userId);
+
+    // Increment silver usage counter (only when generating a new plan on Silver)
+    if (silverActive) {
+      await supabase
+        .from("subscriptions")
+        .update({ silver_plans_used: (sub!.silver_plans_used ?? 0) + 1 })
+        .eq("user_id", userId);
+    }
     return plan;
   });
