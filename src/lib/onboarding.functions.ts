@@ -104,12 +104,22 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
     if (!p) throw new Error("Profile not found");
 
+    // Subscription gating
+    const { data: sub } = await supabase.from("subscriptions").select("*").eq("user_id", userId).maybeSingle();
+    const now = new Date();
+    const trialActive = sub?.plan === "trial" && sub?.status === "active" && new Date(sub.trial_expires_at) > now;
+    const goldOrPlat = (sub?.plan === "gold" || sub?.plan === "platinum") && sub?.status === "active" &&
+      (!sub.current_period_expires_at || new Date(sub.current_period_expires_at) > now);
+    const silverActive = sub?.plan === "silver" && sub?.status === "active" && (sub.silver_plans_used ?? 0) < 15;
+    if (!trialActive && !goldOrPlat && !silverActive) {
+      throw new Error("Your plan does not include diet plan generation. Please upgrade.");
+    }
+
     // Once-per-day gate: if a plan was generated today, return the cached plan.
     const existingPlan = (p as any).ai_plan;
     const lastGen = (p as any).ai_plan_generated_at as string | null | undefined;
     if (!data?.force && existingPlan && lastGen) {
       const last = new Date(lastGen);
-      const now = new Date();
       const sameDay =
         last.getUTCFullYear() === now.getUTCFullYear() &&
         last.getUTCMonth() === now.getUTCMonth() &&

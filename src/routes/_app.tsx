@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BottomNav } from "@/components/mobile/BottomNav";
+import { TrialBanner } from "@/components/mobile/TrialBanner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_app")({
@@ -41,6 +42,7 @@ function AppShell() {
 
   return (
     <div className="app-shell">
+      <TrialBanner />
       <Outlet />
       <BottomNav />
     </div>
