@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BottomNav } from "@/components/mobile/BottomNav";
 import { TrialBanner } from "@/components/mobile/TrialBanner";
+import { NutriBotFab } from "@/components/mobile/NutriBotFab";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_app")({
@@ -44,6 +45,7 @@ function AppShell() {
     <div className="app-shell">
       <TrialBanner />
       <Outlet />
+      <NutriBotFab />
       <BottomNav />
     </div>
   );

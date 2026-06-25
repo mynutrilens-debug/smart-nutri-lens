@@ -19,6 +19,7 @@ import { Route as AppPricingRouteImport } from './routes/_app/pricing'
 import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
 import { Route as AppHomeRouteImport } from './routes/_app/home'
 import { Route as AppDietRouteImport } from './routes/_app/diet'
+import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
 import { Route as ApiPublicFirebaseConfigRouteImport } from './routes/api/public/firebase-config'
 
@@ -71,6 +72,11 @@ const AppDietRoute = AppDietRouteImport.update({
   path: '/diet',
   getParentRoute: () => AppRoute,
 } as any)
+const AppChatRoute = AppChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AppRoute,
+} as any)
 const ApiPublicRazorpayWebhookRoute =
   ApiPublicRazorpayWebhookRouteImport.update({
     id: '/api/public/razorpay-webhook',
@@ -86,6 +92,7 @@ const ApiPublicFirebaseConfigRoute = ApiPublicFirebaseConfigRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/chat': typeof AppChatRoute
   '/diet': typeof AppDietRoute
   '/home': typeof AppHomeRoute
   '/onboarding': typeof AppOnboardingRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/chat': typeof AppChatRoute
   '/diet': typeof AppDietRoute
   '/home': typeof AppHomeRoute
   '/onboarding': typeof AppOnboardingRoute
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/chat': typeof AppChatRoute
   '/_app/diet': typeof AppDietRoute
   '/_app/home': typeof AppHomeRoute
   '/_app/onboarding': typeof AppOnboardingRoute
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/chat'
     | '/diet'
     | '/home'
     | '/onboarding'
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/chat'
     | '/diet'
     | '/home'
     | '/onboarding'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/chat'
     | '/_app/diet'
     | '/_app/home'
     | '/_app/onboarding'
@@ -247,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDietRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/chat': {
+      id: '/_app/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AppChatRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/api/public/razorpay-webhook': {
       id: '/api/public/razorpay-webhook'
       path: '/api/public/razorpay-webhook'
@@ -265,6 +284,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppChatRoute: typeof AppChatRoute
   AppDietRoute: typeof AppDietRoute
   AppHomeRoute: typeof AppHomeRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
@@ -275,6 +295,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppChatRoute: AppChatRoute,
   AppDietRoute: AppDietRoute,
   AppHomeRoute: AppHomeRoute,
   AppOnboardingRoute: AppOnboardingRoute,
