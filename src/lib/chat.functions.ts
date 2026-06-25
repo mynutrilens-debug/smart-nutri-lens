@@ -75,7 +75,7 @@ export const listChatMessages = createServerFn({ method: "GET" })
       .order("created_at", { ascending: true })
       .limit(200);
     if (error) throw new Error(error.message);
-    return (data ?? []) as { id: string; role: "user" | "assistant"; content: string; created_at: string }[];
+    return (data ?? []) as unknown as { id: string; role: "user" | "assistant"; content: string; created_at: string }[];
   });
 
 export const sendChatMessage = createServerFn({ method: "POST" })
@@ -106,7 +106,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(20);
-    const ordered = ((history ?? []) as { role: "user" | "assistant"; content: string }[]).reverse();
+    const ordered = ((history ?? []) as unknown as { role: "user" | "assistant"; content: string }[]).reverse();
 
     const profileBlock = p
       ? `USER PROFILE
