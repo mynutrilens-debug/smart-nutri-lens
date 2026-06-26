@@ -93,6 +93,17 @@ function Diet() {
     { k: "dinner", label: "Dinner", icon: Moon, color: "oklch(0.74 0.22 295)" },
   ];
 
+  const loggedNames = new Set(todays.map(f => f.name?.toLowerCase().trim()).filter(Boolean));
+  const isMealLogged = (key: string, meal: any) => loggedNames.has(meal_name(key, meal).toLowerCase().trim());
+
+  const planDate = plan?.generated_at ? new Date(plan.generated_at) : null;
+  const planGeneratedToday = (() => {
+    const d = dash?.profile?.ai_plan_generated_at;
+    if (!d) return false;
+    const last = new Date(d); const n = new Date();
+    return last.getUTCFullYear() === n.getUTCFullYear() && last.getUTCMonth() === n.getUTCMonth() && last.getUTCDate() === n.getUTCDate();
+  })();
+
   const grouped = (["breakfast", "lunch", "dinner", "snack"] as const).map(t => ({
     type: t,
     items: todays.filter(f => f.meal_type === t),
