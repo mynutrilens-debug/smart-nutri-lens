@@ -148,38 +148,84 @@ function Scan() {
       )}
 
       {/* Analysis result */}
-      {analysis && (
-        <div className="glass rounded-3xl p-5 animate-slide-up">
+      {analysis && edit && (
+        <div className="glass rounded-3xl p-5 animate-slide-up space-y-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-xs uppercase tracking-wider text-muted-foreground">AI detected</span>
             <span className="ml-auto text-[11px] px-2 py-0.5 rounded-full bg-primary/15 text-primary">{Math.round(analysis.confidence * 100)}% sure</span>
           </div>
-          <h3 className="mt-2 text-xl font-bold">{analysis.name}</h3>
-          {analysis.notes && <p className="text-xs text-muted-foreground mt-1">{analysis.notes}</p>}
 
-          <div className="mt-4 grid grid-cols-4 gap-2">
-            {[
-              { l: "kcal", v: analysis.calories, c: "oklch(0.84 0.18 145)" },
-              { l: "P", v: `${Math.round(analysis.protein_g)}g`, c: "oklch(0.74 0.22 295)" },
-              { l: "C", v: `${Math.round(analysis.carbs_g)}g`, c: "oklch(0.82 0.16 80)" },
-              { l: "F", v: `${Math.round(analysis.fat_g)}g`, c: "oklch(0.7 0.2 25)" },
-            ].map(m => (
-              <div key={m.l} className="bg-white/5 rounded-2xl p-2.5 text-center border border-white/5">
-                <div className="text-sm font-bold tabular-nums" style={{ color: m.c }}>{m.v}</div>
+          {editing ? (
+            <input
+              autoFocus
+              value={edit.name}
+              onChange={e => setEdit({ ...edit, name: e.target.value })}
+              onBlur={() => setEditing(false)}
+              onKeyDown={e => e.key === "Enter" && setEditing(false)}
+              className="w-full text-xl font-bold bg-white/5 rounded-xl px-3 py-2 border border-primary/40 outline-none"
+            />
+          ) : (
+            <button onClick={() => setEditing(true)} className="flex items-center gap-2 group">
+              <h3 className="text-xl font-bold text-left">{edit.name}</h3>
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
+            </button>
+          )}
+          {analysis.notes && <p className="text-xs text-muted-foreground -mt-2">{analysis.notes}</p>}
+
+          {/* Smart alternatives */}
+          {analysis.alternatives?.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Wand2 className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Not this? Tap a match</span>
+              </div>
+              <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+                {analysis.alternatives.map(a => {
+                  const active = a.name.toLowerCase() === edit.name.toLowerCase();
+                  return (
+                    <button key={a.name}
+                      onClick={() => setEdit({ name: a.name, calories: a.calories, protein_g: a.protein_g, carbs_g: a.carbs_g, fat_g: a.fat_g })}
+                      className={`shrink-0 rounded-2xl px-3 py-2 text-left border transition ${active ? "bg-primary/15 border-primary/60" : "bg-white/5 border-white/10 hover:border-primary/40"}`}>
+                      <div className="text-xs font-semibold">{a.name}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{a.calories} kcal · {Math.round(a.protein_g)}P</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Editable macros */}
+          <div className="grid grid-cols-4 gap-2">
+            {([
+              { k: "calories", l: "kcal", c: "oklch(0.84 0.18 145)" },
+              { k: "protein_g", l: "P (g)", c: "oklch(0.74 0.22 295)" },
+              { k: "carbs_g", l: "C (g)", c: "oklch(0.82 0.16 80)" },
+              { k: "fat_g", l: "F (g)", c: "oklch(0.7 0.2 25)" },
+            ] as const).map(m => (
+              <div key={m.k} className="bg-white/5 rounded-2xl p-2 text-center border border-white/5">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={Math.round((edit[m.k] as number) * 10) / 10}
+                  onChange={e => setEdit({ ...edit, [m.k]: Math.max(0, Number(e.target.value) || 0) })}
+                  className="w-full bg-transparent text-sm font-bold tabular-nums text-center outline-none focus:ring-1 focus:ring-primary/40 rounded"
+                  style={{ color: m.c }}
+                />
                 <div className="text-[10px] text-muted-foreground mt-0.5">{m.l}</div>
               </div>
             ))}
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <button onClick={() => { setAnalysis(null); setPreview(null); }}
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => { setAnalysis(null); setPreview(null); setEdit(null); }}
               className="py-3 rounded-2xl glass font-medium flex items-center justify-center gap-2"><X className="h-4 w-4" /> Discard</button>
             <button disabled={logMut.isPending}
               onClick={() => logMut.mutate({
-                name: analysis.name, meal_type: analysis.meal_type,
-                calories: analysis.calories, protein_g: analysis.protein_g,
-                carbs_g: analysis.carbs_g, fat_g: analysis.fat_g, image_url: preview,
+                name: edit.name, meal_type: analysis.meal_type,
+                calories: Math.round(edit.calories), protein_g: edit.protein_g,
+                carbs_g: edit.carbs_g, fat_g: edit.fat_g, image_url: preview,
               })}
               className="py-3 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold flex items-center justify-center gap-2 glow-ring">
               {logMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Log it
