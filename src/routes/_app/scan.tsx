@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Camera, Upload, Sparkles, Loader2, Check, X, Image as ImageIcon } from "lucide-react";
+import { Camera, Upload, Sparkles, Loader2, Check, X, Image as ImageIcon, Pencil, Wand2 } from "lucide-react";
 import { analyzeFood } from "@/lib/scan.functions";
 import { logFood, listFoods } from "@/lib/food.functions";
 import { hapticTap, pickNativeFoodImage } from "@/lib/native";
