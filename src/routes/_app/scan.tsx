@@ -35,6 +35,15 @@ function Scan() {
   const camRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<Awaited<ReturnType<typeof analyzeFood>> | null>(null);
+  const [edit, setEdit] = useState<{ name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number } | null>(null);
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    if (analysis) setEdit({
+      name: analysis.name, calories: analysis.calories, protein_g: analysis.protein_g,
+      carbs_g: analysis.carbs_g, fat_g: analysis.fat_g,
+    });
+  }, [analysis]);
 
   const recent = useQuery({ queryKey: ["foods"], queryFn: () => listFoods() });
 
