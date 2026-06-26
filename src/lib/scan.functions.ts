@@ -8,6 +8,7 @@ const ScanInput = z.object({
   hint: z.string().max(200).optional(),
 });
 
+type Alternative = { name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number };
 type Analysis = {
   name: string;
   meal_type: "breakfast" | "lunch" | "dinner" | "snack";
@@ -17,11 +18,13 @@ type Analysis = {
   fat_g: number;
   confidence: number;
   notes: string;
+  alternatives: Alternative[];
 };
 
 const SYSTEM = `You are a nutrition vision expert. Identify the food in the image and return realistic per-serving macronutrients.
-Return STRICT JSON: { "name": string, "meal_type": "breakfast"|"lunch"|"dinner"|"snack", "calories": int, "protein_g": number, "carbs_g": number, "fat_g": number, "confidence": number (0-1), "notes": string }.
-Estimate portion based on visible cues. If ambiguous, pick the most likely common serving. No prose, only JSON.`;
+Return STRICT JSON: { "name": string, "meal_type": "breakfast"|"lunch"|"dinner"|"snack", "calories": int, "protein_g": number, "carbs_g": number, "fat_g": number, "confidence": number (0-1), "notes": string, "alternatives": [{ "name": string, "calories": int, "protein_g": number, "carbs_g": number, "fat_g": number }] }.
+Estimate portion based on visible cues. If ambiguous, pick the most likely common serving.
+ALWAYS include 3-4 visually-similar alternative foods in "alternatives" (e.g. paneer vs tofu, chicken vs turkey, white rice vs basmati, sweet potato vs pumpkin) with their own macros for the same portion size. No prose, only JSON.`;
 
 export const analyzeFood = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
