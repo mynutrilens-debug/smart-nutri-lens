@@ -67,6 +67,13 @@ export const analyzeFood = createServerFn({ method: "POST" })
       fat_g: Math.max(0, Number(parsed.fat_g) || 0),
       confidence: Math.min(1, Math.max(0, Number(parsed.confidence) || 0.6)),
       notes: String(parsed.notes ?? ""),
+      alternatives: (Array.isArray(parsed.alternatives) ? parsed.alternatives : []).slice(0, 4).map((a: any) => ({
+        name: String(a?.name ?? "Alternative"),
+        calories: Math.max(0, Math.round(Number(a?.calories) || 0)),
+        protein_g: Math.max(0, Number(a?.protein_g) || 0),
+        carbs_g: Math.max(0, Number(a?.carbs_g) || 0),
+        fat_g: Math.max(0, Number(a?.fat_g) || 0),
+      })),
     };
   });
 
