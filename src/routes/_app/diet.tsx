@@ -148,12 +148,15 @@ function Diet() {
             )}
           </div>
           <button
-            onClick={() => genPlan.mutate()}
-            disabled={genPlan.isPending}
-            className="shrink-0 h-10 px-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-semibold glow-ring flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+            onClick={() => {
+              if (planGeneratedToday) { toast.info("Today's plan is already set. New plan unlocks tomorrow."); return; }
+              genPlan.mutate();
+            }}
+            disabled={genPlan.isPending || planGeneratedToday}
+            className="shrink-0 h-10 px-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-semibold glow-ring flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
           >
             {genPlan.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {plan ? "Regenerate" : "Generate"}
+            {planGeneratedToday ? "Today's plan" : plan ? "Generate" : "Generate"}
           </button>
         </div>
 
