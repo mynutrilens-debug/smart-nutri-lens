@@ -115,10 +115,11 @@ export const generateAiPlan = createServerFn({ method: "POST" })
       throw new Error("Your plan does not include diet plan generation. Please upgrade.");
     }
 
-    // Once-per-day gate: if a plan was generated today, return the cached plan.
+    // Once-per-day gate: strictly one plan per UTC day. `force` is ignored
+    // so users cannot regenerate multiple times in the same day.
     const existingPlan = (p as any).ai_plan;
     const lastGen = (p as any).ai_plan_generated_at as string | null | undefined;
-    if (!data?.force && existingPlan && lastGen) {
+    if (existingPlan && lastGen) {
       const last = new Date(lastGen);
       const sameDay =
         last.getUTCFullYear() === now.getUTCFullYear() &&

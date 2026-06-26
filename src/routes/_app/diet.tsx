@@ -3,7 +3,7 @@ import { useSuspenseQuery, useMutation, useQueryClient, useQuery } from "@tansta
 import { foodsQuery, dashboardQuery } from "@/lib/queries";
 import { deleteFood, logFood } from "@/lib/food.functions";
 import { generateAiPlan } from "@/lib/onboarding.functions";
-import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus } from "lucide-react";
+import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check } from "lucide-react";
 import { toast } from "sonner";
 import { MacroRings } from "@/components/mobile/MacroRings";
 
@@ -93,6 +93,17 @@ function Diet() {
     { k: "dinner", label: "Dinner", icon: Moon, color: "oklch(0.74 0.22 295)" },
   ];
 
+  const loggedNames = new Set(todays.map(f => f.name?.toLowerCase().trim()).filter(Boolean));
+  const isMealLogged = (key: string, meal: any) => loggedNames.has(meal_name(key, meal).toLowerCase().trim());
+
+  const planDate = plan?.generated_at ? new Date(plan.generated_at) : null;
+  const planGeneratedToday = (() => {
+    const d = dash?.profile?.ai_plan_generated_at;
+    if (!d) return false;
+    const last = new Date(d); const n = new Date();
+    return last.getUTCFullYear() === n.getUTCFullYear() && last.getUTCMonth() === n.getUTCMonth() && last.getUTCDate() === n.getUTCDate();
+  })();
+
   const grouped = (["breakfast", "lunch", "dinner", "snack"] as const).map(t => ({
     type: t,
     items: todays.filter(f => f.meal_type === t),
@@ -137,12 +148,15 @@ function Diet() {
             )}
           </div>
           <button
-            onClick={() => genPlan.mutate()}
-            disabled={genPlan.isPending}
-            className="shrink-0 h-10 px-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-semibold glow-ring flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+            onClick={() => {
+              if (planGeneratedToday) { toast.info("Today's plan is already set. New plan unlocks tomorrow."); return; }
+              genPlan.mutate();
+            }}
+            disabled={genPlan.isPending || planGeneratedToday}
+            className="shrink-0 h-10 px-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-semibold glow-ring flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
           >
             {genPlan.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {plan ? "Regenerate" : "Generate"}
+            {planGeneratedToday ? "Today's plan" : plan ? "Generate" : "Generate"}
           </button>
         </div>
 
@@ -168,13 +182,19 @@ function Diet() {
                     <div className="text-[10px] text-muted-foreground tabular-nums">
                       {Math.round(Number(meal.protein_g ?? 0))}P · {Math.round(Number(meal.carbs_g ?? 0))}C · {Math.round(Number(meal.fat_g ?? 0))}F
                     </div>
-                    <button
-                      onClick={() => logMeal.mutate({ mealKey: m.k, meal })}
-                      disabled={logMeal.isPending}
-                      className="h-7 px-2.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-60"
-                    >
-                      <Plus className="h-3 w-3" /> Log
-                    </button>
+                    {isMealLogged(m.k, meal) ? (
+                      <span className="h-7 px-2.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-semibold flex items-center gap-1">
+                        <Check className="h-3 w-3" /> Logged
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => logMeal.mutate({ mealKey: m.k, meal })}
+                        disabled={logMeal.isPending}
+                        className="h-7 px-2.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-60"
+                      >
+                        <Plus className="h-3 w-3" /> Log
+                      </button>
+                    )}
                   </div>
                 </div>
               );
