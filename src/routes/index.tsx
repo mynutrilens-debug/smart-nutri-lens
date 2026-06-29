@@ -122,7 +122,7 @@ function Welcome() {
       {/* CTAs */}
       <div className="px-5 pb-10 space-y-3">
         <Link
-          to="/install"
+          to="/login"
           className="group relative w-full py-4 rounded-2xl bg-gradient-to-r from-[oklch(0.85_0.20_140)] via-[oklch(0.78_0.20_150)] to-[oklch(0.62_0.18_160)] text-[oklch(0.10_0.02_160)] font-bold shadow-[0_18px_50px_-12px_oklch(0.78_0.20_150/0.9)] flex items-center justify-center gap-2 active:scale-[.98] transition overflow-hidden animate-pulse-cta"
         >
           <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
