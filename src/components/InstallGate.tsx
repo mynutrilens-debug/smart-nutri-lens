@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Download, Rocket, ScanLine, Bell, Zap, Leaf } from "lucide-react";
+import { Download, Rocket, ScanLine, Bell, Zap, Leaf, Share, Plus, X } from "lucide-react";
 import { isNative } from "@/lib/native";
 
 type BIPEvent = Event & {
@@ -28,6 +28,12 @@ export function InstallGate({ to = "/login" }: { to?: string }) {
   const navigate = useNavigate();
   const [evt, setEvt] = useState<BIPEvent | null>(null);
   const [installing, setInstalling] = useState(false);
+  const [helpOpen, setHelpOpen] = useState<null | "ios" | "android" | "desktop">(null);
+
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown })?.MSStream;
+  const isAndroid = /Android/i.test(ua);
+  const isInIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -49,22 +55,25 @@ export function InstallGate({ to = "/login" }: { to?: string }) {
   }, [navigate, to]);
 
   const onInstall = async () => {
-    if (!evt) {
-      // iOS / unsupported: show inline instructions
-      alert("To install: tap Share → Add to Home Screen.");
+    // Native prompt available — use it directly
+    if (evt) {
+      setInstalling(true);
+      try {
+        await evt.prompt();
+        const { outcome } = await evt.userChoice;
+        if (outcome === "accepted") {
+          localStorage.setItem(SKIP_KEY, String(Date.now()));
+          navigate({ to: to as never, replace: true });
+        }
+      } finally {
+        setInstalling(false);
+      }
       return;
     }
-    setInstalling(true);
-    try {
-      await evt.prompt();
-      const { outcome } = await evt.userChoice;
-      if (outcome === "accepted") {
-        localStorage.setItem(SKIP_KEY, String(Date.now()));
-      }
-    } finally {
-      setInstalling(false);
-      navigate({ to: to as never, replace: true });
-    }
+    // No native prompt — explain why based on platform
+    if (isIOS) setHelpOpen("ios");
+    else if (isAndroid) setHelpOpen("android");
+    else setHelpOpen("desktop");
   };
 
   const onContinue = () => {
@@ -133,6 +142,49 @@ export function InstallGate({ to = "/login" }: { to?: string }) {
           50%      { box-shadow: 0 18px 60px -10px oklch(0.78 0.20 150 / 0.95), 0 0 0 14px oklch(0.78 0.20 150 / 0); }
         }
       `}</style>
+
+      {helpOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setHelpOpen(null)}>
+          <div className="w-full sm:max-w-sm bg-[oklch(0.12_0.02_160)] border border-white/10 rounded-t-3xl sm:rounded-3xl p-5 m-0 sm:m-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h3 className="text-base font-bold text-white">
+                {helpOpen === "ios" ? "Install on iPhone" : helpOpen === "android" ? "Install on Android" : "Install on Desktop"}
+              </h3>
+              <button onClick={() => setHelpOpen(null)} className="h-7 w-7 rounded-full hover:bg-white/10 flex items-center justify-center"><X className="h-4 w-4 text-white/70" /></button>
+            </div>
+            {isInIframe && (
+              <p className="text-[12px] text-amber-300/90 bg-amber-500/10 border border-amber-400/30 rounded-xl p-2.5 mb-3">
+                You're viewing this inside a preview. Open <span className="font-mono">app.mynutrilens.com</span> directly in your browser to install.
+              </p>
+            )}
+            {helpOpen === "ios" && (
+              <ol className="space-y-3 text-[13px] text-white/85">
+                <li className="flex gap-3"><span className="h-6 w-6 rounded-full bg-[oklch(0.78_0.20_150/0.2)] text-[oklch(0.85_0.20_140)] font-bold text-[11px] flex items-center justify-center shrink-0">1</span><span>Open this page in <b>Safari</b> (not Chrome on iOS).</span></li>
+                <li className="flex gap-3"><span className="h-6 w-6 rounded-full bg-[oklch(0.78_0.20_150/0.2)] text-[oklch(0.85_0.20_140)] font-bold text-[11px] flex items-center justify-center shrink-0">2</span><span>Tap the <Share className="inline h-3.5 w-3.5 mx-0.5" /> <b>Share</b> button in the toolbar.</span></li>
+                <li className="flex gap-3"><span className="h-6 w-6 rounded-full bg-[oklch(0.78_0.20_150/0.2)] text-[oklch(0.85_0.20_140)] font-bold text-[11px] flex items-center justify-center shrink-0">3</span><span>Scroll and tap <Plus className="inline h-3.5 w-3.5 mx-0.5" /> <b>Add to Home Screen</b>, then <b>Add</b>.</span></li>
+              </ol>
+            )}
+            {helpOpen === "android" && (
+              <ol className="space-y-3 text-[13px] text-white/85">
+                <li className="flex gap-3"><span className="h-6 w-6 rounded-full bg-[oklch(0.78_0.20_150/0.2)] text-[oklch(0.85_0.20_140)] font-bold text-[11px] flex items-center justify-center shrink-0">1</span><span>Open this page in <b>Chrome</b> (not in an in-app browser like Instagram/Facebook).</span></li>
+                <li className="flex gap-3"><span className="h-6 w-6 rounded-full bg-[oklch(0.78_0.20_150/0.2)] text-[oklch(0.85_0.20_140)] font-bold text-[11px] flex items-center justify-center shrink-0">2</span><span>Tap the <b>⋮ menu</b> in the top-right.</span></li>
+                <li className="flex gap-3"><span className="h-6 w-6 rounded-full bg-[oklch(0.78_0.20_150/0.2)] text-[oklch(0.85_0.20_140)] font-bold text-[11px] flex items-center justify-center shrink-0">3</span><span>Tap <b>Install app</b> or <b>Add to Home screen</b>.</span></li>
+                <li className="text-[11px] text-white/55 pl-9">If you don't see "Install app", the app may already be installed or your browser doesn't support it.</li>
+              </ol>
+            )}
+            {helpOpen === "desktop" && (
+              <ol className="space-y-3 text-[13px] text-white/85">
+                <li className="flex gap-3"><span className="h-6 w-6 rounded-full bg-[oklch(0.78_0.20_150/0.2)] text-[oklch(0.85_0.20_140)] font-bold text-[11px] flex items-center justify-center shrink-0">1</span><span>Open this page in <b>Chrome</b> or <b>Edge</b>.</span></li>
+                <li className="flex gap-3"><span className="h-6 w-6 rounded-full bg-[oklch(0.78_0.20_150/0.2)] text-[oklch(0.85_0.20_140)] font-bold text-[11px] flex items-center justify-center shrink-0">2</span><span>Click the <Download className="inline h-3.5 w-3.5 mx-0.5" /> <b>Install</b> icon in the address bar (right side).</span></li>
+                <li className="flex gap-3"><span className="h-6 w-6 rounded-full bg-[oklch(0.78_0.20_150/0.2)] text-[oklch(0.85_0.20_140)] font-bold text-[11px] flex items-center justify-center shrink-0">3</span><span>Click <b>Install</b> in the popup.</span></li>
+              </ol>
+            )}
+            <button onClick={onContinue} className="mt-5 w-full py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-sm font-semibold transition">
+              Continue in Browser
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
