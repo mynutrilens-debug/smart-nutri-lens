@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Download, Rocket, ScanLine, Bell, Zap, Leaf } from "lucide-react";
+import { Download, Rocket, ScanLine, Bell, Zap, Leaf, Share, Plus, X } from "lucide-react";
 import { isNative } from "@/lib/native";
 
 type BIPEvent = Event & {
