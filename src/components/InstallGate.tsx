@@ -28,6 +28,12 @@ export function InstallGate({ to = "/login" }: { to?: string }) {
   const navigate = useNavigate();
   const [evt, setEvt] = useState<BIPEvent | null>(null);
   const [installing, setInstalling] = useState(false);
+  const [helpOpen, setHelpOpen] = useState<null | "ios" | "android" | "desktop">(null);
+
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown })?.MSStream;
+  const isAndroid = /Android/i.test(ua);
+  const isInIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -49,22 +55,25 @@ export function InstallGate({ to = "/login" }: { to?: string }) {
   }, [navigate, to]);
 
   const onInstall = async () => {
-    if (!evt) {
-      // iOS / unsupported: show inline instructions
-      alert("To install: tap Share → Add to Home Screen.");
+    // Native prompt available — use it directly
+    if (evt) {
+      setInstalling(true);
+      try {
+        await evt.prompt();
+        const { outcome } = await evt.userChoice;
+        if (outcome === "accepted") {
+          localStorage.setItem(SKIP_KEY, String(Date.now()));
+          navigate({ to: to as never, replace: true });
+        }
+      } finally {
+        setInstalling(false);
+      }
       return;
     }
-    setInstalling(true);
-    try {
-      await evt.prompt();
-      const { outcome } = await evt.userChoice;
-      if (outcome === "accepted") {
-        localStorage.setItem(SKIP_KEY, String(Date.now()));
-      }
-    } finally {
-      setInstalling(false);
-      navigate({ to: to as never, replace: true });
-    }
+    // No native prompt — explain why based on platform
+    if (isIOS) setHelpOpen("ios");
+    else if (isAndroid) setHelpOpen("android");
+    else setHelpOpen("desktop");
   };
 
   const onContinue = () => {
