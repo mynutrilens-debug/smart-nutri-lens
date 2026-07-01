@@ -128,10 +128,10 @@ export function InstallPwaPrompt() {
                 </span>
               </div>
               <p className="text-[17px] font-extrabold leading-tight text-white mt-0.5">
-                Get MyNutriLens on your home screen
+                Download the MyNutriLens app
               </p>
               <p className="text-[12px] text-white/65 leading-snug mt-1">
-                Faster access · Push reminders · Works offline
+                Full-screen app · Push reminders · Works offline
               </p>
             </div>
           </div>
@@ -142,8 +142,13 @@ export function InstallPwaPrompt() {
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[oklch(0.85_0.20_140)] via-[oklch(0.78_0.20_150)] to-[oklch(0.62_0.18_160)] text-[oklch(0.08_0.02_160)] font-extrabold text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition shadow-[0_10px_30px_-8px_oklch(0.78_0.20_150/0.9)]"
             >
               <Download className="h-5 w-5" strokeWidth={2.8} />
-              {platformIos ? "Show me how" : "Install Now"}
+              {evt ? "Download App" : platformIos ? "How to install" : "Download App"}
             </button>
+            {!evt && !platformIos && (
+              <p className="text-[10px] text-white/50 text-center mt-2">
+                Use Chrome or Edge on Android/Desktop for one-tap install
+              </p>
+            )}
           </div>
         </div>
       </div>
