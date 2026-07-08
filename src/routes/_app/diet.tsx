@@ -303,6 +303,16 @@ function Diet() {
           );
         })}
       </div>
+
+      {recipeFor && (
+        <RecipeSheet
+          open={!!recipeFor}
+          onOpenChange={(v) => { if (!v) setRecipeFor(null); }}
+          mealKey={recipeFor.key}
+          mealName={recipeFor.name}
+          meal={recipeFor.meal}
+        />
+      )}
     </div>
   );
 }
