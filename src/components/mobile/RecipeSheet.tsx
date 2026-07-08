@@ -37,9 +37,10 @@ export function RecipeSheet({
     onSuccess: (data) => setRecipe(data),
   });
 
-  // Trigger fetch when opened for a fresh meal
-  const shouldFetch = open && !recipe && !gen.isPending && !gen.isError;
-  if (shouldFetch) queueMicrotask(() => gen.mutate());
+  useEffect(() => {
+    if (open && !recipe && !gen.isPending && !gen.isError) gen.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleOpenChange = (v: boolean) => {
     onOpenChange(v);
