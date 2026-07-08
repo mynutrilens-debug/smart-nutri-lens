@@ -3,9 +3,11 @@ import { useSuspenseQuery, useMutation, useQueryClient, useQuery } from "@tansta
 import { foodsQuery, dashboardQuery } from "@/lib/queries";
 import { deleteFood, logFood } from "@/lib/food.functions";
 import { generateAiPlan } from "@/lib/onboarding.functions";
-import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check } from "lucide-react";
+import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check, ChefHat } from "lucide-react";
 import { toast } from "sonner";
 import { MacroRings } from "@/components/mobile/MacroRings";
+import { RecipeSheet } from "@/components/mobile/RecipeSheet";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_app/diet")({
   component: Diet,
@@ -38,6 +40,8 @@ function Diet() {
     carbs: a.carbs + Number(f.carbs_g),
     fat: a.fat + Number(f.fat_g),
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+  const [recipeFor, setRecipeFor] = useState<{ key: string; name: string; meal: any } | null>(null);
 
   const del = useMutation({
     mutationFn: (id: string) => deleteFood({ data: { id } }),
@@ -182,20 +186,29 @@ function Diet() {
                     <div className="text-[10px] text-muted-foreground tabular-nums">
                       {Math.round(Number(meal.protein_g ?? 0))}P · {Math.round(Number(meal.carbs_g ?? 0))}C · {Math.round(Number(meal.fat_g ?? 0))}F
                     </div>
-                    {isMealLogged(m.k, meal) ? (
-                      <span className="h-7 px-2.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-semibold flex items-center gap-1">
-                        <Check className="h-3 w-3" /> Logged
-                      </span>
-                    ) : (
+                    <div className="flex items-center gap-1.5">
                       <button
-                        onClick={() => logMeal.mutate({ mealKey: m.k, meal })}
-                        disabled={logMeal.isPending}
-                        className="h-7 px-2.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-60"
+                        onClick={() => setRecipeFor({ key: m.k, name: meal_name(m.k, meal), meal })}
+                        className="h-7 px-2.5 rounded-full bg-white/5 border border-white/10 text-foreground/90 text-[10px] font-semibold flex items-center gap-1 active:scale-95 hover:bg-white/10 transition"
                       >
-                        <Plus className="h-3 w-3" /> Log
+                        <ChefHat className="h-3 w-3 text-emerald-400" /> Recipe
                       </button>
-                    )}
+                      {isMealLogged(m.k, meal) ? (
+                        <span className="h-7 px-2.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-semibold flex items-center gap-1">
+                          <Check className="h-3 w-3" /> Logged
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => logMeal.mutate({ mealKey: m.k, meal })}
+                          disabled={logMeal.isPending}
+                          className="h-7 px-2.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-60"
+                        >
+                          <Plus className="h-3 w-3" /> Log
+                        </button>
+                      )}
+                    </div>
                   </div>
+
                 </div>
               );
             })}
@@ -290,6 +303,16 @@ function Diet() {
           );
         })}
       </div>
+
+      {recipeFor && (
+        <RecipeSheet
+          open={!!recipeFor}
+          onOpenChange={(v) => { if (!v) setRecipeFor(null); }}
+          mealKey={recipeFor.key}
+          mealName={recipeFor.name}
+          meal={recipeFor.meal}
+        />
+      )}
     </div>
   );
 }
