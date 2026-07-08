@@ -41,6 +41,8 @@ function Diet() {
     fat: a.fat + Number(f.fat_g),
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
+  const [recipeFor, setRecipeFor] = useState<{ key: string; name: string; meal: any } | null>(null);
+
   const del = useMutation({
     mutationFn: (id: string) => deleteFood({ data: { id } }),
     onSuccess: () => {
