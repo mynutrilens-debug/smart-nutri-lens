@@ -3,9 +3,8 @@ import { useSuspenseQuery, useMutation, useQueryClient, useQuery } from "@tansta
 import { foodsQuery, dashboardQuery } from "@/lib/queries";
 import { deleteFood, logFood } from "@/lib/food.functions";
 import { generateAiPlan } from "@/lib/onboarding.functions";
-import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check, ChefHat } from "lucide-react";
+import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check, ChefHat, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-import { MacroRings } from "@/components/mobile/MacroRings";
 import { RecipeSheet } from "@/components/mobile/RecipeSheet";
 import { useState } from "react";
 
@@ -27,6 +26,61 @@ function meal_name(key: string, meal: any) {
   return first ? `${label}: ${first.slice(0, 160)}` : label;
 }
 
+const MACROS = [
+  { key: "calories", label: "Calories", unit: "kcal", color: "#4ADE80" },
+  { key: "protein",  label: "Protein",  unit: "g",    color: "#22D3EE" },
+  { key: "carbs",    label: "Carbs",    unit: "g",    color: "#A78BFA" },
+  { key: "fat",      label: "Fat",      unit: "g",    color: "#F59E0B" },
+] as const;
+
+function MacroBars({ totals, goals }: { totals: any; goals: any }) {
+  return (
+    <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-3 animate-slide-up">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+          <h2 className="text-sm font-semibold">Today's macros</h2>
+        </div>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Live</span>
+      </div>
+      <div className="space-y-2.5">
+        {MACROS.map((m) => {
+          const consumed = Math.round(Number(totals[m.key] ?? 0));
+          const goal = Math.max(1, Math.round(Number(goals[m.key] ?? 1)));
+          const pct = Math.min(100, (consumed / goal) * 100);
+          const remaining = Math.max(0, goal - consumed);
+          return (
+            <div key={m.key}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: m.color, boxShadow: `0 0 8px ${m.color}` }} />
+                  <span className="text-[11px] font-medium">{m.label}</span>
+                </div>
+                <span className="text-[11px] tabular-nums text-muted-foreground">
+                  <span className="text-foreground font-semibold">{consumed}</span> / {goal} {m.unit}
+                  <span className="ml-1.5 text-[10px]" style={{ color: remaining > 0 ? m.color : "#4ADE80" }}>
+                    {remaining > 0 ? `· ${remaining} left` : "· ✓"}
+                  </span>
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700 ease-out"
+                  style={{
+                    width: `${pct}%`,
+                    background: `linear-gradient(90deg, ${m.color}, ${m.color}dd)`,
+                    boxShadow: `0 0 10px ${m.color}80`,
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function Diet() {
   const { data } = useSuspenseQuery(foodsQuery);
   const { data: dash } = useQuery(dashboardQuery);
@@ -42,6 +96,8 @@ function Diet() {
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
   const [recipeFor, setRecipeFor] = useState<{ key: string; name: string; meal: any } | null>(null);
+  const [whyOpen, setWhyOpen] = useState(false);
+  const [expandedMeal, setExpandedMeal] = useState<string | null>(null);
 
   const del = useMutation({
     mutationFn: (id: string) => deleteFood({ data: { id } }),
@@ -78,29 +134,49 @@ function Diet() {
         notes: (input.meal.items ?? "").toString().slice(0, 500),
       }});
     },
-    onSuccess: () => {
+    // Optimistic update so progress bars & logged badge update instantly
+    onMutate: async (input) => {
+      await qc.cancelQueries({ queryKey: ["foods"] });
+      const prev = qc.getQueryData<any[]>(["foods"]) ?? [];
+      const optimistic = {
+        id: `optimistic-${Date.now()}`,
+        name: meal_name(input.mealKey, input.meal),
+        meal_type: (["breakfast","lunch","dinner"].includes(input.mealKey) ? input.mealKey : "snack"),
+        calories: Math.round(Number(input.meal.calories ?? 0)),
+        protein_g: Math.round(Number(input.meal.protein_g ?? 0)),
+        carbs_g: Math.round(Number(input.meal.carbs_g ?? 0)),
+        fat_g: Math.round(Number(input.meal.fat_g ?? 0)),
+        logged_at: new Date().toISOString(),
+        image_url: null,
+      };
+      qc.setQueryData(["foods"], [optimistic, ...prev]);
+      return { prev };
+    },
+    onError: (e: any, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(["foods"], ctx.prev);
+      toast.error(e.message ?? "Could not log");
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ["foods"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
-      toast.success("Logged to dashboard");
     },
-    onError: (e: any) => toast.error(e.message ?? "Could not log"),
+    onSuccess: () => toast.success("Logged"),
   });
 
   const plan: any = dash?.profile?.ai_plan;
   const meals = plan?.meals ?? null;
   const mealOrder: { k: string; label: string; icon: any; color: string }[] = [
-    { k: "breakfast", label: "Breakfast", icon: Sunrise, color: "oklch(0.82 0.16 80)" },
-    { k: "pre_workout", label: "Pre-workout", icon: Zap, color: "oklch(0.78 0.18 60)" },
-    { k: "post_workout", label: "Post-workout", icon: Dumbbell, color: "oklch(0.78 0.2 160)" },
-    { k: "lunch", label: "Lunch", icon: Sun, color: "oklch(0.84 0.18 145)" },
-    { k: "snack", label: "Snack", icon: Cookie, color: "oklch(0.7 0.18 25)" },
-    { k: "dinner", label: "Dinner", icon: Moon, color: "oklch(0.74 0.22 295)" },
+    { k: "breakfast", label: "Breakfast", icon: Sunrise, color: "#F59E0B" },
+    { k: "pre_workout", label: "Pre-workout", icon: Zap, color: "#FBBF24" },
+    { k: "post_workout", label: "Post-workout", icon: Dumbbell, color: "#4ADE80" },
+    { k: "lunch", label: "Lunch", icon: Sun, color: "#84CC16" },
+    { k: "snack", label: "Snack", icon: Cookie, color: "#F97316" },
+    { k: "dinner", label: "Dinner", icon: Moon, color: "#A78BFA" },
   ];
 
   const loggedNames = new Set(todays.map(f => f.name?.toLowerCase().trim()).filter(Boolean));
   const isMealLogged = (key: string, meal: any) => loggedNames.has(meal_name(key, meal).toLowerCase().trim());
 
-  const planDate = plan?.generated_at ? new Date(plan.generated_at) : null;
   const planGeneratedToday = (() => {
     const d = dash?.profile?.ai_plan_generated_at;
     if (!d) return false;
@@ -114,18 +190,18 @@ function Diet() {
   }));
 
   return (
-    <div className="px-5 pt-12 pb-8 space-y-5">
+    <div className="px-5 pt-12 pb-8 space-y-4">
       <header className="flex items-center justify-between animate-slide-up">
         <div>
-          <p className="text-xs text-muted-foreground">Today</p>
-          <h1 className="text-2xl font-bold tracking-tight">Nutrition timeline</h1>
+          <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Today</p>
+          <h1 className="text-2xl font-bold tracking-tight">Nutrition</h1>
         </div>
-        <Link to="/scan" className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-ring active:scale-95">
-          <Camera className="h-5 w-5 text-primary-foreground" />
+        <Link to="/scan" className="h-11 w-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-400 flex items-center justify-center shadow-[0_0_20px_rgba(74,222,128,0.4)] active:scale-95">
+          <Camera className="h-5 w-5 text-black" />
         </Link>
       </header>
 
-      <MacroRings
+      <MacroBars
         totals={totals}
         goals={{
           calories: dash?.profile?.daily_calorie_goal ?? 2200,
@@ -133,170 +209,211 @@ function Diet() {
           carbs: dash?.profile?.carbs_goal_g ?? 250,
           fat: dash?.profile?.fat_goal_g ?? 70,
         }}
-        insight={dash?.insight?.content ?? null}
       />
 
-
-      <section className="glass rounded-3xl p-5 space-y-4 animate-slide-up" style={{ animationDelay: ".08s" }}>
+      {/* AI Plan summary card */}
+      <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-3 animate-slide-up" style={{ animationDelay: ".05s" }}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <Sparkles className="h-4 w-4 text-primary" /> Personalized AI plan
+            <div className="flex items-center gap-1.5 text-sm font-semibold">
+              <Sparkles className="h-3.5 w-3.5 text-emerald-400" /> AI Plan
+              {plan?.bmi && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 text-[9px] font-semibold tabular-nums">
+                  BMI {plan.bmi}
+                </span>
+              )}
             </div>
-            {plan?.summary && <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{plan.summary}</p>}
-            {plan?.bmi && (
-              <div className="flex gap-2 mt-2 text-[10px]">
-                <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">BMI {plan.bmi}</span>
-                <span className="px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground uppercase tracking-wider">{plan.bmi_category}</span>
-              </div>
+            {plan?.summary && (
+              <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed line-clamp-2">{plan.summary}</p>
             )}
           </div>
           <button
             onClick={() => {
-              if (planGeneratedToday) { toast.info("Today's plan is already set. New plan unlocks tomorrow."); return; }
+              if (planGeneratedToday) { toast.info("Today's plan is already set."); return; }
               genPlan.mutate();
             }}
             disabled={genPlan.isPending || planGeneratedToday}
-            className="shrink-0 h-10 px-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-semibold glow-ring flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+            className="shrink-0 h-9 px-3 rounded-xl bg-emerald-500 text-black text-[11px] font-bold shadow-[0_0_16px_rgba(74,222,128,0.4)] flex items-center gap-1 active:scale-95 disabled:opacity-40"
           >
-            {genPlan.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {planGeneratedToday ? "Today's plan" : plan ? "Generate" : "Generate"}
+            {genPlan.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+            {planGeneratedToday ? "Today" : "Generate"}
           </button>
         </div>
 
-        {meals && (
-          <div className="space-y-2">
-            {mealOrder.map(m => {
-              const meal = meals[m.k];
-              if (!meal) return null;
-              const Icon = m.icon;
-              return (
-                <div key={m.k} className="rounded-2xl bg-white/5 border border-white/5 p-3">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="h-7 w-7 rounded-lg flex items-center justify-center" style={{ background: `${m.color}25` }}>
-                      <Icon className="h-3.5 w-3.5" style={{ color: m.color }} />
+        {plan && (
+          <>
+            <button
+              onClick={() => setWhyOpen(v => !v)}
+              className="w-full flex items-center justify-between text-[11px] font-semibold text-emerald-400/90 hover:text-emerald-400 py-1.5 border-t border-white/[0.04]"
+            >
+              <span>Why this plan?</span>
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${whyOpen ? "rotate-180" : ""}`} />
+            </button>
+            {whyOpen && (
+              <div className="space-y-2 pt-1 animate-fade-in">
+                {plan.bmi_category && (
+                  <p className="text-[11px] text-foreground/80">
+                    <span className="text-muted-foreground">Category: </span>
+                    <span className="font-semibold uppercase tracking-wider text-[10px]">{plan.bmi_category}</span>
+                  </p>
+                )}
+                {Array.isArray(plan.tips) && plan.tips.length > 0 && (
+                  <ul className="space-y-1">
+                    {plan.tips.map((t: string, i: number) => (
+                      <li key={i} className="text-[11px] text-muted-foreground leading-relaxed pl-3 relative">
+                        <span className="absolute left-0 top-1.5 h-1 w-1 rounded-full bg-emerald-400" />{t}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {Array.isArray(plan?.shakes) && plan.shakes.length > 0 && (
+                  <div className="pt-1">
+                    <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                      <GlassWater className="h-3 w-3 text-emerald-400" /> Recommended shakes
                     </div>
-                    <span className="text-xs font-semibold">{m.label}</span>
-                    {meal.timing && <span className="text-[10px] text-muted-foreground">· {meal.timing}</span>}
-                    <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">{meal.calories} kcal</span>
-                  </div>
-                  {meal.name && <p className="text-[11px] font-semibold text-foreground/95 mb-0.5">{meal.name}</p>}
-                  <p className="text-xs text-foreground/85 leading-relaxed">{meal.items}</p>
-                  <div className="flex items-center justify-between gap-2 mt-2">
-                    <div className="text-[10px] text-muted-foreground tabular-nums">
-                      {Math.round(Number(meal.protein_g ?? 0))}P · {Math.round(Number(meal.carbs_g ?? 0))}C · {Math.round(Number(meal.fat_g ?? 0))}F
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => setRecipeFor({ key: m.k, name: meal_name(m.k, meal), meal })}
-                        className="h-7 px-2.5 rounded-full bg-white/5 border border-white/10 text-foreground/90 text-[10px] font-semibold flex items-center gap-1 active:scale-95 hover:bg-white/10 transition"
-                      >
-                        <ChefHat className="h-3 w-3 text-emerald-400" /> Recipe
-                      </button>
-                      {isMealLogged(m.k, meal) ? (
-                        <span className="h-7 px-2.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-semibold flex items-center gap-1">
-                          <Check className="h-3 w-3" /> Logged
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => logMeal.mutate({ mealKey: m.k, meal })}
-                          disabled={logMeal.isPending}
-                          className="h-7 px-2.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center gap-1 active:scale-95 disabled:opacity-60"
-                        >
-                          <Plus className="h-3 w-3" /> Log
-                        </button>
-                      )}
+                    <div className="space-y-1.5">
+                      {plan.shakes.map((s: any, i: number) => (
+                        <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-semibold">{s.name}</span>
+                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{s.when}</span>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{s.ingredients}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
-
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {Array.isArray(plan?.shakes) && plan.shakes.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 text-xs font-semibold mb-2"><GlassWater className="h-3.5 w-3.5 text-accent" /> Recommended shakes</div>
-            <div className="space-y-2">
-              {plan.shakes.map((s: any, i: number) => (
-                <div key={i} className="rounded-2xl bg-gradient-to-r from-accent/10 to-primary/10 border border-white/5 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold">{s.name}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.when}</span>
-                  </div>
-                  <p className="text-[11px] text-foreground/80 mt-1 leading-relaxed">{s.ingredients}</p>
-                  <div className="text-[10px] text-muted-foreground tabular-nums mt-1">{s.calories} kcal · {s.protein_g}g protein</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {Array.isArray(plan?.tips) && plan.tips.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 text-xs font-semibold mb-2"><Lightbulb className="h-3.5 w-3.5 text-primary" /> Tips</div>
-            <ul className="space-y-1.5">
-              {plan.tips.map((t: string, i: number) => (
-                <li key={i} className="text-[11px] text-muted-foreground leading-relaxed pl-3 relative">
-                  <span className="absolute left-0 top-1.5 h-1 w-1 rounded-full bg-primary" />{t}
-                </li>
-              ))}
-            </ul>
-          </div>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {!plan && !genPlan.isPending && (
-          <p className="text-xs text-muted-foreground text-center py-2">Tap Generate to get a personalized plan based on your BMI, goal & preferences.</p>
+          <p className="text-[11px] text-muted-foreground text-center py-1">Tap Generate for a personalized plan.</p>
         )}
       </section>
 
+      {/* Suggested meals — compact */}
+      {meals && (
+        <section className="space-y-2 animate-slide-up" style={{ animationDelay: ".08s" }}>
+          <div className="flex items-center gap-1.5 px-1">
+            <Lightbulb className="h-3 w-3 text-emerald-400" />
+            <h3 className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Suggested meals</h3>
+          </div>
+          {mealOrder.map(m => {
+            const meal = meals[m.k];
+            if (!meal) return null;
+            const Icon = m.icon;
+            const logged = isMealLogged(m.k, meal);
+            const isExpanded = expandedMeal === m.k;
+            return (
+              <div
+                key={m.k}
+                className="rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-hidden transition-all duration-200 hover:border-emerald-400/20"
+              >
+                <button
+                  onClick={() => setExpandedMeal(isExpanded ? null : m.k)}
+                  className="w-full p-3 text-left"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${m.color}20` }}>
+                      <Icon className="h-4 w-4" style={{ color: m.color }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{m.label}</span>
+                        {meal.timing && <span className="text-[9px] text-muted-foreground/60">· {meal.timing}</span>}
+                      </div>
+                      <p className="text-[13px] font-semibold text-foreground truncate mt-0.5">
+                        {meal.name || meal_name(m.k, meal)}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1 text-[10px] tabular-nums text-muted-foreground">
+                        <span className="text-emerald-400 font-semibold">{meal.calories} kcal</span>
+                        <span>·</span>
+                        <span>{Math.round(Number(meal.protein_g ?? 0))}P</span>
+                        <span>{Math.round(Number(meal.carbs_g ?? 0))}C</span>
+                        <span>{Math.round(Number(meal.fat_g ?? 0))}F</span>
+                      </div>
+                    </div>
+                    <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  </div>
+                </button>
 
+                {isExpanded && (
+                  <div className="px-3 pb-3 animate-fade-in">
+                    <p className="text-[11px] text-foreground/80 leading-relaxed pl-[42px]">{meal.items}</p>
+                  </div>
+                )}
 
-      <div className="space-y-5">
+                <div className="flex items-center gap-1.5 px-3 pb-3 pl-[54px]">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setRecipeFor({ key: m.k, name: meal_name(m.k, meal), meal }); }}
+                    className="h-7 px-2.5 rounded-full bg-white/5 border border-white/10 text-foreground/90 text-[10px] font-semibold flex items-center gap-1 active:scale-95 hover:bg-white/10 transition"
+                  >
+                    <ChefHat className="h-3 w-3 text-emerald-400" /> Recipe
+                  </button>
+                  {logged ? (
+                    <span className="h-7 px-2.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-semibold flex items-center gap-1 border border-emerald-500/30">
+                      <Check className="h-3 w-3" /> Logged
+                    </span>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); logMeal.mutate({ mealKey: m.k, meal }); }}
+                      disabled={logMeal.isPending}
+                      className="h-7 px-2.5 rounded-full bg-emerald-500 text-black text-[10px] font-bold flex items-center gap-1 active:scale-95 disabled:opacity-60 shadow-[0_0_12px_rgba(74,222,128,0.3)]"
+                    >
+                      <Plus className="h-3 w-3" /> Log
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {/* Logged today timeline */}
+      <div className="space-y-4">
         {grouped.map((g, gi) => {
           const meta = mealMeta[g.type];
           const Icon = meta.icon;
           const cals = g.items.reduce((a, i) => a + i.calories, 0);
           return (
-            <section key={g.type} className="animate-slide-up" style={{ animationDelay: `${.1 + gi * .05}s` }}>
-              <div className="flex items-center gap-3 px-1 mb-2">
-                <div className="h-8 w-8 rounded-xl flex items-center justify-center" style={{ background: `${meta.color}25`, boxShadow: `0 0 16px ${meta.color}40` }}>
-                  <Icon className="h-4 w-4" style={{ color: meta.color }} />
+            <section key={g.type} className="animate-slide-up" style={{ animationDelay: `${.1 + gi * .04}s` }}>
+              <div className="flex items-center gap-2 px-1 mb-2">
+                <div className="h-6 w-6 rounded-lg flex items-center justify-center" style={{ background: `${meta.color}20` }}>
+                  <Icon className="h-3 w-3" style={{ color: meta.color }} />
                 </div>
-                <h3 className="text-sm font-semibold">{meta.label}</h3>
-                <span className="ml-auto text-xs text-muted-foreground tabular-nums">{cals} kcal</span>
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider">{meta.label}</h3>
+                <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">{cals} kcal</span>
               </div>
               {g.items.length === 0 ? (
-                <Link to="/scan" className="block glass rounded-2xl p-4 text-center text-xs text-muted-foreground border-dashed border-white/10 hover:border-primary/40 transition">
+                <Link to="/scan" className="block rounded-xl p-3 text-center text-[11px] text-muted-foreground border border-dashed border-white/10 hover:border-emerald-400/40 transition">
                   + Add {meta.label.toLowerCase()}
                 </Link>
               ) : (
-                <div className="relative pl-6">
-                  <div className="absolute left-2 top-1 bottom-1 w-px bg-gradient-to-b from-primary/40 via-accent/30 to-transparent" />
-                  <div className="space-y-2">
-                    {g.items.map(f => (
-                      <div key={f.id} className="relative glass rounded-2xl p-3 flex items-center gap-3">
-                        <div className="absolute -left-[18px] top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-primary glow-ring" />
-                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/25 to-accent/25 flex items-center justify-center text-xl overflow-hidden shrink-0">
-                          {f.image_url ? <img src={f.image_url} className="h-full w-full object-cover" alt="" /> : "🍽️"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{f.name}</div>
-                          <div className="text-[11px] text-muted-foreground tabular-nums">
-                            {Math.round(Number(f.protein_g))}P · {Math.round(Number(f.carbs_g))}C · {Math.round(Number(f.fat_g))}F
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold tabular-nums">{f.calories}</div>
-                          <div className="text-[10px] text-muted-foreground">kcal</div>
-                        </div>
-                        <button onClick={() => del.mutate(f.id)} className="ml-1 text-muted-foreground/60 hover:text-destructive p-1">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                <div className="space-y-1.5">
+                  {g.items.map(f => (
+                    <div key={f.id} className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-2.5 flex items-center gap-2.5">
+                      <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-400/10 flex items-center justify-center text-lg overflow-hidden shrink-0">
+                        {f.image_url ? <img src={f.image_url} className="h-full w-full object-cover" alt="" /> : "🍽️"}
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-medium truncate">{f.name}</div>
+                        <div className="text-[10px] text-muted-foreground tabular-nums">
+                          {Math.round(Number(f.protein_g))}P · {Math.round(Number(f.carbs_g))}C · {Math.round(Number(f.fat_g))}F
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-[13px] font-semibold tabular-nums text-emerald-400">{f.calories}</div>
+                        <div className="text-[9px] text-muted-foreground">kcal</div>
+                      </div>
+                      <button onClick={() => del.mutate(f.id)} className="text-muted-foreground/60 hover:text-destructive p-1">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </section>
