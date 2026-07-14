@@ -938,11 +938,19 @@ function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone 
           )}
 
           {/* Watch demo */}
-          <a href={ytUrl(ex.name)} target="_blank" rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const url = ytUrl(ex.name);
+              const win = window.open(url, "_blank", "noopener,noreferrer");
+              if (!win) window.top ? (window.top.location.href = url) : (window.location.href = url);
+            }}
             className="w-full h-11 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] flex items-center justify-center gap-2 text-sm font-bold transition active:scale-[0.98]">
             <PlayCircle className="h-4 w-4" style={{ color: NEON }} />
             Watch Demo <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-          </a>
+          </button>
         </div>
       )}
     </div>
