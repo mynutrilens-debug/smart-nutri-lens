@@ -110,11 +110,15 @@ export function RecipeSheet({
           {recipe && (
             <div className="space-y-4 animate-fade-in">
               {/* YouTube CTA */}
-              <a
-                href={ytUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="block rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-red-500/20 via-zinc-900 to-zinc-950 relative group active:scale-[0.99] transition"
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const win = window.open(ytUrl, "_blank", "noopener,noreferrer");
+                  if (!win) window.top ? (window.top.location.href = ytUrl) : (window.location.href = ytUrl);
+                }}
+                className="block w-full text-left rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-red-500/20 via-zinc-900 to-zinc-950 relative group active:scale-[0.99] transition"
               >
                 <div className="aspect-video flex items-center justify-center relative">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.25),transparent_60%)]" />
@@ -129,7 +133,7 @@ export function RecipeSheet({
                   </div>
                   <span className="text-[10px] font-semibold text-red-400 uppercase tracking-wider">Open</span>
                 </div>
-              </a>
+              </button>
 
               {/* Meta */}
               <div className="grid grid-cols-4 gap-2">
