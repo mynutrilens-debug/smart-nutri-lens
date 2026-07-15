@@ -13,6 +13,9 @@ type NativeInitOptions = {
 
 let nativeListenersReady = false;
 let nativeHandlers: NativeInitOptions = {};
+// Set to true when a deep-link auth callback is handled so the browserFinished
+// fallback knows not to double-navigate.
+let oauthDeepLinkHandled = false;
 
 export const isNative = () =>
   typeof window !== 'undefined' && Capacitor?.isNativePlatform?.() === true;
@@ -67,6 +70,7 @@ async function handleIncomingUrl(url: string) {
   try {
     const isAuth = await handleAuthCallback(url);
     if (isAuth) {
+      oauthDeepLinkHandled = true;
       const { Browser } = await import('@capacitor/browser');
       await Browser.close().catch(() => {});
       nativeHandlers.onAuthRedirect?.();
@@ -129,6 +133,26 @@ export async function signInWithNativeOAuth(provider: Provider) {
   if (error) throw error;
   if (!data.url) throw new Error('No OAuth URL returned');
   const { Browser } = await import('@capacitor/browser');
+
+  // Fallback: if the custom-scheme deep link never fires appUrlOpen (e.g. Chrome
+  // Custom Tab doesn't dispatch the intent on some Android versions), we catch
+  // the session via the browserFinished event instead.
+  oauthDeepLinkHandled = false;
+  const handle = await Browser.addListener('browserFinished', async () => {
+    await handle.remove();
+    if (oauthDeepLinkHandled) {
+      // Already handled by appUrlOpen — nothing to do.
+      oauthDeepLinkHandled = false;
+      return;
+    }
+    // Check whether Supabase already established a session (e.g. the redirect
+    // went to the web app URL and Supabase processed it there).
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      nativeHandlers.onAuthRedirect?.();
+    }
+  });
+
   await Browser.open({ url: data.url, presentationStyle: 'fullscreen' });
   return true;
 }
