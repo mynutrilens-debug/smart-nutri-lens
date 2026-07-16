@@ -1005,25 +1005,38 @@ function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone,
             </div>
           )}
 
-          {/* Watch demo */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const url = ytUrl(ex.name);
-              const win = window.open(url, "_blank", "noopener,noreferrer");
-              if (!win) window.top ? (window.top.location.href = url) : (window.location.href = url);
-            }}
-            className="w-full h-11 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] flex items-center justify-center gap-2 text-sm font-bold transition active:scale-[0.98]">
-            <PlayCircle className="h-4 w-4" style={{ color: NEON }} />
-            Watch Demo <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+          {/* Log workout + watch demo */}
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <button
+              type="button"
+              disabled={logging || logged}
+              onClick={onLog}
+              className="h-11 rounded-xl font-black text-black text-sm flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-70"
+              style={{
+                background: logged
+                  ? "oklch(0.84 0.20 145 / 30%)"
+                  : `linear-gradient(135deg, ${NEON}, oklch(0.92 0.2 130))`,
+                color: logged ? NEON : undefined,
+                boxShadow: logged ? undefined : `0 8px 20px -6px ${NEON}`,
+              }}>
+              {logging ? <Loader2 className="h-4 w-4 animate-spin" />
+                : logged ? <><Check className="h-4 w-4" strokeWidth={3} /> Logged · {estKcal} kcal</>
+                : <><Flame className="h-4 w-4" /> Log Workout · ~{estKcal} kcal</>}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const url = ytUrl(ex.name);
+                const win = window.open(url, "_blank", "noopener,noreferrer");
+                if (!win) window.top ? (window.top.location.href = url) : (window.location.href = url);
+              }}
+              className="h-11 px-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] flex items-center justify-center gap-1 text-xs font-bold transition active:scale-[0.98]">
+              <PlayCircle className="h-4 w-4" style={{ color: NEON }} />
+              Demo
+            </button>
+          </div>
 
 function timeAgo(d: Date) {
   const diff = Date.now() - d.getTime();
