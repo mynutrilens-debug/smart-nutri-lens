@@ -961,9 +961,14 @@ function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone,
                   <div className="text-center text-lg font-bold tabular-nums">{ex.reps}</div>
                   <div className="text-center text-sm text-muted-foreground tabular-nums">
                     <input
-                      type="text"
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.5"
+                      value={weights[`${idx}:${sIdx}`] ?? ""}
+                      onChange={(e) => onWeightChange(sIdx, e.target.value)}
                       placeholder="—"
-                      className="w-16 bg-transparent text-center text-base font-bold outline-none focus:text-white"
+                      className="w-16 bg-transparent text-center text-base font-bold outline-none focus:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <span className="text-[10px] ml-0.5">kg</span>
                   </div>
