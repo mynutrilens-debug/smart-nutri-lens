@@ -1037,6 +1037,13 @@ function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone,
               Demo
             </button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 
 function timeAgo(d: Date) {
   const diff = Date.now() - d.getTime();
