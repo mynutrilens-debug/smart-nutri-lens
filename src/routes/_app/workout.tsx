@@ -178,6 +178,57 @@ function Workout() {
   }>(null);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({ 0: true });
   const [rest, setRest] = useState<{ remaining: number; total: number } | null>(null);
+  // weights[exerciseIdx][setIdx] = kg string
+  const [weights, setWeights] = useState<Record<string, string>>({});
+  const [loggedEx, setLoggedEx] = useState<Record<number, boolean>>({});
+
+  const setWeight = (exIdx: number, setIdx: number, val: string) =>
+    setWeights(w => ({ ...w, [`${exIdx}:${setIdx}`]: val }));
+
+  const estimateExerciseKcal = (ex: any, exIdx: number) => {
+    const setCount = Number(ex.sets) || 3;
+    const repsNum = parseInt(String(ex.reps).match(/\d+/)?.[0] ?? "10", 10) || 10;
+    const bw = Number(profile.weight_kg) || 70;
+    let volume = 0;
+    let weighted = 0;
+    for (let s = 0; s < setCount; s++) {
+      const kg = parseFloat(weights[`${exIdx}:${s}`] || "");
+      if (!isNaN(kg) && kg > 0) { volume += kg * repsNum; weighted++; }
+    }
+    // Strength kcal: ~0.05/kg-rep of external load + base 4 kcal per set (from bodyweight/effort)
+    const base = setCount * 4 + Math.round(bw * 0.04 * setCount);
+    const load = Math.round(volume * 0.05);
+    return Math.max(8, base + load);
+  };
+
+  const estimateExerciseMin = (ex: any) => {
+    const setCount = Number(ex.sets) || 3;
+    const rest_sec = Number(ex.rest_sec) || 60;
+    return Math.max(1, Math.round((setCount * (30 + rest_sec)) / 60));
+  };
+
+  const logExMut = useMutation({
+    mutationFn: (payload: { name: string; duration_min: number; calories_burned: number }) =>
+      logWorkout({ data: {
+        name: payload.name,
+        workout_type: "strength",
+        duration_min: payload.duration_min,
+        calories_burned: payload.calories_burned,
+      }}),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["workouts"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success(`Logged · ${vars.calories_burned} kcal 🔥`);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Failed to log"),
+  });
+
+  const logExercise = (ex: any, exIdx: number) => {
+    const kcal = estimateExerciseKcal(ex, exIdx);
+    const mins = estimateExerciseMin(ex);
+    logExMut.mutate({ name: ex.name, duration_min: mins, calories_burned: kcal });
+    setLoggedEx(l => ({ ...l, [exIdx]: true }));
+  };
 
   useEffect(() => {
     if (!rest) return;
@@ -437,6 +488,12 @@ function Workout() {
                 session={session}
                 onToggleSet={(sIdx) => toggleSet(i, sIdx, Number(ex.rest_sec) || 60)}
                 lastDone={lastPerf(ex.name)}
+                weights={weights}
+                onWeightChange={(sIdx, v) => setWeight(i, sIdx, v)}
+                onLog={() => logExercise(ex, i)}
+                logging={logExMut.isPending}
+                logged={!!loggedEx[i]}
+                estKcal={estimateExerciseKcal(ex, i)}
               />
             ))}
             {exercises.length === 0 && (
@@ -813,7 +870,7 @@ function PhaseCard({ tone, icon: Icon, title, duration, items }: {
   );
 }
 
-function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone }: {
+function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone, weights, onWeightChange, onLog, logging, logged, estKcal }: {
   idx: number;
   ex: any;
   open: boolean;
@@ -821,6 +878,12 @@ function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone 
   session: null | { startedAt: number; completed: Record<string, boolean> };
   onToggleSet: (setIdx: number) => void;
   lastDone: Date | null;
+  weights: Record<string, string>;
+  onWeightChange: (setIdx: number, val: string) => void;
+  onLog: () => void;
+  logging: boolean;
+  logged: boolean;
+  estKcal: number;
 }) {
   const setCount = Number(ex.sets) || 3;
   const sets = Array.from({ length: setCount });
@@ -898,9 +961,14 @@ function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone 
                   <div className="text-center text-lg font-bold tabular-nums">{ex.reps}</div>
                   <div className="text-center text-sm text-muted-foreground tabular-nums">
                     <input
-                      type="text"
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.5"
+                      value={weights[`${idx}:${sIdx}`] ?? ""}
+                      onChange={(e) => onWeightChange(sIdx, e.target.value)}
                       placeholder="—"
-                      className="w-16 bg-transparent text-center text-base font-bold outline-none focus:text-white"
+                      className="w-16 bg-transparent text-center text-base font-bold outline-none focus:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <span className="text-[10px] ml-0.5">kg</span>
                   </div>
@@ -937,25 +1005,45 @@ function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone 
             </div>
           )}
 
-          {/* Watch demo */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const url = ytUrl(ex.name);
-              const win = window.open(url, "_blank", "noopener,noreferrer");
-              if (!win) window.top ? (window.top.location.href = url) : (window.location.href = url);
-            }}
-            className="w-full h-11 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] flex items-center justify-center gap-2 text-sm font-bold transition active:scale-[0.98]">
-            <PlayCircle className="h-4 w-4" style={{ color: NEON }} />
-            Watch Demo <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
+          {/* Log workout + watch demo */}
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <button
+              type="button"
+              disabled={logging || logged}
+              onClick={onLog}
+              className="h-11 rounded-xl font-black text-black text-sm flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-70"
+              style={{
+                background: logged
+                  ? "oklch(0.84 0.20 145 / 30%)"
+                  : `linear-gradient(135deg, ${NEON}, oklch(0.92 0.2 130))`,
+                color: logged ? NEON : undefined,
+                boxShadow: logged ? undefined : `0 8px 20px -6px ${NEON}`,
+              }}>
+              {logging ? <Loader2 className="h-4 w-4 animate-spin" />
+                : logged ? <><Check className="h-4 w-4" strokeWidth={3} /> Logged · {estKcal} kcal</>
+                : <><Flame className="h-4 w-4" /> Log Workout · ~{estKcal} kcal</>}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const url = ytUrl(ex.name);
+                const win = window.open(url, "_blank", "noopener,noreferrer");
+                if (!win) window.top ? (window.top.location.href = url) : (window.location.href = url);
+              }}
+              className="h-11 px-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] flex items-center justify-center gap-1 text-xs font-bold transition active:scale-[0.98]">
+              <PlayCircle className="h-4 w-4" style={{ color: NEON }} />
+              Demo
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 }
+
+
 
 function timeAgo(d: Date) {
   const diff = Date.now() - d.getTime();
