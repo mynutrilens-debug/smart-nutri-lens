@@ -870,7 +870,7 @@ function PhaseCard({ tone, icon: Icon, title, duration, items }: {
   );
 }
 
-function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone }: {
+function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone, weights, onWeightChange, onLog, logging, logged, estKcal }: {
   idx: number;
   ex: any;
   open: boolean;
@@ -878,6 +878,12 @@ function ExerciseCard({ idx, ex, open, onToggle, session, onToggleSet, lastDone 
   session: null | { startedAt: number; completed: Record<string, boolean> };
   onToggleSet: (setIdx: number) => void;
   lastDone: Date | null;
+  weights: Record<string, string>;
+  onWeightChange: (setIdx: number, val: string) => void;
+  onLog: () => void;
+  logging: boolean;
+  logged: boolean;
+  estKcal: number;
 }) {
   const setCount = Number(ex.sets) || 3;
   const sets = Array.from({ length: setCount });
