@@ -178,6 +178,57 @@ function Workout() {
   }>(null);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({ 0: true });
   const [rest, setRest] = useState<{ remaining: number; total: number } | null>(null);
+  // weights[exerciseIdx][setIdx] = kg string
+  const [weights, setWeights] = useState<Record<string, string>>({});
+  const [loggedEx, setLoggedEx] = useState<Record<number, boolean>>({});
+
+  const setWeight = (exIdx: number, setIdx: number, val: string) =>
+    setWeights(w => ({ ...w, [`${exIdx}:${setIdx}`]: val }));
+
+  const estimateExerciseKcal = (ex: any, exIdx: number) => {
+    const setCount = Number(ex.sets) || 3;
+    const repsNum = parseInt(String(ex.reps).match(/\d+/)?.[0] ?? "10", 10) || 10;
+    const bw = Number(profile.weight_kg) || 70;
+    let volume = 0;
+    let weighted = 0;
+    for (let s = 0; s < setCount; s++) {
+      const kg = parseFloat(weights[`${exIdx}:${s}`] || "");
+      if (!isNaN(kg) && kg > 0) { volume += kg * repsNum; weighted++; }
+    }
+    // Strength kcal: ~0.05/kg-rep of external load + base 4 kcal per set (from bodyweight/effort)
+    const base = setCount * 4 + Math.round(bw * 0.04 * setCount);
+    const load = Math.round(volume * 0.05);
+    return Math.max(8, base + load);
+  };
+
+  const estimateExerciseMin = (ex: any) => {
+    const setCount = Number(ex.sets) || 3;
+    const rest_sec = Number(ex.rest_sec) || 60;
+    return Math.max(1, Math.round((setCount * (30 + rest_sec)) / 60));
+  };
+
+  const logExMut = useMutation({
+    mutationFn: (payload: { name: string; duration_min: number; calories_burned: number }) =>
+      logWorkout({ data: {
+        name: payload.name,
+        workout_type: "strength",
+        duration_min: payload.duration_min,
+        calories_burned: payload.calories_burned,
+      }}),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["workouts"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success(`Logged · ${vars.calories_burned} kcal 🔥`);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Failed to log"),
+  });
+
+  const logExercise = (ex: any, exIdx: number) => {
+    const kcal = estimateExerciseKcal(ex, exIdx);
+    const mins = estimateExerciseMin(ex);
+    logExMut.mutate({ name: ex.name, duration_min: mins, calories_burned: kcal });
+    setLoggedEx(l => ({ ...l, [exIdx]: true }));
+  };
 
   useEffect(() => {
     if (!rest) return;
