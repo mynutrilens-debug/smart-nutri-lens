@@ -488,6 +488,12 @@ function Workout() {
                 session={session}
                 onToggleSet={(sIdx) => toggleSet(i, sIdx, Number(ex.rest_sec) || 60)}
                 lastDone={lastPerf(ex.name)}
+                weights={weights}
+                onWeightChange={(sIdx, v) => setWeight(i, sIdx, v)}
+                onLog={() => logExercise(ex, i)}
+                logging={logExMut.isPending}
+                logged={!!loggedEx[i]}
+                estKcal={estimateExerciseKcal(ex, i)}
               />
             ))}
             {exercises.length === 0 && (
