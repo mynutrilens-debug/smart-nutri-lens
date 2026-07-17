@@ -138,7 +138,19 @@ export const generateAiPlan = createServerFn({ method: "POST" })
       ? `- Region: India · Sub-cuisine focus: ${cuisine || "balanced pan-Indian"} (use authentic local staples — e.g. Maharashtrian: poha, bhakri, varan-bhaat, misal; Kerala: appam, puttu, fish curry, sambhar; Tamil: idli, dosa, sambar, rasam; Rajasthani: dal-baati, gatte ki sabzi, khichdi; Punjabi: roti, dal, sarson, paneer; Bengali: macher jhol, luchi; Gujarati: thepla, dhokla; South Indian: ragi, millets). Use household measures (katori, roti count, glass).`
       : `- Region: ${region}${cuisine ? ` · Cuisine: ${cuisine}` : ""}`;
 
-    const prompt = `You are a certified nutrition and fitness coach. Build a PERSONALIZED daily diet plan. Return STRICT JSON only.
+    // Health signals from Apple Health / Health Connect (7-day averages)
+    const { data: snaps } = await supabase
+      .from("health_snapshots")
+      .select("steps, calories_burned, active_minutes, avg_heart_rate, resting_heart_rate, sleep_minutes")
+      .eq("user_id", userId)
+      .gte("captured_on", new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10));
+    const n = snaps?.length ?? 0;
+    const avg = (k: string) => n ? Math.round(snaps!.reduce((a: number, s: any) => a + (Number(s[k]) || 0), 0) / n) : 0;
+    const healthLine = n > 0
+      ? `- Health signals (7-day avg from Apple Health / Health Connect): steps ${avg("steps")}, active min ${avg("active_minutes")}, calories burned ${avg("calories_burned")}, resting HR ${avg("resting_heart_rate") || avg("avg_heart_rate") || "n/a"}, sleep ${Math.round(avg("sleep_minutes") / 60)}h. Tune calorie target to measured activity (not just self-reported) and prefer lighter meals/recovery focus on days after <6h sleep.`
+      : `- Health signals: none synced yet.`;
+
+
 
 USER PROFILE
 - Gender: ${p.gender}, Age: ${p.age}
