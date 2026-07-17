@@ -10,6 +10,7 @@ import {
   Award, Moon, Dumbbell, Heart, ChevronRight, Zap, Medal, Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
+import { HealthSyncCard } from "@/components/mobile/HealthSyncCard";
 
 export const Route = createFileRoute("/_app/profile")({
   component: Profile,
