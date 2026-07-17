@@ -67,7 +67,7 @@ async function readHealthKit(sinceISO: string): Promise<HealthSnapshot> {
   const end = new Date();
   const q = { startDate: start.toISOString(), endDate: end.toISOString(), limit: 0 } as any;
 
-  const safe = async <T,>(fn: () => Promise<T>): Promise<T | null> => {
+  const safe = async (fn: () => Promise<any>): Promise<any> => {
     try { return await fn(); } catch { return null; }
   };
 
