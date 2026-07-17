@@ -107,6 +107,66 @@ export type Database = {
         }
         Relationships: []
       }
+      health_snapshots: {
+        Row: {
+          active_minutes: number | null
+          avg_heart_rate: number | null
+          calories_burned: number | null
+          captured_on: string
+          created_at: string
+          distance_m: number | null
+          height_cm: number | null
+          id: string
+          raw: Json | null
+          resting_heart_rate: number | null
+          sleep_minutes: number | null
+          source: string
+          steps: number | null
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+          workouts_count: number | null
+        }
+        Insert: {
+          active_minutes?: number | null
+          avg_heart_rate?: number | null
+          calories_burned?: number | null
+          captured_on: string
+          created_at?: string
+          distance_m?: number | null
+          height_cm?: number | null
+          id?: string
+          raw?: Json | null
+          resting_heart_rate?: number | null
+          sleep_minutes?: number | null
+          source: string
+          steps?: number | null
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+          workouts_count?: number | null
+        }
+        Update: {
+          active_minutes?: number | null
+          avg_heart_rate?: number | null
+          calories_burned?: number | null
+          captured_on?: string
+          created_at?: string
+          distance_m?: number | null
+          height_cm?: number | null
+          id?: string
+          raw?: Json | null
+          resting_heart_rate?: number | null
+          sleep_minutes?: number | null
+          source?: string
+          steps?: number | null
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number | null
+          workouts_count?: number | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -151,6 +211,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_minutes_today: number | null
           activity_level: string | null
           age: number | null
           ai_plan: Json | null
@@ -166,6 +227,8 @@ export type Database = {
           display_name: string | null
           fat_goal_g: number
           gender: string | null
+          health_last_synced_at: string | null
+          health_sync_enabled: boolean
           height_cm: number | null
           last_active_date: string | null
           medical_conditions: string[] | null
@@ -174,6 +237,8 @@ export type Database = {
           physique_goal: string | null
           protein_goal_g: number
           region: string | null
+          resting_hr: number | null
+          sleep_minutes: number | null
           streak_count: number
           target_weight_kg: number | null
           updated_at: string
@@ -181,6 +246,7 @@ export type Database = {
           weight_kg: number | null
         }
         Insert: {
+          active_minutes_today?: number | null
           activity_level?: string | null
           age?: number | null
           ai_plan?: Json | null
@@ -196,6 +262,8 @@ export type Database = {
           display_name?: string | null
           fat_goal_g?: number
           gender?: string | null
+          health_last_synced_at?: string | null
+          health_sync_enabled?: boolean
           height_cm?: number | null
           last_active_date?: string | null
           medical_conditions?: string[] | null
@@ -204,6 +272,8 @@ export type Database = {
           physique_goal?: string | null
           protein_goal_g?: number
           region?: string | null
+          resting_hr?: number | null
+          sleep_minutes?: number | null
           streak_count?: number
           target_weight_kg?: number | null
           updated_at?: string
@@ -211,6 +281,7 @@ export type Database = {
           weight_kg?: number | null
         }
         Update: {
+          active_minutes_today?: number | null
           activity_level?: string | null
           age?: number | null
           ai_plan?: Json | null
@@ -226,6 +297,8 @@ export type Database = {
           display_name?: string | null
           fat_goal_g?: number
           gender?: string | null
+          health_last_synced_at?: string | null
+          health_sync_enabled?: boolean
           height_cm?: number | null
           last_active_date?: string | null
           medical_conditions?: string[] | null
@@ -234,6 +307,8 @@ export type Database = {
           physique_goal?: string | null
           protein_goal_g?: number
           region?: string | null
+          resting_hr?: number | null
+          sleep_minutes?: number | null
           streak_count?: number
           target_weight_kg?: number | null
           updated_at?: string
@@ -359,6 +434,8 @@ export type Database = {
           logged_at: string
           name: string
           notes: string | null
+          source: string | null
+          source_id: string | null
           user_id: string
           workout_type: string
         }
@@ -370,6 +447,8 @@ export type Database = {
           logged_at?: string
           name: string
           notes?: string | null
+          source?: string | null
+          source_id?: string | null
           user_id: string
           workout_type?: string
         }
@@ -381,6 +460,8 @@ export type Database = {
           logged_at?: string
           name?: string
           notes?: string | null
+          source?: string | null
+          source_id?: string | null
           user_id?: string
           workout_type?: string
         }
