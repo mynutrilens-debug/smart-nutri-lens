@@ -161,6 +161,7 @@ ${cuisineLine}
 - Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
 - Daily targets: ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g
 - Plan date (vary dishes day-to-day): ${new Date().toISOString().slice(0, 10)}
+${healthLine}
 
 RULES
 - Tailor calories/macros to BMI + goal (deficit for weight/fat loss, surplus for muscle gain, balanced for maintenance/recomp).
