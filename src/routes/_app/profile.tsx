@@ -129,6 +129,18 @@ function Profile() {
         </button>
       </header>
 
+      {/* ── Health sources (HealthKit / Health Connect) ── */}
+      <section className="animate-slide-up" style={{ animationDelay: ".02s" }}>
+        <HealthSyncCard
+          lastSyncedAt={(p as any)?.health_last_synced_at}
+          enabled={(p as any)?.health_sync_enabled}
+          restingHr={(p as any)?.resting_hr}
+          sleepMinutes={(p as any)?.sleep_minutes}
+          activeMinutes={(p as any)?.active_minutes_today}
+        />
+      </section>
+
+
       {/* ── Hero KPI: Consistency + Weekly goal ─────────── */}
       <section className="grid grid-cols-2 gap-3 animate-slide-up" style={{ animationDelay: ".04s" }}>
         <KpiCard
