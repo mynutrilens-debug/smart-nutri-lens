@@ -149,8 +149,7 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const healthLine = n > 0
       ? `- Health signals (7-day avg from Apple Health / Health Connect): steps ${avg("steps")}, active min ${avg("active_minutes")}, calories burned ${avg("calories_burned")}, resting HR ${avg("resting_heart_rate") || avg("avg_heart_rate") || "n/a"}, sleep ${Math.round(avg("sleep_minutes") / 60)}h. Tune calorie target to measured activity (not just self-reported) and prefer lighter meals/recovery focus on days after <6h sleep.`
       : `- Health signals: none synced yet.`;
-
-
+    const prompt = `You are a certified nutrition and fitness coach. Build a PERSONALIZED daily diet plan. Return STRICT JSON only.
 
 USER PROFILE
 - Gender: ${p.gender}, Age: ${p.age}
