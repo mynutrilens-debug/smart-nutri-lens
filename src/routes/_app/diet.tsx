@@ -6,6 +6,7 @@ import { generateAiPlan } from "@/lib/onboarding.functions";
 import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check, ChefHat, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { RecipeSheet } from "@/components/mobile/RecipeSheet";
+import { MealThumb } from "@/components/mobile/MealThumb";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_app/diet")({
@@ -317,9 +318,8 @@ function Diet() {
                   className="w-full p-3 text-left"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${m.color}20` }}>
-                      <Icon className="h-4 w-4" style={{ color: m.color }} />
-                    </div>
+                    <MealThumb name={meal.name || meal_name(m.k, meal)} items={meal.items} fallbackColor={m.color} FallbackIcon={Icon} />
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{m.label}</span>
