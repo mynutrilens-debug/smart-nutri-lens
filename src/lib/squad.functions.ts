@@ -202,7 +202,7 @@ export const getSquadLeaderboard = createServerFn({ method: "GET" })
       supabase.from("food_logs").select("user_id, logged_at").in("user_id", memberIds).gte("logged_at", start).lte("logged_at", end),
       supabase.from("workouts").select("user_id, logged_at, calories_burned").in("user_id", memberIds).gte("logged_at", start).lte("logged_at", end),
       supabase.from("weight_entries").select("user_id, logged_at, weight_kg").in("user_id", memberIds).gte("logged_at", start).lte("logged_at", end).order("logged_at", { ascending: true }),
-      supabase.from("health_snapshots").select("user_id, date, steps, water_ml, sleep_minutes").in("user_id", memberIds).gte("date", start.slice(0, 10)).lte("date", end.slice(0, 10)),
+      supabase.from("health_snapshots").select("user_id, captured_on, steps, active_minutes, sleep_minutes").in("user_id", memberIds).gte("captured_on", start.slice(0, 10)).lte("captured_on", end.slice(0, 10)),
     ]);
 
     const leaderboard = (members ?? []).map((m) => {
@@ -249,7 +249,7 @@ export const finalizeSquad = createServerFn({ method: "POST" })
       supabase.from("food_logs").select("user_id, logged_at").in("user_id", memberIds).gte("logged_at", squad.starts_at).lte("logged_at", squad.ends_at),
       supabase.from("workouts").select("user_id, logged_at").in("user_id", memberIds).gte("logged_at", squad.starts_at).lte("logged_at", squad.ends_at),
       supabase.from("weight_entries").select("user_id, logged_at, weight_kg").in("user_id", memberIds).gte("logged_at", squad.starts_at).lte("logged_at", squad.ends_at).order("logged_at", { ascending: true }),
-      supabase.from("health_snapshots").select("user_id, date, steps, water_ml, sleep_minutes").in("user_id", memberIds).gte("date", squad.starts_at.slice(0, 10)).lte("date", squad.ends_at.slice(0, 10)),
+      supabase.from("health_snapshots").select("user_id, captured_on, steps, active_minutes, sleep_minutes").in("user_id", memberIds).gte("captured_on", squad.starts_at.slice(0, 10)).lte("captured_on", squad.ends_at.slice(0, 10)),
     ]);
     const scored = (members ?? []).map((m) => {
       const pts = computePointsFor({
