@@ -23,6 +23,7 @@ import { Route as AppDietRouteImport } from './routes/_app/diet'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
 import { Route as ApiPublicFirebaseConfigRouteImport } from './routes/api/public/firebase-config'
+import { Route as AppSquadsSquadIdRouteImport } from './routes/_app/squads.$squadId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -94,6 +95,11 @@ const ApiPublicFirebaseConfigRoute = ApiPublicFirebaseConfigRouteImport.update({
   path: '/api/public/firebase-config',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppSquadsSquadIdRoute = AppSquadsSquadIdRouteImport.update({
+  id: '/$squadId',
+  path: '/$squadId',
+  getParentRoute: () => AppSquadsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -105,8 +111,9 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof AppPricingRoute
   '/profile': typeof AppProfileRoute
   '/scan': typeof AppScanRoute
-  '/squads': typeof AppSquadsRoute
+  '/squads': typeof AppSquadsRouteWithChildren
   '/workout': typeof AppWorkoutRoute
+  '/squads/$squadId': typeof AppSquadsSquadIdRoute
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
 }
@@ -120,8 +127,9 @@ export interface FileRoutesByTo {
   '/pricing': typeof AppPricingRoute
   '/profile': typeof AppProfileRoute
   '/scan': typeof AppScanRoute
-  '/squads': typeof AppSquadsRoute
+  '/squads': typeof AppSquadsRouteWithChildren
   '/workout': typeof AppWorkoutRoute
+  '/squads/$squadId': typeof AppSquadsSquadIdRoute
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
 }
@@ -137,8 +145,9 @@ export interface FileRoutesById {
   '/_app/pricing': typeof AppPricingRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/scan': typeof AppScanRoute
-  '/_app/squads': typeof AppSquadsRoute
+  '/_app/squads': typeof AppSquadsRouteWithChildren
   '/_app/workout': typeof AppWorkoutRoute
+  '/_app/squads/$squadId': typeof AppSquadsSquadIdRoute
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
 }
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/squads'
     | '/workout'
+    | '/squads/$squadId'
     | '/api/public/firebase-config'
     | '/api/public/razorpay-webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/squads'
     | '/workout'
+    | '/squads/$squadId'
     | '/api/public/firebase-config'
     | '/api/public/razorpay-webhook'
   id:
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/_app/scan'
     | '/_app/squads'
     | '/_app/workout'
+    | '/_app/squads/$squadId'
     | '/api/public/firebase-config'
     | '/api/public/razorpay-webhook'
   fileRoutesById: FileRoutesById
@@ -299,8 +311,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFirebaseConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/squads/$squadId': {
+      id: '/_app/squads/$squadId'
+      path: '/$squadId'
+      fullPath: '/squads/$squadId'
+      preLoaderRoute: typeof AppSquadsSquadIdRouteImport
+      parentRoute: typeof AppSquadsRoute
+    }
   }
 }
+
+interface AppSquadsRouteChildren {
+  AppSquadsSquadIdRoute: typeof AppSquadsSquadIdRoute
+}
+
+const AppSquadsRouteChildren: AppSquadsRouteChildren = {
+  AppSquadsSquadIdRoute: AppSquadsSquadIdRoute,
+}
+
+const AppSquadsRouteWithChildren = AppSquadsRoute._addFileChildren(
+  AppSquadsRouteChildren,
+)
 
 interface AppRouteChildren {
   AppChatRoute: typeof AppChatRoute
@@ -310,7 +341,7 @@ interface AppRouteChildren {
   AppPricingRoute: typeof AppPricingRoute
   AppProfileRoute: typeof AppProfileRoute
   AppScanRoute: typeof AppScanRoute
-  AppSquadsRoute: typeof AppSquadsRoute
+  AppSquadsRoute: typeof AppSquadsRouteWithChildren
   AppWorkoutRoute: typeof AppWorkoutRoute
 }
 
@@ -322,7 +353,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPricingRoute: AppPricingRoute,
   AppProfileRoute: AppProfileRoute,
   AppScanRoute: AppScanRoute,
-  AppSquadsRoute: AppSquadsRoute,
+  AppSquadsRoute: AppSquadsRouteWithChildren,
   AppWorkoutRoute: AppWorkoutRoute,
 }
 
