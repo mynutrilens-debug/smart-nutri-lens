@@ -6,6 +6,7 @@ import { generateAiPlan } from "@/lib/onboarding.functions";
 import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check, ChefHat, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { RecipeSheet } from "@/components/mobile/RecipeSheet";
+import { MealThumb } from "@/components/mobile/MealThumb";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_app/diet")({
