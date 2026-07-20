@@ -378,3 +378,157 @@ function Home() {
     </div>
   );
 }
+
+function SquadCard({ squad }: { squad: any }) {
+  const daysLeft = Math.max(0, Math.ceil((new Date(squad.ends_at).getTime() - Date.now()) / 86400000));
+  const totalDays = squad.period === "monthly" ? 30 : 7;
+  const elapsed = Math.max(0, totalDays - daysLeft);
+  const progressPct = Math.min(100, Math.round((elapsed / totalDays) * 100));
+  const inviteUrl = `${typeof window !== "undefined" ? window.location.origin : "https://app.mynutrilens.com"}/squads/join/${squad.code}`;
+  const inviteMsg = `🔥 Join my "${squad.name}" squad on MyNutriLens! Code: ${squad.code}\n${inviteUrl}`;
+  const members: any[] = squad.members ?? [];
+  const rank = squad.my_rank ?? 1;
+  const rankColor = rank === 1 ? "text-amber-300" : rank === 2 ? "text-slate-200" : rank === 3 ? "text-orange-300" : "text-emerald-300";
+
+  const copyCode = (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    navigator.clipboard.writeText(squad.code);
+    toast.success(`Code ${squad.code} copied`);
+  };
+  const shareLink = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    try {
+      if (navigator.share) await navigator.share({ title: `Join ${squad.name}`, text: inviteMsg, url: inviteUrl });
+      else { await navigator.clipboard.writeText(inviteUrl); toast.success("Invite link copied"); }
+    } catch {}
+  };
+  const whatsapp = (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    window.open(`https://wa.me/?text=${encodeURIComponent(inviteMsg)}`, "_blank");
+  };
+
+  return (
+    <Link
+      to="/squads/$squadId"
+      params={{ squadId: squad.id }}
+      className="relative block overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/[0.08] via-black/40 to-black/60 backdrop-blur-xl p-4 group active:scale-[0.99] transition-transform"
+    >
+      {/* ambient glow */}
+      <div className="absolute -top-20 -right-16 h-44 w-44 rounded-full bg-emerald-400/20 blur-3xl group-hover:bg-emerald-400/30 transition-all" />
+      <div className="absolute -bottom-16 -left-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl" />
+
+      <div className="relative">
+        {/* Header */}
+        <div className="flex items-start gap-3">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_0_22px_rgba(52,211,153,0.5)] shrink-0">
+            <Users className="h-5 w-5 text-black" strokeWidth={2.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h4 className="text-base font-bold truncate">{squad.name}</h4>
+              <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-emerald-400/15 text-emerald-300 border border-emerald-400/25 font-semibold">
+                {squad.code}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground capitalize mt-0.5">
+              {String(squad.challenge_type).replace("_", " ")} · {daysLeft}d left
+            </p>
+          </div>
+          <div className={`flex items-center gap-1 ${rankColor}`}>
+            <Medal className="h-4 w-4" />
+            <span className="text-sm font-bold tabular-nums">#{rank}</span>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="mt-3.5 grid grid-cols-3 gap-2">
+          <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-2.5 py-2">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <Zap className="h-2.5 w-2.5 text-emerald-300" /> Weekly XP
+            </p>
+            <p className="text-base font-bold tabular-nums text-emerald-300 mt-0.5">{squad.my_points ?? 0}</p>
+          </div>
+          <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-2.5 py-2">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <Flame className="h-2.5 w-2.5 text-orange-300" /> Streak
+            </p>
+            <p className="text-base font-bold tabular-nums text-orange-300 mt-0.5">{squad.my_streak ?? 0}d</p>
+          </div>
+          <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-2.5 py-2">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <Users className="h-2.5 w-2.5 text-cyan-300" /> Squad
+            </p>
+            <p className="text-base font-bold tabular-nums text-cyan-300 mt-0.5">{squad.member_count ?? members.length}</p>
+          </div>
+        </div>
+
+        {/* Avatars + progress */}
+        <div className="mt-3.5 flex items-center gap-3">
+          <div className="flex -space-x-2">
+            {members.slice(0, 4).map((m: any, i: number) => {
+              const initial = (m.display_name ?? "A").trim().charAt(0).toUpperCase();
+              const gradients = [
+                "from-emerald-400 to-cyan-400",
+                "from-fuchsia-400 to-violet-500",
+                "from-amber-400 to-orange-500",
+                "from-sky-400 to-indigo-500",
+              ];
+              return (
+                <div
+                  key={m.user_id}
+                  className={`h-8 w-8 rounded-full bg-gradient-to-br ${gradients[i % gradients.length]} border-2 border-black flex items-center justify-center text-[11px] font-bold text-black`}
+                  title={m.display_name}
+                >
+                  {initial}
+                </div>
+              );
+            })}
+            {members.length > 4 && (
+              <div className="h-8 w-8 rounded-full bg-white/10 border-2 border-black flex items-center justify-center text-[10px] font-bold text-foreground/80">
+                +{members.length - 4}
+              </div>
+            )}
+          </div>
+          <div className="flex-1">
+            <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div
+                className="h-full rounded-full transition-[width] duration-1000"
+                style={{
+                  width: `${progressPct}%`,
+                  background: "linear-gradient(90deg,#10b981,#34d399,#6ee7b7)",
+                  boxShadow: "0 0 12px rgba(52,211,153,0.55)",
+                }}
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1 tabular-nums">{progressPct}% complete</p>
+          </div>
+        </div>
+
+        {/* Invite actions */}
+        <div className="mt-3.5 grid grid-cols-3 gap-2">
+          <button
+            onClick={whatsapp}
+            className="relative flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-black font-semibold text-[11px] py-2.5 shadow-[0_0_16px_rgba(52,211,153,0.45)] active:scale-95 transition-transform"
+          >
+            <MessageCircle className="h-3.5 w-3.5" strokeWidth={2.5} />
+            WhatsApp
+          </button>
+          <button
+            onClick={copyCode}
+            className="flex items-center justify-center gap-1.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-foreground/90 font-semibold text-[11px] py-2.5 hover:bg-white/[0.09] active:scale-95 transition-all"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            Copy Code
+          </button>
+          <button
+            onClick={shareLink}
+            className="flex items-center justify-center gap-1.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-foreground/90 font-semibold text-[11px] py-2.5 hover:bg-white/[0.09] active:scale-95 transition-all"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Share
+          </button>
+        </div>
+      </div>
+    </Link>
+  );
+}
