@@ -171,6 +171,54 @@ function Home() {
         ))}
       </section>
 
+      {/* Squad Challenges */}
+      <section className="animate-slide-up" style={{ animationDelay: ".17s" }}>
+        {squads.length === 0 ? (
+          <Link to="/squads" className="relative block overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/[0.1] via-white/[0.02] to-cyan-500/[0.06] backdrop-blur-xl p-5">
+            <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-400/20 blur-3xl" />
+            <div className="relative flex items-center gap-3">
+              <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.45)]">
+                <Users className="h-5 w-5 text-black" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.22em] text-emerald-300">New · Squad Challenges</p>
+                <p className="text-sm font-semibold mt-0.5">Compete with friends, win Platinum</p>
+                <p className="text-[11px] text-muted-foreground">Create a squad or join with a code · earn coupons + badges</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-emerald-300" />
+            </div>
+          </Link>
+        ) : (
+          <>
+            <div className="flex items-center justify-between px-1 mb-2">
+              <h3 className="text-sm font-semibold flex items-center gap-2"><Trophy className="h-4 w-4 text-amber-300" /> Your squads</h3>
+              <Link to="/squads" className="text-[11px] text-emerald-300">Manage</Link>
+            </div>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 pb-1">
+              {squads.slice(0, 5).map((s: any) => {
+                const daysLeft = Math.max(0, Math.ceil((new Date(s.ends_at).getTime() - Date.now()) / 86400000));
+                return (
+                  <Link key={s.id} to="/squads/$squadId" params={{ squadId: s.id }} className="min-w-[220px] rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-3.5 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-400/30 to-cyan-400/30 flex items-center justify-center">
+                      <Users className="h-4 w-4 text-emerald-300" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{s.name}</p>
+                      <p className="text-[10px] text-muted-foreground capitalize">{s.challenge_type.replace("_"," ")} · {daysLeft}d left</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+                );
+              })}
+              <Link to="/squads" className="min-w-[110px] rounded-2xl border border-dashed border-emerald-400/30 bg-emerald-500/[0.04] flex flex-col items-center justify-center py-3 gap-1">
+                <Plus className="h-4 w-4 text-emerald-300" />
+                <span className="text-[11px] text-emerald-300 font-medium">New squad</span>
+              </Link>
+            </div>
+          </>
+        )}
+      </section>
+
       {/* Daily missions */}
       <section className="relative rounded-3xl border border-white/[0.06] bg-gradient-to-b from-white/[0.04] to-white/[0.01] backdrop-blur-xl p-5 animate-slide-up" style={{ animationDelay: ".2s" }}>
         <div className="flex items-center justify-between mb-3">
