@@ -21,6 +21,8 @@ function Home() {
   const { data } = useSuspenseQuery(dashboardQuery);
   const qc = useQueryClient();
   const profile = data.profile;
+  const squadsFn = useServerFn(listMySquads);
+  const { data: squads = [] } = useQuery({ queryKey: ["squads"], queryFn: () => squadsFn(), staleTime: 60_000 });
 
   useEffect(() => {
     if (profile && !profile.onboarded_at) navigate({ to: "/onboarding", replace: true });
