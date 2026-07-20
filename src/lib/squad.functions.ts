@@ -130,8 +130,8 @@ function computePointsFor(rows: {
   const foodCount = rows.foods.length;
   const workoutCount = rows.workouts.length;
   const totalSteps = rows.snapshots.reduce((a, s) => a + (s.steps ?? 0), 0);
-  const totalWater = rows.snapshots.reduce((a, s) => a + (s.water_ml ?? 0), 0);
   const totalSleep = rows.snapshots.reduce((a, s) => a + (s.sleep_minutes ?? 0), 0);
+  const totalActive = rows.snapshots.reduce((a, s) => a + (s.active_minutes ?? 0), 0);
 
   const days = new Set(rows.foods.map((f) => new Date(f.logged_at).toDateString())).size;
 
@@ -140,11 +140,12 @@ function computePointsFor(rows: {
     workout: workoutCount * 30,
     muscle_gain: workoutCount * 30,
     steps: Math.floor(totalSteps / 1000) * 5,
-    hydration: Math.floor(totalWater / 500) * 5,
+    hydration: Math.floor(totalActive / 15) * 5, // proxy: active minutes (no water column yet)
     sleep: Math.floor(totalSleep / 60) * 5,
-    weight_loss: 0, // computed below
+    weight_loss: 0,
     custom: 0,
   };
+
   const streak = days * 20;
 
   // Weight loss reward: reward every 0.5kg drop from first to last entry in period
