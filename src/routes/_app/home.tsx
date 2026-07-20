@@ -7,9 +7,10 @@ import { MacroRings } from "@/components/mobile/MacroRings";
 import {
   Flame, Sparkles, Trophy, Plus, Loader2, Zap, Target, CheckCircle2,
   Circle, Camera, Dumbbell, Droplet, Scale, TrendingUp, ChevronRight, Crown, Users,
+  Copy, Share2, UserPlus, MessageCircle, Medal,
 } from "lucide-react";
 import { generateInsight } from "@/lib/scan.functions";
-import { listMySquads } from "@/lib/squad.functions";
+import { listMySquadsRich } from "@/lib/squad.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/home")({
