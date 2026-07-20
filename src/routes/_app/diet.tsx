@@ -317,9 +317,7 @@ function Diet() {
                   onClick={() => setExpandedMeal(isExpanded ? null : m.k)}
                   className="w-full p-3 text-left"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <MealThumb name={meal.name || meal_name(m.k, meal)} items={meal.items} fallbackColor={m.color} FallbackIcon={Icon} />
-
+                  <div className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{m.label}</span>
@@ -336,6 +334,7 @@ function Diet() {
                         <span>{Math.round(Number(meal.fat_g ?? 0))}F</span>
                       </div>
                     </div>
+                    <MealThumb name={meal.name || meal_name(m.k, meal)} items={meal.items} fallbackColor={m.color} FallbackIcon={Icon} size={64} />
                     <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                   </div>
                 </button>
