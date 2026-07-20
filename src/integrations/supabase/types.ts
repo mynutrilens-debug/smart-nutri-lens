@@ -347,6 +347,136 @@ export type Database = {
         }
         Relationships: []
       }
+      squad_members: {
+        Row: {
+          display_name: string | null
+          id: string
+          joined_at: string
+          squad_id: string
+          user_id: string
+        }
+        Insert: {
+          display_name?: string | null
+          id?: string
+          joined_at?: string
+          squad_id: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string | null
+          id?: string
+          joined_at?: string
+          squad_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_members_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squad_rewards: {
+        Row: {
+          awarded_at: string
+          badge: string | null
+          coupon_code: string | null
+          id: string
+          platinum_days: number
+          points: number
+          rank: number
+          squad_id: string
+          user_id: string
+          xp_bonus: number
+        }
+        Insert: {
+          awarded_at?: string
+          badge?: string | null
+          coupon_code?: string | null
+          id?: string
+          platinum_days?: number
+          points?: number
+          rank: number
+          squad_id: string
+          user_id: string
+          xp_bonus?: number
+        }
+        Update: {
+          awarded_at?: string
+          badge?: string | null
+          coupon_code?: string | null
+          id?: string
+          platinum_days?: number
+          points?: number
+          rank?: number
+          squad_id?: string
+          user_id?: string
+          xp_bonus?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_rewards_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squads: {
+        Row: {
+          challenge_type: Database["public"]["Enums"]["squad_challenge_type"]
+          code: string
+          created_at: string
+          custom_challenge: string | null
+          ends_at: string
+          finalized_at: string | null
+          goal_description: string | null
+          goal_target: number | null
+          id: string
+          name: string
+          owner_id: string
+          period: Database["public"]["Enums"]["squad_period"]
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          challenge_type?: Database["public"]["Enums"]["squad_challenge_type"]
+          code: string
+          created_at?: string
+          custom_challenge?: string | null
+          ends_at: string
+          finalized_at?: string | null
+          goal_description?: string | null
+          goal_target?: number | null
+          id?: string
+          name: string
+          owner_id: string
+          period?: Database["public"]["Enums"]["squad_period"]
+          starts_at?: string
+          updated_at?: string
+        }
+        Update: {
+          challenge_type?: Database["public"]["Enums"]["squad_challenge_type"]
+          code?: string
+          created_at?: string
+          custom_challenge?: string | null
+          ends_at?: string
+          finalized_at?: string | null
+          goal_description?: string | null
+          goal_target?: number | null
+          id?: string
+          name?: string
+          owner_id?: string
+          period?: Database["public"]["Enums"]["squad_period"]
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           amount_paid: number | null
@@ -472,9 +602,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_squad_member: {
+        Args: { _squad_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      squad_challenge_type:
+        | "weight_loss"
+        | "muscle_gain"
+        | "steps"
+        | "healthy_eating"
+        | "workout"
+        | "hydration"
+        | "sleep"
+        | "custom"
+      squad_period: "weekly" | "monthly"
       subscription_plan: "trial" | "silver" | "gold" | "platinum" | "expired"
       subscription_status: "active" | "expired" | "cancelled" | "pending"
     }
@@ -604,6 +747,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      squad_challenge_type: [
+        "weight_loss",
+        "muscle_gain",
+        "steps",
+        "healthy_eating",
+        "workout",
+        "hydration",
+        "sleep",
+        "custom",
+      ],
+      squad_period: ["weekly", "monthly"],
       subscription_plan: ["trial", "silver", "gold", "platinum", "expired"],
       subscription_status: ["active", "expired", "cancelled", "pending"],
     },
