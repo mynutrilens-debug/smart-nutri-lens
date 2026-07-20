@@ -1,13 +1,15 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { dashboardQuery } from "@/lib/queries";
 import { MacroRings } from "@/components/mobile/MacroRings";
 import {
   Flame, Sparkles, Trophy, Plus, Loader2, Zap, Target, CheckCircle2,
-  Circle, Camera, Dumbbell, Droplet, Scale, TrendingUp, ChevronRight, Crown,
+  Circle, Camera, Dumbbell, Droplet, Scale, TrendingUp, ChevronRight, Crown, Users,
 } from "lucide-react";
 import { generateInsight } from "@/lib/scan.functions";
+import { listMySquads } from "@/lib/squad.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/home")({
