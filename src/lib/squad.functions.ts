@@ -130,8 +130,8 @@ function computePointsFor(rows: {
   const foodCount = rows.foods.length;
   const workoutCount = rows.workouts.length;
   const totalSteps = rows.snapshots.reduce((a, s) => a + (s.steps ?? 0), 0);
-  const totalWater = rows.snapshots.reduce((a, s) => a + (s.water_ml ?? 0), 0);
   const totalSleep = rows.snapshots.reduce((a, s) => a + (s.sleep_minutes ?? 0), 0);
+  const totalActive = rows.snapshots.reduce((a, s) => a + (s.active_minutes ?? 0), 0);
 
   const days = new Set(rows.foods.map((f) => new Date(f.logged_at).toDateString())).size;
 
@@ -140,11 +140,12 @@ function computePointsFor(rows: {
     workout: workoutCount * 30,
     muscle_gain: workoutCount * 30,
     steps: Math.floor(totalSteps / 1000) * 5,
-    hydration: Math.floor(totalWater / 500) * 5,
+    hydration: Math.floor(totalActive / 15) * 5, // proxy: active minutes (no water column yet)
     sleep: Math.floor(totalSleep / 60) * 5,
-    weight_loss: 0, // computed below
+    weight_loss: 0,
     custom: 0,
   };
+
   const streak = days * 20;
 
   // Weight loss reward: reward every 0.5kg drop from first to last entry in period
@@ -201,7 +202,7 @@ export const getSquadLeaderboard = createServerFn({ method: "GET" })
       supabase.from("food_logs").select("user_id, logged_at").in("user_id", memberIds).gte("logged_at", start).lte("logged_at", end),
       supabase.from("workouts").select("user_id, logged_at, calories_burned").in("user_id", memberIds).gte("logged_at", start).lte("logged_at", end),
       supabase.from("weight_entries").select("user_id, logged_at, weight_kg").in("user_id", memberIds).gte("logged_at", start).lte("logged_at", end).order("logged_at", { ascending: true }),
-      supabase.from("health_snapshots").select("user_id, date, steps, water_ml, sleep_minutes").in("user_id", memberIds).gte("date", start.slice(0, 10)).lte("date", end.slice(0, 10)),
+      supabase.from("health_snapshots").select("user_id, captured_on, steps, active_minutes, sleep_minutes").in("user_id", memberIds).gte("captured_on", start.slice(0, 10)).lte("captured_on", end.slice(0, 10)),
     ]);
 
     const leaderboard = (members ?? []).map((m) => {
@@ -248,7 +249,7 @@ export const finalizeSquad = createServerFn({ method: "POST" })
       supabase.from("food_logs").select("user_id, logged_at").in("user_id", memberIds).gte("logged_at", squad.starts_at).lte("logged_at", squad.ends_at),
       supabase.from("workouts").select("user_id, logged_at").in("user_id", memberIds).gte("logged_at", squad.starts_at).lte("logged_at", squad.ends_at),
       supabase.from("weight_entries").select("user_id, logged_at, weight_kg").in("user_id", memberIds).gte("logged_at", squad.starts_at).lte("logged_at", squad.ends_at).order("logged_at", { ascending: true }),
-      supabase.from("health_snapshots").select("user_id, date, steps, water_ml, sleep_minutes").in("user_id", memberIds).gte("date", squad.starts_at.slice(0, 10)).lte("date", squad.ends_at.slice(0, 10)),
+      supabase.from("health_snapshots").select("user_id, captured_on, steps, active_minutes, sleep_minutes").in("user_id", memberIds).gte("captured_on", squad.starts_at.slice(0, 10)).lte("captured_on", squad.ends_at.slice(0, 10)),
     ]);
     const scored = (members ?? []).map((m) => {
       const pts = computePointsFor({

@@ -602,6 +602,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_squad_by_code: {
+        Args: { _code: string }
+        Returns: {
+          ends_at: string
+          finalized_at: string
+          id: string
+          name: string
+        }[]
+      }
       is_squad_member: {
         Args: { _squad_id: string; _user_id: string }
         Returns: boolean

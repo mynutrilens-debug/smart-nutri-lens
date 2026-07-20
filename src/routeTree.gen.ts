@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWorkoutRouteImport } from './routes/_app/workout'
+import { Route as AppSquadsRouteImport } from './routes/_app/squads'
 import { Route as AppScanRouteImport } from './routes/_app/scan'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppPricingRouteImport } from './routes/_app/pricing'
@@ -22,6 +23,8 @@ import { Route as AppDietRouteImport } from './routes/_app/diet'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
 import { Route as ApiPublicFirebaseConfigRouteImport } from './routes/api/public/firebase-config'
+import { Route as AppSquadsSquadIdRouteImport } from './routes/_app/squads.$squadId'
+import { Route as AppSquadsJoinCodeRouteImport } from './routes/_app/squads.join.$code'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -40,6 +43,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppWorkoutRoute = AppWorkoutRouteImport.update({
   id: '/workout',
   path: '/workout',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSquadsRoute = AppSquadsRouteImport.update({
+  id: '/squads',
+  path: '/squads',
   getParentRoute: () => AppRoute,
 } as any)
 const AppScanRoute = AppScanRouteImport.update({
@@ -88,6 +96,16 @@ const ApiPublicFirebaseConfigRoute = ApiPublicFirebaseConfigRouteImport.update({
   path: '/api/public/firebase-config',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppSquadsSquadIdRoute = AppSquadsSquadIdRouteImport.update({
+  id: '/$squadId',
+  path: '/$squadId',
+  getParentRoute: () => AppSquadsRoute,
+} as any)
+const AppSquadsJoinCodeRoute = AppSquadsJoinCodeRouteImport.update({
+  id: '/join/$code',
+  path: '/join/$code',
+  getParentRoute: () => AppSquadsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -99,9 +117,12 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof AppPricingRoute
   '/profile': typeof AppProfileRoute
   '/scan': typeof AppScanRoute
+  '/squads': typeof AppSquadsRouteWithChildren
   '/workout': typeof AppWorkoutRoute
+  '/squads/$squadId': typeof AppSquadsSquadIdRoute
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
+  '/squads/join/$code': typeof AppSquadsJoinCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -113,9 +134,12 @@ export interface FileRoutesByTo {
   '/pricing': typeof AppPricingRoute
   '/profile': typeof AppProfileRoute
   '/scan': typeof AppScanRoute
+  '/squads': typeof AppSquadsRouteWithChildren
   '/workout': typeof AppWorkoutRoute
+  '/squads/$squadId': typeof AppSquadsSquadIdRoute
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
+  '/squads/join/$code': typeof AppSquadsJoinCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -129,9 +153,12 @@ export interface FileRoutesById {
   '/_app/pricing': typeof AppPricingRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/scan': typeof AppScanRoute
+  '/_app/squads': typeof AppSquadsRouteWithChildren
   '/_app/workout': typeof AppWorkoutRoute
+  '/_app/squads/$squadId': typeof AppSquadsSquadIdRoute
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
+  '/_app/squads/join/$code': typeof AppSquadsJoinCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -145,9 +172,12 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/profile'
     | '/scan'
+    | '/squads'
     | '/workout'
+    | '/squads/$squadId'
     | '/api/public/firebase-config'
     | '/api/public/razorpay-webhook'
+    | '/squads/join/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -159,9 +189,12 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/profile'
     | '/scan'
+    | '/squads'
     | '/workout'
+    | '/squads/$squadId'
     | '/api/public/firebase-config'
     | '/api/public/razorpay-webhook'
+    | '/squads/join/$code'
   id:
     | '__root__'
     | '/'
@@ -174,9 +207,12 @@ export interface FileRouteTypes {
     | '/_app/pricing'
     | '/_app/profile'
     | '/_app/scan'
+    | '/_app/squads'
     | '/_app/workout'
+    | '/_app/squads/$squadId'
     | '/api/public/firebase-config'
     | '/api/public/razorpay-webhook'
+    | '/_app/squads/join/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -215,6 +251,13 @@ declare module '@tanstack/react-router' {
       path: '/workout'
       fullPath: '/workout'
       preLoaderRoute: typeof AppWorkoutRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/squads': {
+      id: '/_app/squads'
+      path: '/squads'
+      fullPath: '/squads'
+      preLoaderRoute: typeof AppSquadsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/scan': {
@@ -280,8 +323,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFirebaseConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/squads/$squadId': {
+      id: '/_app/squads/$squadId'
+      path: '/$squadId'
+      fullPath: '/squads/$squadId'
+      preLoaderRoute: typeof AppSquadsSquadIdRouteImport
+      parentRoute: typeof AppSquadsRoute
+    }
+    '/_app/squads/join/$code': {
+      id: '/_app/squads/join/$code'
+      path: '/join/$code'
+      fullPath: '/squads/join/$code'
+      preLoaderRoute: typeof AppSquadsJoinCodeRouteImport
+      parentRoute: typeof AppSquadsRoute
+    }
   }
 }
+
+interface AppSquadsRouteChildren {
+  AppSquadsSquadIdRoute: typeof AppSquadsSquadIdRoute
+  AppSquadsJoinCodeRoute: typeof AppSquadsJoinCodeRoute
+}
+
+const AppSquadsRouteChildren: AppSquadsRouteChildren = {
+  AppSquadsSquadIdRoute: AppSquadsSquadIdRoute,
+  AppSquadsJoinCodeRoute: AppSquadsJoinCodeRoute,
+}
+
+const AppSquadsRouteWithChildren = AppSquadsRoute._addFileChildren(
+  AppSquadsRouteChildren,
+)
 
 interface AppRouteChildren {
   AppChatRoute: typeof AppChatRoute
@@ -291,6 +362,7 @@ interface AppRouteChildren {
   AppPricingRoute: typeof AppPricingRoute
   AppProfileRoute: typeof AppProfileRoute
   AppScanRoute: typeof AppScanRoute
+  AppSquadsRoute: typeof AppSquadsRouteWithChildren
   AppWorkoutRoute: typeof AppWorkoutRoute
 }
 
@@ -302,6 +374,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPricingRoute: AppPricingRoute,
   AppProfileRoute: AppProfileRoute,
   AppScanRoute: AppScanRoute,
+  AppSquadsRoute: AppSquadsRouteWithChildren,
   AppWorkoutRoute: AppWorkoutRoute,
 }
 
