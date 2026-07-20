@@ -93,60 +93,6 @@ export const joinSquadByCode = createServerFn({ method: "POST" })
     return { squad_id: squadRow.id };
   });
 
-export const listMySquadsRich = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    const { data: memberships } = await supabase
-      .from("squad_members")
-      .select("squad_id, squads(*)")
-      .eq("user_id", userId);
-    const squads = (memberships ?? []).map((m: any) => m.squads).filter(Boolean);
-    if (squads.length === 0) return [];
-
-    const results = await Promise.all(squads.map(async (squad: any) => {
-      const { data: members } = await supabase
-        .from("squad_members")
-        .select("user_id, display_name, joined_at")
-        .eq("squad_id", squad.id);
-      const memberIds = (members ?? []).map((m: any) => m.user_id);
-      if (memberIds.length === 0) {
-        return { ...squad, members: [], member_count: 0, my_rank: 1, my_points: 0, top_points: 0 };
-      }
-
-      const [foods, workouts, weights, snaps] = await Promise.all([
-        supabase.from("food_logs").select("user_id, logged_at").in("user_id", memberIds).gte("logged_at", squad.starts_at).lte("logged_at", squad.ends_at),
-        supabase.from("workouts").select("user_id, logged_at").in("user_id", memberIds).gte("logged_at", squad.starts_at).lte("logged_at", squad.ends_at),
-        supabase.from("weight_entries").select("user_id, logged_at, weight_kg").in("user_id", memberIds).gte("logged_at", squad.starts_at).lte("logged_at", squad.ends_at).order("logged_at", { ascending: true }),
-        supabase.from("health_snapshots").select("user_id, captured_on, steps, active_minutes, sleep_minutes").in("user_id", memberIds).gte("captured_on", squad.starts_at.slice(0, 10)).lte("captured_on", squad.ends_at.slice(0, 10)),
-      ]);
-
-      const scored = (members ?? []).map((m: any) => {
-        const pts = computePointsFor({
-          foods: (foods.data ?? []).filter((r: any) => r.user_id === m.user_id),
-          workouts: (workouts.data ?? []).filter((r: any) => r.user_id === m.user_id),
-          weights: (weights.data ?? []).filter((r: any) => r.user_id === m.user_id),
-          snapshots: (snaps.data ?? []).filter((r: any) => r.user_id === m.user_id),
-          challenge_type: squad.challenge_type as string,
-        });
-        return { user_id: m.user_id, display_name: m.display_name ?? "Athlete", points: pts.total, streak_days: pts.days };
-      }).sort((a, b) => b.points - a.points);
-
-      const my_rank = Math.max(1, scored.findIndex((s) => s.user_id === userId) + 1);
-      const me = scored.find((s) => s.user_id === userId);
-      return {
-        ...squad,
-        members: scored,
-        member_count: scored.length,
-        my_rank,
-        my_points: me?.points ?? 0,
-        my_streak: me?.streak_days ?? 0,
-        top_points: scored[0]?.points ?? 0,
-      };
-    }));
-    return results;
-  });
-
 export const leaveSquad = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ squad_id: z.string().uuid() }).parse(d))
