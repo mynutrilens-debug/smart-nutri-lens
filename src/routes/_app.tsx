@@ -16,9 +16,16 @@ function AppShell() {
   useEffect(() => {
     let active = true;
     const check = async () => {
-      const { data } = await supabase.auth.getUser();
+      // Prefer cached session (instant, offline-safe) so returning users
+      // aren't bounced to the welcome screen while the network call spins up.
+      const { data: sessionData } = await supabase.auth.getSession();
+      let user = sessionData.session?.user ?? null;
+      if (!user) {
+        const { data } = await supabase.auth.getUser();
+        user = data.user ?? null;
+      }
       if (!active) return;
-      if (!data.user || data.user.is_anonymous) {
+      if (!user || user.is_anonymous) {
         navigate({ to: "/", replace: true });
         return;
       }
