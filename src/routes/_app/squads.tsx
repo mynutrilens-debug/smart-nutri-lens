@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { createSquad, joinSquadByCode, listMySquads } from "@/lib/squad.functions";
-import { Users, Trophy, Plus, ArrowLeft, Sparkles, Target, ChevronRight, Flame, Copy } from "lucide-react";
+import { Users, Trophy, Plus, ArrowLeft, Sparkles, Target, ChevronRight, Flame, Copy, Lock, Globe, Gift, Crown, Zap, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/squads")({
@@ -33,6 +33,9 @@ function SquadsPage() {
   const [customChallenge, setCustomChallenge] = useState("");
   const [goal, setGoal] = useState("");
   const [period, setPeriod] = useState<"weekly" | "monthly">("weekly");
+  const [visibility, setVisibility] = useState<"public" | "private">("private");
+  const [maxMembers, setMaxMembers] = useState<number>(10);
+  const [reward, setReward] = useState<"coupon" | "platinum" | "badge">("coupon");
   const [code, setCode] = useState("");
 
   const createFn = useServerFn(createSquad);
@@ -81,23 +84,49 @@ function SquadsPage() {
 
       {mode === "none" && (
         <>
-          <section className="grid grid-cols-2 gap-3 animate-slide-up">
-            <button onClick={() => setMode("create")} className="group relative overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/[0.12] via-white/[0.02] to-cyan-500/[0.08] p-5 text-left">
-              <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-emerald-400/20 blur-2xl" />
-              <div className="relative">
-                <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.4)]">
-                  <Plus className="h-5 w-5 text-white" />
+          <section className="animate-slide-up">
+            <button
+              onClick={() => setMode("create")}
+              className="group relative w-full overflow-hidden rounded-3xl border border-emerald-400/25 bg-gradient-to-br from-emerald-500/[0.14] via-white/[0.02] to-cyan-500/[0.10] p-5 text-left shadow-[0_20px_60px_-30px_rgba(52,211,153,0.55)] backdrop-blur-2xl"
+            >
+              <div className="absolute -top-14 -right-10 h-40 w-40 rounded-full bg-emerald-400/25 blur-3xl" />
+              <div className="absolute -bottom-14 -left-10 h-40 w-40 rounded-full bg-cyan-400/15 blur-3xl" />
+              <div className="relative flex items-center gap-3">
+                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center shadow-[0_0_28px_rgba(52,211,153,0.55)]">
+                  <Plus className="h-6 w-6 text-black" />
                 </div>
-                <p className="text-sm font-semibold mt-3">Create squad</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Invite friends, pick a challenge</p>
+                <div className="flex-1">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-emerald-300 font-semibold">Premium</p>
+                  <p className="text-lg font-bold">Create your squad</p>
+                  <p className="text-[11px] text-muted-foreground">Public or private · pick rewards, member limits & duration</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-emerald-300" />
+              </div>
+              <div className="relative mt-4 grid grid-cols-4 gap-2">
+                {[
+                  { icon: <Lock className="h-3.5 w-3.5 text-emerald-300" />, l: "Private" },
+                  { icon: <Users className="h-3.5 w-3.5 text-cyan-300" />, l: "Limits" },
+                  { icon: <Calendar className="h-3.5 w-3.5 text-fuchsia-300" />, l: "Duration" },
+                  { icon: <Gift className="h-3.5 w-3.5 text-amber-300" />, l: "Rewards" },
+                ].map((r) => (
+                  <div key={r.l} className="rounded-xl bg-black/30 border border-white/[0.06] px-1.5 py-2 text-center">
+                    <div className="flex items-center justify-center gap-1">{r.icon}<span className="text-[9px] uppercase tracking-widest text-muted-foreground">{r.l}</span></div>
+                  </div>
+                ))}
               </div>
             </button>
-            <button onClick={() => setMode("join")} className="rounded-3xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-5 text-left">
-              <div className="h-10 w-10 rounded-2xl bg-white/[0.06] flex items-center justify-center">
+          </section>
+
+          <section className="animate-slide-up" style={{ animationDelay: ".05s" }}>
+            <button onClick={() => setMode("join")} className="w-full rounded-3xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl p-4 text-left flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-white/[0.06] border border-white/[0.06] flex items-center justify-center">
                 <Users className="h-5 w-5 text-cyan-300" />
               </div>
-              <p className="text-sm font-semibold mt-3">Join with code</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Enter a 6-character invite</p>
+              <div className="flex-1">
+                <p className="text-sm font-semibold">Join with invite code</p>
+                <p className="text-[11px] text-muted-foreground">Got a FIT-XXXXXX code from a friend?</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
           </section>
 
@@ -171,10 +200,53 @@ function SquadsPage() {
               <input value={goal} onChange={(e) => setGoal(e.target.value)} maxLength={200} placeholder="Lose 2kg / 70k steps / 5 workouts" className="mt-1 w-full rounded-2xl bg-white/[0.04] border border-white/[0.06] px-3 py-3 text-sm focus:outline-none focus:border-emerald-400/40" />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Period</label>
+              <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Duration</label>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {(["weekly", "monthly"] as const).map((p) => (
-                  <button key={p} onClick={() => setPeriod(p)} className={`rounded-2xl py-3 text-sm capitalize border ${period === p ? "border-emerald-400/50 bg-emerald-500/[0.12]" : "border-white/[0.06] bg-white/[0.02]"}`}>{p}</button>
+                  <button key={p} onClick={() => setPeriod(p)} className={`rounded-2xl py-3 text-sm capitalize border flex items-center justify-center gap-2 ${period === p ? "border-emerald-400/50 bg-emerald-500/[0.12] shadow-[0_0_18px_rgba(52,211,153,0.25)]" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                    <Calendar className="h-3.5 w-3.5" /> {p === "weekly" ? "7 days" : "30 days"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Visibility</label>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {([
+                  { id: "private", icon: <Lock className="h-3.5 w-3.5" />, l: "Private", d: "Invite-only" },
+                  { id: "public", icon: <Globe className="h-3.5 w-3.5" />, l: "Public", d: "Anyone with code" },
+                ] as const).map((v) => (
+                  <button key={v.id} onClick={() => setVisibility(v.id)} className={`rounded-2xl py-2.5 px-3 text-left border ${visibility === v.id ? "border-emerald-400/50 bg-emerald-500/[0.12]" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold">{v.icon}{v.l}</div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{v.d}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground flex items-center justify-between">
+                <span>Member limit</span>
+                <span className="text-emerald-300 font-mono tabular-nums">{maxMembers}</span>
+              </label>
+              <input
+                type="range" min={2} max={50} value={maxMembers}
+                onChange={(e) => setMaxMembers(Number(e.target.value))}
+                className="mt-2 w-full accent-emerald-400"
+              />
+              <div className="flex justify-between text-[9px] text-muted-foreground mt-1"><span>2</span><span>50</span></div>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Reward</label>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {([
+                  { id: "coupon", icon: <Gift className="h-4 w-4 text-amber-300" />, l: "Coupon" },
+                  { id: "platinum", icon: <Crown className="h-4 w-4 text-fuchsia-300" />, l: "Platinum" },
+                  { id: "badge", icon: <Trophy className="h-4 w-4 text-cyan-300" />, l: "Badge" },
+                ] as const).map((r) => (
+                  <button key={r.id} onClick={() => setReward(r.id)} className={`rounded-2xl py-2.5 border flex flex-col items-center gap-1 ${reward === r.id ? "border-emerald-400/50 bg-emerald-500/[0.12]" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                    {r.icon}
+                    <span className="text-[10px] font-medium">{r.l}</span>
+                  </button>
                 ))}
               </div>
             </div>
