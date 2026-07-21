@@ -14,9 +14,12 @@ function Welcome() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getUser().then(({ data }) => {
+    // Fast path: cached session from localStorage (no network) — keeps returning
+    // users signed in and skips the welcome flash on app relaunch.
+    supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
-      if (data.user && !data.user.is_anonymous) {
+      const u = data.session?.user;
+      if (u && !u.is_anonymous) {
         navigate({ to: "/home", replace: true });
       }
     }).catch(() => {});

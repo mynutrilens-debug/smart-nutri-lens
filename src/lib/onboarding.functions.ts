@@ -128,6 +128,29 @@ export const generateAiPlan = createServerFn({ method: "POST" })
       if (sameDay) return existingPlan;
     }
 
+    // Recent dishes to AVOID — pulls from the previous plan's meals plus
+    // the last 3 days of food_logs, so each day's plan is meaningfully
+    // different from what the user just ate.
+    const recentDishes = new Set<string>();
+    const prevMeals = (existingPlan?.meals ?? {}) as Record<string, any>;
+    for (const m of Object.values(prevMeals)) {
+      if (m?.name) recentDishes.add(String(m.name).trim());
+    }
+    const { data: recentLogs } = await supabase
+      .from("food_logs")
+      .select("name")
+      .eq("user_id", userId)
+      .gte("logged_at", new Date(Date.now() - 3 * 86400000).toISOString())
+      .limit(40);
+    for (const r of (recentLogs ?? [])) {
+      if ((r as any)?.name) recentDishes.add(String((r as any).name).trim());
+    }
+    const avoidLine = recentDishes.size
+      ? `- AVOID repeating these recent dishes (choose different ones): ${Array.from(recentDishes).slice(0, 24).join(", ")}`
+      : `- No recent dishes on record — pick a fresh variety.`;
+    const rotationSeed = Math.floor(Date.now() / 86400000) % 7; // 0..6, rotates daily
+
+
     const heightM = (p.height_cm ?? 170) / 100;
     const bmi = Number(((p.weight_kg ?? 70) / (heightM * heightM)).toFixed(1));
     const bmiCat = bmi < 18.5 ? "underweight" : bmi < 25 ? "normal" : bmi < 30 ? "overweight" : "obese";
@@ -160,7 +183,8 @@ ${cuisineLine}
 - Allergies (STRICTLY AVOID): ${(p.allergies ?? []).join(", ") || "none"}
 - Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
 - Daily targets: ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g
-- Plan date (vary dishes day-to-day): ${new Date().toISOString().slice(0, 10)}
+- Plan date (vary dishes day-to-day): ${new Date().toISOString().slice(0, 10)} · rotation slot #${rotationSeed} of 7 (use this to rotate cuisines/cooking styles across the week)
+${avoidLine}
 ${healthLine}
 
 RULES
@@ -173,6 +197,7 @@ RULES
   * maintenance / recomp → balanced protein smoothies
   * diabetic-friendly → unsweetened, low-GI options only
 - Never include allergens. Respect medical conditions and diet preference strictly.
+- VARIETY IS CRITICAL: every meal (breakfast, pre_workout, post_workout, lunch, snack, dinner) MUST be a DIFFERENT dish from the AVOID list above. Do not repeat yesterday's meals. Rotate protein sources, grains, and cooking styles day-to-day so the plan feels fresh every day of the week.
 
 Return ONLY this JSON (no markdown):
 {
