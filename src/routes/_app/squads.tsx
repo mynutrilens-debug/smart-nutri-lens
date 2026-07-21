@@ -84,23 +84,49 @@ function SquadsPage() {
 
       {mode === "none" && (
         <>
-          <section className="grid grid-cols-2 gap-3 animate-slide-up">
-            <button onClick={() => setMode("create")} className="group relative overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/[0.12] via-white/[0.02] to-cyan-500/[0.08] p-5 text-left">
-              <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-emerald-400/20 blur-2xl" />
-              <div className="relative">
-                <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.4)]">
-                  <Plus className="h-5 w-5 text-white" />
+          <section className="animate-slide-up">
+            <button
+              onClick={() => setMode("create")}
+              className="group relative w-full overflow-hidden rounded-3xl border border-emerald-400/25 bg-gradient-to-br from-emerald-500/[0.14] via-white/[0.02] to-cyan-500/[0.10] p-5 text-left shadow-[0_20px_60px_-30px_rgba(52,211,153,0.55)] backdrop-blur-2xl"
+            >
+              <div className="absolute -top-14 -right-10 h-40 w-40 rounded-full bg-emerald-400/25 blur-3xl" />
+              <div className="absolute -bottom-14 -left-10 h-40 w-40 rounded-full bg-cyan-400/15 blur-3xl" />
+              <div className="relative flex items-center gap-3">
+                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center shadow-[0_0_28px_rgba(52,211,153,0.55)]">
+                  <Plus className="h-6 w-6 text-black" />
                 </div>
-                <p className="text-sm font-semibold mt-3">Create squad</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Invite friends, pick a challenge</p>
+                <div className="flex-1">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-emerald-300 font-semibold">Premium</p>
+                  <p className="text-lg font-bold">Create your squad</p>
+                  <p className="text-[11px] text-muted-foreground">Public or private · pick rewards, member limits & duration</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-emerald-300" />
+              </div>
+              <div className="relative mt-4 grid grid-cols-4 gap-2">
+                {[
+                  { icon: <Lock className="h-3.5 w-3.5 text-emerald-300" />, l: "Private" },
+                  { icon: <Users className="h-3.5 w-3.5 text-cyan-300" />, l: "Limits" },
+                  { icon: <Calendar className="h-3.5 w-3.5 text-fuchsia-300" />, l: "Duration" },
+                  { icon: <Gift className="h-3.5 w-3.5 text-amber-300" />, l: "Rewards" },
+                ].map((r) => (
+                  <div key={r.l} className="rounded-xl bg-black/30 border border-white/[0.06] px-1.5 py-2 text-center">
+                    <div className="flex items-center justify-center gap-1">{r.icon}<span className="text-[9px] uppercase tracking-widest text-muted-foreground">{r.l}</span></div>
+                  </div>
+                ))}
               </div>
             </button>
-            <button onClick={() => setMode("join")} className="rounded-3xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-5 text-left">
-              <div className="h-10 w-10 rounded-2xl bg-white/[0.06] flex items-center justify-center">
+          </section>
+
+          <section className="animate-slide-up" style={{ animationDelay: ".05s" }}>
+            <button onClick={() => setMode("join")} className="w-full rounded-3xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl p-4 text-left flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-white/[0.06] border border-white/[0.06] flex items-center justify-center">
                 <Users className="h-5 w-5 text-cyan-300" />
               </div>
-              <p className="text-sm font-semibold mt-3">Join with code</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Enter a 6-character invite</p>
+              <div className="flex-1">
+                <p className="text-sm font-semibold">Join with invite code</p>
+                <p className="text-[11px] text-muted-foreground">Got a FIT-XXXXXX code from a friend?</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
           </section>
 
