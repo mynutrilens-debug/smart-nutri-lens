@@ -128,6 +128,29 @@ export const generateAiPlan = createServerFn({ method: "POST" })
       if (sameDay) return existingPlan;
     }
 
+    // Recent dishes to AVOID — pulls from the previous plan's meals plus
+    // the last 3 days of food_logs, so each day's plan is meaningfully
+    // different from what the user just ate.
+    const recentDishes = new Set<string>();
+    const prevMeals = (existingPlan?.meals ?? {}) as Record<string, any>;
+    for (const m of Object.values(prevMeals)) {
+      if (m?.name) recentDishes.add(String(m.name).trim());
+    }
+    const { data: recentLogs } = await supabase
+      .from("food_logs")
+      .select("name")
+      .eq("user_id", userId)
+      .gte("logged_at", new Date(Date.now() - 3 * 86400000).toISOString())
+      .limit(40);
+    for (const r of (recentLogs ?? [])) {
+      if ((r as any)?.name) recentDishes.add(String((r as any).name).trim());
+    }
+    const avoidLine = recentDishes.size
+      ? `- AVOID repeating these recent dishes (choose different ones): ${Array.from(recentDishes).slice(0, 24).join(", ")}`
+      : `- No recent dishes on record — pick a fresh variety.`;
+    const rotationSeed = Math.floor(Date.now() / 86400000) % 7; // 0..6, rotates daily
+
+
     const heightM = (p.height_cm ?? 170) / 100;
     const bmi = Number(((p.weight_kg ?? 70) / (heightM * heightM)).toFixed(1));
     const bmiCat = bmi < 18.5 ? "underweight" : bmi < 25 ? "normal" : bmi < 30 ? "overweight" : "obese";
