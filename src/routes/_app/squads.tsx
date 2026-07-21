@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { createSquad, joinSquadByCode, listMySquads } from "@/lib/squad.functions";
-import { Users, Trophy, Plus, ArrowLeft, Sparkles, Target, ChevronRight, Flame, Copy } from "lucide-react";
+import { Users, Trophy, Plus, ArrowLeft, Sparkles, Target, ChevronRight, Flame, Copy, Lock, Globe, Gift, Crown, Zap, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/squads")({
