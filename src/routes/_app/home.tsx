@@ -4,6 +4,7 @@ import { useSuspenseQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { useServerFn } from "@tanstack/react-start";
 import { dashboardQuery } from "@/lib/queries";
 import { MacroRings } from "@/components/mobile/MacroRings";
+import { SquadHeroCard } from "@/components/mobile/SquadHeroCard";
 import {
   Flame, Sparkles, Trophy, Plus, Loader2, Zap, Target, CheckCircle2,
   Circle, Camera, Dumbbell, Droplet, Scale, TrendingUp, ChevronRight, Crown, Users,
