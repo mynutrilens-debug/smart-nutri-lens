@@ -33,6 +33,9 @@ function SquadsPage() {
   const [customChallenge, setCustomChallenge] = useState("");
   const [goal, setGoal] = useState("");
   const [period, setPeriod] = useState<"weekly" | "monthly">("weekly");
+  const [visibility, setVisibility] = useState<"public" | "private">("private");
+  const [maxMembers, setMaxMembers] = useState<number>(10);
+  const [reward, setReward] = useState<"coupon" | "platinum" | "badge">("coupon");
   const [code, setCode] = useState("");
 
   const createFn = useServerFn(createSquad);
