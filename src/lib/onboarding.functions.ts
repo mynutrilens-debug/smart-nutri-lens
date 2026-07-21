@@ -197,6 +197,7 @@ RULES
   * maintenance / recomp → balanced protein smoothies
   * diabetic-friendly → unsweetened, low-GI options only
 - Never include allergens. Respect medical conditions and diet preference strictly.
+- VARIETY IS CRITICAL: every meal (breakfast, pre_workout, post_workout, lunch, snack, dinner) MUST be a DIFFERENT dish from the AVOID list above. Do not repeat yesterday's meals. Rotate protein sources, grains, and cooking styles day-to-day so the plan feels fresh every day of the week.
 
 Return ONLY this JSON (no markdown):
 {
