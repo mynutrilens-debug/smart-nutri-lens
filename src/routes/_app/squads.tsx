@@ -200,10 +200,53 @@ function SquadsPage() {
               <input value={goal} onChange={(e) => setGoal(e.target.value)} maxLength={200} placeholder="Lose 2kg / 70k steps / 5 workouts" className="mt-1 w-full rounded-2xl bg-white/[0.04] border border-white/[0.06] px-3 py-3 text-sm focus:outline-none focus:border-emerald-400/40" />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Period</label>
+              <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Duration</label>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {(["weekly", "monthly"] as const).map((p) => (
-                  <button key={p} onClick={() => setPeriod(p)} className={`rounded-2xl py-3 text-sm capitalize border ${period === p ? "border-emerald-400/50 bg-emerald-500/[0.12]" : "border-white/[0.06] bg-white/[0.02]"}`}>{p}</button>
+                  <button key={p} onClick={() => setPeriod(p)} className={`rounded-2xl py-3 text-sm capitalize border flex items-center justify-center gap-2 ${period === p ? "border-emerald-400/50 bg-emerald-500/[0.12] shadow-[0_0_18px_rgba(52,211,153,0.25)]" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                    <Calendar className="h-3.5 w-3.5" /> {p === "weekly" ? "7 days" : "30 days"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Visibility</label>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {([
+                  { id: "private", icon: <Lock className="h-3.5 w-3.5" />, l: "Private", d: "Invite-only" },
+                  { id: "public", icon: <Globe className="h-3.5 w-3.5" />, l: "Public", d: "Anyone with code" },
+                ] as const).map((v) => (
+                  <button key={v.id} onClick={() => setVisibility(v.id)} className={`rounded-2xl py-2.5 px-3 text-left border ${visibility === v.id ? "border-emerald-400/50 bg-emerald-500/[0.12]" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold">{v.icon}{v.l}</div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{v.d}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground flex items-center justify-between">
+                <span>Member limit</span>
+                <span className="text-emerald-300 font-mono tabular-nums">{maxMembers}</span>
+              </label>
+              <input
+                type="range" min={2} max={50} value={maxMembers}
+                onChange={(e) => setMaxMembers(Number(e.target.value))}
+                className="mt-2 w-full accent-emerald-400"
+              />
+              <div className="flex justify-between text-[9px] text-muted-foreground mt-1"><span>2</span><span>50</span></div>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Reward</label>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {([
+                  { id: "coupon", icon: <Gift className="h-4 w-4 text-amber-300" />, l: "Coupon" },
+                  { id: "platinum", icon: <Crown className="h-4 w-4 text-fuchsia-300" />, l: "Platinum" },
+                  { id: "badge", icon: <Trophy className="h-4 w-4 text-cyan-300" />, l: "Badge" },
+                ] as const).map((r) => (
+                  <button key={r.id} onClick={() => setReward(r.id)} className={`rounded-2xl py-2.5 border flex flex-col items-center gap-1 ${reward === r.id ? "border-emerald-400/50 bg-emerald-500/[0.12]" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                    {r.icon}
+                    <span className="text-[10px] font-medium">{r.l}</span>
+                  </button>
                 ))}
               </div>
             </div>
