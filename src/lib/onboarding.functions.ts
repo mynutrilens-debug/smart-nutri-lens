@@ -183,7 +183,8 @@ ${cuisineLine}
 - Allergies (STRICTLY AVOID): ${(p.allergies ?? []).join(", ") || "none"}
 - Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
 - Daily targets: ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g
-- Plan date (vary dishes day-to-day): ${new Date().toISOString().slice(0, 10)}
+- Plan date (vary dishes day-to-day): ${new Date().toISOString().slice(0, 10)} · rotation slot #${rotationSeed} of 7 (use this to rotate cuisines/cooking styles across the week)
+${avoidLine}
 ${healthLine}
 
 RULES
