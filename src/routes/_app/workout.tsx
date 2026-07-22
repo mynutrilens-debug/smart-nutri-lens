@@ -168,8 +168,15 @@ function Workout() {
     },
   });
 
-  const todayPlan = aiPlan?.days?.[todayIdx()];
+  const [selectedDay, setSelectedDay] = useState<number>(todayIdx());
+  const todayPlan = aiPlan?.days?.[selectedDay];
   const exercises: any[] = todayPlan?.exercises ?? [];
+
+  // Re-plan gating: allow only after 7 days since generated_at
+  const planGenAt = aiPlan?.generated_at ? new Date(aiPlan.generated_at).getTime() : 0;
+  const msSinceGen = planGenAt ? Date.now() - planGenAt : Infinity;
+  const daysUntilReplan = Math.max(0, Math.ceil((7 * 86400000 - msSinceGen) / 86400000));
+  const canReplan = !aiPlan || daysUntilReplan === 0;
 
   // -------- Live session state --------
   const [session, setSession] = useState<null | {
