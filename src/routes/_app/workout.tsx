@@ -356,23 +356,27 @@ function Workout() {
           </div>
           <div className="flex gap-2 overflow-x-auto -mx-5 px-5 pb-1 snap-x">
             {aiPlan.days.map((d: any, i: number) => {
-              const active = i === todayIdx();
+              const active = i === selectedDay;
+              const isToday = i === todayIdx();
               const isRest = d.workout_type === "rest";
               return (
-                <div key={i} className={`snap-start shrink-0 w-[128px] rounded-2xl p-3 border transition
+                <button key={i} type="button" onClick={() => setSelectedDay(i)}
+                  className={`snap-start shrink-0 w-[128px] text-left rounded-2xl p-3 border transition active:scale-[0.98]
                   ${active
                     ? "border-[oklch(0.84_0.20_145/60%)] bg-[oklch(0.84_0.20_145/10%)]"
                     : "border-white/[0.06] bg-white/[0.03]"}`}
                   style={active ? { boxShadow: `0 0 20px -8px ${NEON}` } : undefined}>
                   <div className="flex items-center justify-between">
-                    <span className={`text-[10px] uppercase tracking-widest ${active ? "text-[oklch(0.84_0.20_145)] font-bold" : "text-muted-foreground"}`}>{d.day}</span>
+                    <span className={`text-[10px] uppercase tracking-widest ${active ? "text-[oklch(0.84_0.20_145)] font-bold" : "text-muted-foreground"}`}>
+                      {d.day}{isToday ? " •" : ""}
+                    </span>
                     {!isRest && <DifficultyBadge d={d.difficulty} compact />}
                   </div>
                   <div className="mt-1.5 text-[13px] font-semibold leading-tight line-clamp-2">{d.focus}</div>
                   <div className="mt-2 text-[10px] text-muted-foreground tabular-nums">
                     {isRest ? "Rest day" : `${d.duration_min}m · ${d.calories}kcal`}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
