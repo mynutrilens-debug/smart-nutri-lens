@@ -54,6 +54,17 @@ export const generateAiWorkout = createServerFn({ method: "POST" })
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
     if (!p) throw new Error("Profile not found");
 
+    // 7-day cache: reuse the existing weekly plan until the cycle completes.
+    // Prevents daily regeneration and reduces Gemini token usage. A fresh
+    // 7-day plan auto-generates only after 7 days have elapsed.
+    const cachedPlan = (p as any).ai_plan?.workout_plan;
+    const cachedAt = cachedPlan?.generated_at ? new Date(cachedPlan.generated_at) : null;
+    if (cachedPlan && cachedAt && Date.now() - cachedAt.getTime() < 7 * 86400000) {
+      return cachedPlan;
+    }
+
+
+
 
     const heightM = (p.height_cm ?? 170) / 100;
     const bmi = Number(((p.weight_kg ?? 70) / (heightM * heightM)).toFixed(1));
