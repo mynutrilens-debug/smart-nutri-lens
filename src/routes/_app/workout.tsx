@@ -396,7 +396,7 @@ function Workout() {
               style={{ background: `linear-gradient(90deg, transparent, ${NEON}, transparent)` }} />
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">{DAYS[todayIdx()]} · Today</div>
+                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">{DAYS[selectedDay]}{selectedDay === todayIdx() ? " · Today" : ""}</div>
                 <div className="mt-0.5 text-2xl font-black leading-tight truncate">{todayPlan.focus}</div>
                 <div className="mt-1.5 flex items-center gap-2 flex-wrap text-[11px]">
                   <DifficultyBadge d={todayPlan.difficulty} />
