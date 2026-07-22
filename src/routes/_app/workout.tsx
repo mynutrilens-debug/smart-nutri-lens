@@ -317,10 +317,14 @@ function Workout() {
               {aiPlan?.summary ?? "Tell me your level & gear — I'll build a smart split tuned to your goal."}
             </p>
           </div>
-          <button onClick={() => setAiOpen(true)}
-            className="shrink-0 h-10 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 text-black active:scale-95"
+          <button
+            onClick={() => canReplan && setAiOpen(true)}
+            disabled={!canReplan}
+            title={canReplan ? "" : `Re-plan available in ${daysUntilReplan}d`}
+            className="shrink-0 h-10 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 text-black active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: `linear-gradient(135deg, ${NEON}, oklch(0.9 0.2 135))`, boxShadow: `0 8px 24px -6px ${NEON}` }}>
-            <Sparkles className="h-3.5 w-3.5" /> {aiPlan ? "Re-plan" : "Generate"}
+            <Sparkles className="h-3.5 w-3.5" />
+            {!aiPlan ? "Generate" : canReplan ? "Re-plan" : `Re-plan in ${daysUntilReplan}d`}
           </button>
         </div>
 
