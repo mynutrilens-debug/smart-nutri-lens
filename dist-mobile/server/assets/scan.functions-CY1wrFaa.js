@@ -1,0 +1,149 @@
+import { c as createServerRpc } from "./createServerRpc-S7gwSw9F.js";
+import { z } from "zod";
+import { r as requireSupabaseAuth } from "./auth-middleware-B4NMxYBh.js";
+import { c as createServerFn } from "./server-BadC42R4.js";
+import "@supabase/supabase-js";
+import "./createMiddleware-BvN2ghIY.js";
+import "node:async_hooks";
+import "h3-v2";
+import "@tanstack/router-core";
+import "seroval";
+import "@tanstack/history";
+import "@tanstack/router-core/ssr/client";
+import "@tanstack/router-core/ssr/server";
+import "react";
+import "@tanstack/react-router";
+import "react/jsx-runtime";
+import "@tanstack/react-router/ssr/server";
+const ScanInput = z.object({
+  image_base64: z.string().min(50),
+  mime_type: z.string().regex(/^image\/(jpeg|png|webp|heic|heif)$/),
+  hint: z.string().max(200).optional()
+});
+const SYSTEM = `You are a nutrition vision expert. Identify the food in the image and return realistic per-serving macronutrients.
+Return STRICT JSON: { "name": string, "meal_type": "breakfast"|"lunch"|"dinner"|"snack", "calories": int, "protein_g": number, "carbs_g": number, "fat_g": number, "confidence": number (0-1), "notes": string, "alternatives": [{ "name": string, "calories": int, "protein_g": number, "carbs_g": number, "fat_g": number }] }.
+Estimate portion based on visible cues. If ambiguous, pick the most likely common serving.
+ALWAYS include 3-4 visually-similar alternative foods in "alternatives" (e.g. paneer vs tofu, chicken vs turkey, white rice vs basmati, sweet potato vs pumpkin) with their own macros for the same portion size. No prose, only JSON.`;
+const analyzeFood_createServerFn_handler = createServerRpc({
+  id: "b693696f56473fcf7fa0b9dcdf7ef61be0370e1d490508a83409f42a39e1373d",
+  name: "analyzeFood",
+  filename: "src/lib/scan.functions.ts"
+}, (opts) => analyzeFood.__executeServer(opts));
+const analyzeFood = createServerFn({
+  method: "POST"
+}).middleware([requireSupabaseAuth]).inputValidator((d) => ScanInput.parse(d)).handler(analyzeFood_createServerFn_handler, async ({
+  data
+}) => {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error("Missing GEMINI_API_KEY");
+  const body = {
+    systemInstruction: {
+      parts: [{
+        text: SYSTEM
+      }]
+    },
+    contents: [{
+      role: "user",
+      parts: [{
+        text: `Analyze this food image.${data.hint ? " Hint: " + data.hint : ""}`
+      }, {
+        inline_data: {
+          mime_type: data.mime_type,
+          data: data.image_base64
+        }
+      }]
+    }],
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.2
+    }
+  };
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`Gemini error ${res.status}: ${t.slice(0, 200)}`);
+  }
+  const json = await res.json();
+  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("Could not parse AI response");
+  }
+  return {
+    name: String(parsed.name ?? "Unknown food"),
+    meal_type: ["breakfast", "lunch", "dinner", "snack"].includes(parsed.meal_type) ? parsed.meal_type : "snack",
+    calories: Math.max(0, Math.round(Number(parsed.calories) || 0)),
+    protein_g: Math.max(0, Number(parsed.protein_g) || 0),
+    carbs_g: Math.max(0, Number(parsed.carbs_g) || 0),
+    fat_g: Math.max(0, Number(parsed.fat_g) || 0),
+    confidence: Math.min(1, Math.max(0, Number(parsed.confidence) || 0.6)),
+    notes: String(parsed.notes ?? ""),
+    alternatives: (Array.isArray(parsed.alternatives) ? parsed.alternatives : []).slice(0, 4).map((a) => ({
+      name: String(a?.name ?? "Alternative"),
+      calories: Math.max(0, Math.round(Number(a?.calories) || 0)),
+      protein_g: Math.max(0, Number(a?.protein_g) || 0),
+      carbs_g: Math.max(0, Number(a?.carbs_g) || 0),
+      fat_g: Math.max(0, Number(a?.fat_g) || 0)
+    }))
+  };
+});
+const generateInsight_createServerFn_handler = createServerRpc({
+  id: "13ed6f0e334bf96b543d440d5ea6dff125ac4e36f6961db1422a2ebf4b08617f",
+  name: "generateInsight",
+  filename: "src/lib/scan.functions.ts"
+}, (opts) => generateInsight.__executeServer(opts));
+const generateInsight = createServerFn({
+  method: "POST"
+}).middleware([requireSupabaseAuth]).handler(generateInsight_createServerFn_handler, async ({
+  context
+}) => {
+  const {
+    supabase,
+    userId
+  } = context;
+  const today = /* @__PURE__ */ new Date();
+  today.setHours(0, 0, 0, 0);
+  const [foods, profile] = await Promise.all([supabase.from("food_logs").select("name,calories,protein_g,carbs_g,fat_g,meal_type").eq("user_id", userId).gte("logged_at", today.toISOString()), supabase.from("profiles").select("daily_calorie_goal,protein_goal_g").eq("user_id", userId).single()]);
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error("Missing GEMINI_API_KEY");
+  const prompt = `User goal: ${profile.data?.daily_calorie_goal ?? 2200} kcal, ${profile.data?.protein_goal_g ?? 140}g protein.
+Today's meals: ${JSON.stringify(foods.data ?? [])}.
+Give one short, motivating, specific coaching tip (max 2 sentences, no emojis).`;
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      contents: [{
+        role: "user",
+        parts: [{
+          text: prompt
+        }]
+      }]
+    })
+  });
+  if (!res.ok) throw new Error(`Gemini ${res.status}`);
+  const json = await res.json();
+  const text = (json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "Keep going — small steps every day.").trim();
+  await supabase.from("ai_insights").insert({
+    user_id: userId,
+    kind: "daily",
+    content: text
+  });
+  return {
+    content: text
+  };
+});
+export {
+  analyzeFood_createServerFn_handler,
+  generateInsight_createServerFn_handler
+};
