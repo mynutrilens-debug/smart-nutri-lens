@@ -28,22 +28,35 @@ Without these, web push is disabled cleanly. Native push works independently via
 
 ## Capacitor — native iOS + Android
 
+The native app now bundles a **separate client-only SPA** (produced by
+`vite.mobile.config.ts` → `dist-mobile/`) into the APK/IPA. The SSR site at
+`app.mynutrilens.com` stays unchanged for SEO/marketing. Server functions
+(`createServerFn`) and `/api/*` routes stay hosted there — the mobile SPA
+reaches them cross-origin via a fetch shim in `src/lib/native.ts` that
+rewrites `/_serverFn/*` and `/api/*` to `VITE_SERVER_FN_BASE_URL`
+(defaults to `https://app.mynutrilens.com`).
 
+```
+[SSR website]  app.mynutrilens.com   ──── server fns / API ────┐
+                                                               │
+[Capacitor APK/IPA]  file://…/dist-mobile/index.html ──────────┘
+```
 
 ## One-time local setup
 
-1. Export the project from Lovable to GitHub (button → top right), then clone it locally.
+1. Export the project from Lovable to GitHub, then clone it locally.
 2. `bun install`
 3. Add the platforms you want:
    ```
    bunx cap add ios       # macOS only, requires Xcode
    bunx cap add android   # requires Android Studio
    ```
-4. Build the web bundle and copy into native shells:
+4. Build the mobile SPA and copy it into the native shells:
    ```
-   bun run build
+   bun run build:mobile
    bunx cap sync
    ```
+   (Shortcut: `bun run cap:sync` runs both.)
 5. Open in the native IDE:
    ```
    bunx cap open ios
@@ -52,22 +65,20 @@ Without these, web push is disabled cleanly. Native push works independently via
 
 ## Fully in-app (no browser redirect)
 
-`capacitor.config.ts` no longer has a `server.url`, so the installed app
-loads the bundled `dist/` assets and runs **entirely inside the native
-shell** — no WebView redirect to lovable.app, no external browser.
-
-Every time you change the web code, rebuild and re-sync:
+`capacitor.config.ts` has **no** `server.url`, so the installed app loads
+`dist-mobile/index.html` from local disk and runs entirely inside the
+native shell. Every web change requires a rebuild + sync:
 
 ```
-bun run build && bunx cap sync
+bun run build:mobile && bunx cap sync
 ```
 
 Then run in the simulator/device from Xcode or Android Studio.
 
 ### Optional: hot reload while developing
 
-If you want live reload against the Lovable preview during development,
-temporarily add this back into `capacitor.config.ts`:
+Temporarily add this to `capacitor.config.ts` to point the shell at a
+running dev server; **remove it before any release build**:
 
 ```ts
 server: {
@@ -78,13 +89,10 @@ server: {
 },
 ```
 
-**Remove the `url`** before building any release artifact, or the store
-build will load remote HTML instead of behaving like a native app.
-
 ## Producing release builds
 
 ```
-bun run build && bunx cap sync
+bun run build:mobile && bunx cap sync
 ```
 
 - **Android AAB/APK** → Android Studio → Build → Generate Signed Bundle / APK
