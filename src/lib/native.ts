@@ -140,6 +140,8 @@ export async function initNative(options: NativeInitOptions = {}) {
   nativeHandlers = options;
   if (!isNative() || nativeListenersReady) return;
   nativeListenersReady = true;
+  // Route server-fn / API traffic to the SSR host when running on device.
+  installRemoteFetchShim();
   try {
     const [{ StatusBar, Style }, { SplashScreen }, { Keyboard }, { App }] = await Promise.all([
       import('@capacitor/status-bar'),
