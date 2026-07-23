@@ -35,6 +35,9 @@ function isAppShellWorker(registration: ServiceWorkerRegistration) {
 function canUseAppShellServiceWorker() {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return false;
   if (!import.meta.env.PROD) return false;
+  // Never register the PWA service worker inside a Capacitor WebView — the
+  // bundled SPA loads from file:// and doesn't need SW-backed navigation.
+  if ((import.meta.env.VITE_MOBILE_BUILD as string | undefined) === "1") return false;
   if (isInsideIframe()) return false;
   if (isLovablePreviewHost(window.location.hostname)) return false;
   if (new URL(window.location.href).searchParams.get("sw") === "off") return false;

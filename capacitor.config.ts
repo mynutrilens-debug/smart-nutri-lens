@@ -1,29 +1,24 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 // MyNutriLens — Capacitor native config
-// To run locally:
-//   1. git pull this project into your machine
-//   2. bun install
-//   3. bunx cap add ios   (and/or)  bunx cap add android
-//   4. bun run build && bunx cap sync
-//   5. bunx cap open ios   /   bunx cap open android
 //
-// Native release builds load bundled assets from `dist/` directly.
-// Do not add `server.url` for Play Store / App Store builds.
+// The native app now ships a bundled SPA (produced by `bun run build:mobile`)
+// inside the binary — no external URL, no browser redirect. The website
+// (SSR site at app.mynutrilens.com) stays separate for SEO/marketing.
+//
+// Workflow:
+//   1. bun install
+//   2. bunx cap add ios   (and/or)  bunx cap add android
+//   3. bun run build:mobile && bunx cap sync
+//   4. bunx cap open ios   /   bunx cap open android
 const config: CapacitorConfig = {
   appId: 'com.mynutrilens.app',
   appName: 'MyNutriLens',
-  webDir: 'dist',
+  // Static SPA output from vite.mobile.config.ts — bundled into the APK/IPA.
+  webDir: 'dist-mobile/client',
   bundledWebRuntime: false,
-  // Native shell loads the published web app directly. This avoids needing
-  // a static `dist/index.html` (TanStack Start is SSR) and keeps the app
-  // always up-to-date without rebuilding the native binary for web changes.
-  server: {
-    url: 'https://app.mynutrilens.com',
-    cleartext: false,
-    androidScheme: 'https',
-    iosScheme: 'capacitor',
-  },
+  // No `server.url` — the shell loads dist-mobile/index.html from local disk.
+  // (Add one temporarily during dev if you want live reload against a preview.)
   ios: {
     contentInset: 'always',
     limitsNavigationsToAppBoundDomains: false,

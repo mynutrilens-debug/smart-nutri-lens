@@ -20,6 +20,59 @@ let oauthDeepLinkHandled = false;
 export const isNative = () =>
   typeof window !== 'undefined' && Capacitor?.isNativePlatform?.() === true;
 
+// Base URL used by the bundled mobile SPA to reach the SSR host for server
+// functions (`/_serverFn/*`) and API routes (`/api/*`). The Capacitor shell
+// serves the app from `capacitor://localhost` / `https://localhost`, so
+// relative-path fetches would 404 without this rewrite.
+const REMOTE_API_BASE =
+  (import.meta.env.VITE_SERVER_FN_BASE_URL as string | undefined) ||
+  'https://app.mynutrilens.com';
+
+let fetchShimInstalled = false;
+function installRemoteFetchShim() {
+  if (fetchShimInstalled || typeof window === 'undefined') return;
+  fetchShimInstalled = true;
+  const originalFetch = window.fetch.bind(window);
+  const shouldProxy = (path: string) =>
+    path.startsWith('/_serverFn') || path.startsWith('/api/');
+  window.fetch = (input, init) => {
+    try {
+      let urlStr: string;
+      let req: Request | null = null;
+      if (typeof input === 'string') urlStr = input;
+      else if (input instanceof URL) urlStr = input.toString();
+      else {
+        req = input as Request;
+        urlStr = req.url;
+      }
+      if (urlStr.startsWith('/') && shouldProxy(urlStr)) {
+        urlStr = REMOTE_API_BASE.replace(/\/$/, '') + urlStr;
+      } else if (urlStr.startsWith('http')) {
+        try {
+          const u = new URL(urlStr);
+          // Requests aimed at the Capacitor webview host must be redirected
+          // to the SSR host (server fns / api routes are not bundled locally).
+          if (
+            (u.hostname === 'localhost' || u.protocol === 'capacitor:') &&
+            shouldProxy(u.pathname)
+          ) {
+            urlStr = REMOTE_API_BASE.replace(/\/$/, '') + u.pathname + u.search;
+          }
+        } catch {}
+      } else {
+        return originalFetch(input as RequestInfo, init);
+      }
+      if (req) {
+        const rewritten = new Request(urlStr, req);
+        return originalFetch(rewritten, init);
+      }
+      return originalFetch(urlStr, init);
+    } catch {
+      return originalFetch(input as RequestInfo, init);
+    }
+  };
+}
+
 export function getAuthRedirectUrl(path = '/home') {
   if (isNative()) return NATIVE_AUTH_REDIRECT;
   return `${window.location.origin}${path}`;
@@ -87,6 +140,8 @@ export async function initNative(options: NativeInitOptions = {}) {
   nativeHandlers = options;
   if (!isNative() || nativeListenersReady) return;
   nativeListenersReady = true;
+  // Route server-fn / API traffic to the SSR host when running on device.
+  installRemoteFetchShim();
   try {
     const [{ StatusBar, Style }, { SplashScreen }, { Keyboard }, { App }] = await Promise.all([
       import('@capacitor/status-bar'),

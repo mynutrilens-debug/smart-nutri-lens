@@ -1,68 +1,62 @@
-# Health Connect + HealthKit Integration Plan
+## Goal
 
-Sync steps, calories, distance, active minutes, workouts, heart rate, sleep, weight, and height from Google Health Connect (Android) and Apple HealthKit (iOS) into MyNutriLens, then use those signals to power the dashboard and improve AI plans.
+Stop the Android/iOS shell from loading `https://app.mynutrilens.com` in a WebView. Keep the SSR site live for SEO/marketing, and ship a separate client-only SPA bundle inside the Capacitor binary.
 
-## 1. Native plugin
+## Approach
 
-Use `@kiwi-health/capacitor-health-connect` for Android and `@perfood/capacitor-healthkit` for iOS (both actively maintained, cover the metrics needed). Wrap them behind a single `src/lib/health.ts` bridge:
+Two build outputs from the same source tree:
 
-- `isHealthAvailable()` — platform + install/permission check
-- `requestHealthPermissions()` — request read scopes for the 9 metrics
-- `readHealthSnapshot({ since })` — normalized shape: `{ steps, caloriesBurned, distanceM, activeMinutes, workouts[], heartRate{avg,resting}, sleep{minutes,stages}, weightKg, heightCm }`
-- Web/unsupported → returns `{ available: false }` for graceful fallback
+- `bun run build` → SSR site (Cloudflare Worker, unchanged) — served at `app.mynutrilens.com`.
+- `bun run build:mobile` → static SPA in `dist-mobile/` — bundled into the APK/IPA.
 
-Native config:
-- Android: add Health Connect permissions to `AndroidManifest.xml` + intent filter for the permissions rationale activity, min SDK stays 24 (Health Connect handles older via Play install).
-- iOS: add HealthKit entitlement + `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription` in `Info.plist`.
-
-## 2. Storage
-
-New table `health_snapshots` (Supabase migration) keyed by `user_id + captured_on (date)` with columns for each metric + `raw jsonb` + `source` (`healthkit` | `health_connect` | `manual`). RLS: user reads/writes own rows only, service_role full. Also add nullable `resting_hr`, `sleep_minutes`, `active_minutes` to `profiles` for the latest quick-access values used by AI prompts.
-
-Weight readings additionally upsert into existing `weight_entries`; workouts additionally insert into existing `workouts` (dedup by `source_id`, add `source` + `source_id` columns via migration).
-
-## 3. Sync flow
-
-- `src/lib/health.functions.ts` server fn `ingestHealthSnapshot` — accepts normalized payload, upserts `health_snapshots`, mirrors into `weight_entries` / `workouts`, updates `profiles.resting_hr` etc.
-- Client sync helper `syncHealth()` in `src/lib/health.ts`:
-  - Foreground: called on app resume, on Home mount, and via a manual "Sync Health" button.
-  - Background: register `App.addListener('appStateChange')` in `src/lib/native.ts` to trigger sync when app becomes active (true OS background sync requires a native background task — out of scope; documented as follow-up).
-- After successful sync: `queryClient.invalidateQueries()` so dashboard/diet/workout reflect new data immediately.
-
-## 4. UI surfaces
-
-- **Onboarding**: new step "Connect Health" with Allow/Skip. Skip is always allowed.
-- **Profile / Me**: "Health sources" card showing connection status, last sync time, resting HR, sleep last night, weekly steps sparkline; manual "Sync now" button.
-- **Home dashboard**: today's steps, active minutes, and calories-burned-from-device merged into existing Quick Log/burn totals (device value takes precedence over manual when both present).
-- **Workout**: imported HealthKit/Health Connect workouts appear in history with a small "Apple Health" / "Health Connect" badge.
-- **Weight tracker**: automatically ingests HealthKit weight; user-entered still supported.
-- **Graceful fallback**: on web or when permission denied, hide the Health card and keep manual entry paths intact.
-
-## 5. AI enrichment
-
-Extend the Gemini prompt builders in `src/lib/onboarding.functions.ts` and `src/lib/workout.functions.ts` with a `healthContext` block (avg daily steps, active minutes, resting HR, sleep, latest weight trend). Adjust calorie target and workout intensity recommendations:
-- TDEE nudged by measured activity vs. sedentary baseline.
-- Recovery-aware workouts: if resting HR trending up or sleep < 6h avg for 3 days → prefer a lighter/mobility session that day.
-- Nutrition coach messages reference concrete numbers ("You averaged 8.4k steps and slept 6h12 — adding 15g protein at lunch").
-
-## 6. Security
-
-- Health data stays in Supabase behind RLS; never sent to third parties other than Gemini (only aggregated summary numbers, no raw samples).
-- Bearer-authenticated server fn writes only; no service-role client from the browser.
-- Explicit permission prompt with clear copy; user can revoke via OS settings and disconnect via in-app toggle (`profiles.health_sync_enabled`).
-
-## Technical details
+Capacitor loads `dist-mobile/index.html` locally. Server functions (`createServerFn`) keep running on the SSR host; the SPA calls them cross-origin over HTTPS.
 
 ```text
-Native:  @kiwi-health/capacitor-health-connect  (Android)
-         @perfood/capacitor-healthkit           (iOS)
-Bridge:  src/lib/health.ts       (platform-agnostic API + web no-op)
-Server:  src/lib/health.functions.ts  (ingestHealthSnapshot, getHealthOverview)
-Schema:  health_snapshots table + workouts.source/source_id + profiles.{resting_hr, sleep_minutes, active_minutes, health_sync_enabled}
-UI:      HealthCard component, onboarding step, Home/Profile integrations
+[SSR site] app.mynutrilens.com  ──── server fns / API ────┐
+                                                          │
+[Capacitor APK/IPA] file://…/dist-mobile/index.html ──────┘
 ```
 
-## Out of scope (follow-up)
+## Steps
 
-- True OS background sync (WorkManager / BGTaskScheduler) — current plan syncs on foreground/app-resume only.
-- Writing data back to Health Connect / HealthKit (read-only for now).
+1. **New SPA entry** (`src/entry.mobile.tsx`, `index.mobile.html`)
+   - Creates the same TanStack Router via `getRouter()` and mounts with `<RouterProvider>` on the client only — no SSR shell, no `Scripts`/`HeadContent` HTML output.
+   - Wraps in `QueryClientProvider`, `Toaster`, calls `initNative()`.
+
+2. **Server-fn base URL for mobile**
+   - `createServerFn` uses relative paths; from `capacitor://localhost` they'd 404.
+   - Add `VITE_SERVER_FN_BASE_URL=https://app.mynutrilens.com` in the mobile build and configure the TanStack Start client to prefix server-fn fetches with it (via `import.meta.env` read in a small fetch shim in `src/start.ts`).
+
+3. **Mobile Vite config** (`vite.mobile.config.ts`)
+   - Plain Vite + React + TanStack Router plugin (no `tanstackStart`, no Nitro, no PWA plugin).
+   - `build.outDir = 'dist-mobile'`, `build.rollupOptions.input = 'index.mobile.html'`.
+   - Same `@` alias, Tailwind plugin, tsconfig-paths.
+
+4. **package.json**
+   - Add `"build:mobile": "vite build --config vite.mobile.config.ts"`.
+
+5. **capacitor.config.ts**
+   - `webDir: 'dist-mobile'`.
+   - Remove the `server.url` block entirely so the shell loads bundled assets.
+
+6. **Root component adjustments**
+   - `src/routes/__root.tsx` currently defines `shellComponent` (html/head/body). SPA mode ignores it — fine. The `head()` meta is applied by TanStack Router's head manager on the client.
+   - Skip `<InstallPwaPrompt />` and PWA SW registration when running under Capacitor (already guarded via `isNative()` in most spots; add the guard around `registerPwaServiceWorker()`).
+
+7. **Route safety pass**
+   - Routes that rely on `useServerFn` already work SPA-side. Any route using a loader that hits a protected server fn already runs only under `_app` (authenticated) — fine.
+
+8. **Docs**
+   - Update `MOBILE_SETUP.md` with the new flow: `bun run build:mobile && bunx cap sync && bunx cap open android|ios`.
+
+## Result
+
+- Website: unchanged, SSR + PWA.
+- APK/IPA: opens instantly from local assets, no external redirect, hits the SSR-hosted server functions over HTTPS for data.
+
+## Out of scope
+
+- Migrating server functions to a dedicated REST API.
+- Offline-first mobile caching beyond what TanStack Query already provides.
+
+Confirm and I'll implement.

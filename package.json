@@ -7,6 +7,8 @@
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:mobile": "vite build --config vite.mobile.config.ts && node -e \"require('fs').renameSync('dist-mobile/client/.html','dist-mobile/client/index.html')\"",
+    "cap:sync": "bun run build:mobile && bunx cap sync",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."
