@@ -15,7 +15,7 @@ const config: CapacitorConfig = {
   appId: 'com.mynutrilens.app',
   appName: 'MyNutriLens',
   // Static SPA output from vite.mobile.config.ts — bundled into the APK/IPA.
-  webDir: 'dist-mobile',
+  webDir: 'dist-mobile/client',
   bundledWebRuntime: false,
   // No `server.url` — the shell loads dist-mobile/index.html from local disk.
   // (Add one temporarily during dev if you want live reload against a preview.)
