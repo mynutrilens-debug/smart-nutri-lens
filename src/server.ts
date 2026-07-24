@@ -94,6 +94,8 @@ function corsHeadersFor(request: Request): Record<string, string> {
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers":
       reqHeaders ?? "Content-Type, Authorization, X-Requested-With, Accept, Origin",
+    "Access-Control-Expose-Headers":
+      "Content-Type, X-Tss-Serialized, x-tss-serialized, X-Tss-Raw-Response, x-tss-raw-response, x-tsr-serverFn",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
