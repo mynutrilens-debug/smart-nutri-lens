@@ -312,3 +312,50 @@ export const getMyRewards = createServerFn({ method: "GET" })
       .order("awarded_at", { ascending: false });
     return data ?? [];
   });
+
+export const updateSquad = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      squad_id: z.string().uuid(),
+      name: z.string().trim().min(2).max(60).optional(),
+      goal_description: z.string().trim().max(200).nullable().optional(),
+      goal_target: z.number().finite().nullable().optional(),
+      challenge_type: z.enum(CHALLENGE_TYPES).optional(),
+      custom_challenge: z.string().trim().max(80).nullable().optional(),
+      ends_at: z.string().datetime().optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { squad_id, ...patch } = data;
+    // RLS restricts UPDATE to owner_id = auth.uid()
+    const { data: updated, error } = await supabase
+      .from("squads")
+      .update(patch)
+      .eq("id", squad_id)
+      .eq("owner_id", userId)
+      .select()
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!updated) throw new Error("Only the owner can edit this squad");
+    return updated;
+  });
+
+export const deleteSquad = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ squad_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // Delete children first (RLS on children uses is_squad_member; owner is a member).
+    await supabase.from("squad_rewards").delete().eq("squad_id", data.squad_id);
+    await supabase.from("squad_members").delete().eq("squad_id", data.squad_id);
+    const { error, count } = await supabase
+      .from("squads")
+      .delete({ count: "exact" })
+      .eq("id", data.squad_id)
+      .eq("owner_id", userId);
+    if (error) throw new Error(error.message);
+    if (!count) throw new Error("Only the owner can delete this squad");
+    return { ok: true };
+  });
