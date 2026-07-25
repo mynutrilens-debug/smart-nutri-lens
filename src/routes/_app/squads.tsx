@@ -1,14 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { createSquad, joinSquadByCode, listMySquads } from "@/lib/squad.functions";
-import { Users, Trophy, Plus, ArrowLeft, Sparkles, Target, ChevronRight, Flame, Copy, Lock, Globe, Gift, Crown, Zap, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { SquadDetailPanel } from "@/components/mobile/SquadDetailPanel";
+import { Users, Trophy, Plus, ArrowLeft, Sparkles, Target, ChevronRight, ChevronDown, Flame, Copy, Lock, Globe, Gift, Crown, Zap, Calendar, Radio } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/squads")({
   component: SquadsPage,
 });
+
 
 const CHALLENGES = [
   { id: "weight_loss", label: "Weight Loss", emoji: "⚖️" },
