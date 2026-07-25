@@ -148,7 +148,10 @@ function SquadsPage() {
 
           <section className="animate-slide-up" style={{ animationDelay: ".1s" }}>
             <div className="flex items-center justify-between px-1 mb-2">
-              <h3 className="text-sm font-semibold flex items-center gap-2"><Trophy className="h-4 w-4 text-amber-300" /> My squads</h3>
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-amber-300" /> My squads
+                <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider text-emerald-300"><Radio className="h-2.5 w-2.5 animate-pulse" /> live</span>
+              </h3>
               <span className="text-[11px] text-muted-foreground tabular-nums">{squads.length}</span>
             </div>
             {squads.length === 0 ? (
@@ -164,25 +167,48 @@ function SquadsPage() {
                 {squads.map((s: any) => {
                   const done = s.finalized_at || new Date(s.ends_at) < new Date();
                   const daysLeft = Math.max(0, Math.ceil((new Date(s.ends_at).getTime() - Date.now()) / 86400000));
+                  const isOpen = expandedId === s.id;
                   return (
-                    <Link key={s.id} to="/squads/$squadId" params={{ squadId: s.id }} className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-4">
-                      <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-emerald-400/30 to-cyan-400/30 flex items-center justify-center text-xl">
-                        {CHALLENGES.find(c => c.id === s.challenge_type)?.emoji ?? "🏆"}
+                    <div key={s.id} className={`rounded-2xl border backdrop-blur-xl transition-all ${isOpen ? "border-emerald-400/40 bg-emerald-500/[0.06] shadow-[0_0_28px_-8px_rgba(52,211,153,0.35)]" : "border-white/[0.06] bg-white/[0.03]"}`}>
+                      <button
+                        onClick={() => setExpandedId(isOpen ? null : s.id)}
+                        aria-expanded={isOpen}
+                        className="w-full flex items-center gap-3 p-4 text-left"
+                      >
+                        <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-emerald-400/30 to-cyan-400/30 flex items-center justify-center text-xl">
+                          {CHALLENGES.find(c => c.id === s.challenge_type)?.emoji ?? "🏆"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate">{s.name}</p>
+                          <p className="text-[11px] text-muted-foreground capitalize">{s.period} · {s.challenge_type.replace("_", " ")}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] uppercase tracking-wider text-emerald-300">{done ? "Ended" : `${daysLeft}d left`}</p>
+                          <p className="text-[10px] font-mono text-muted-foreground mt-0.5">{s.code}</p>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-300 ${isOpen ? "rotate-180 text-emerald-300" : ""}`} />
+                      </button>
+                      <div
+                        className={`grid transition-all duration-500 ease-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="px-4 pb-4 border-t border-white/[0.05]">
+                            {isOpen && (
+                              <SquadDetailPanel
+                                squadId={s.id}
+                                onLeft={() => { setExpandedId(null); }}
+                                onDeleted={() => { setExpandedId(null); }}
+                              />
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate">{s.name}</p>
-                        <p className="text-[11px] text-muted-foreground capitalize">{s.period} · {s.challenge_type.replace("_", " ")}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] uppercase tracking-wider text-emerald-300">{done ? "Ended" : `${daysLeft}d left`}</p>
-                        <p className="text-[10px] font-mono text-muted-foreground mt-0.5">{s.code}</p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </Link>
+                    </div>
                   );
                 })}
               </div>
             )}
+
           </section>
         </>
       )}
