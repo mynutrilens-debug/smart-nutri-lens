@@ -28,7 +28,20 @@ function SquadsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const list = useServerFn(listMySquads);
-  const { data: squads = [] } = useQuery({ queryKey: ["squads"], queryFn: () => list() });
+  const { data: squads = [] } = useQuery({ queryKey: ["squads"], queryFn: () => list(), refetchInterval: 60000 });
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Real-time refresh of the squad list when membership or squad metadata changes
+  useEffect(() => {
+    const refetch = () => qc.invalidateQueries({ queryKey: ["squads"] });
+    const channel = supabase
+      .channel("squads-list-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "squads" }, refetch)
+      .on("postgres_changes", { event: "*", schema: "public", table: "squad_members" }, refetch)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
+
 
   const [mode, setMode] = useState<"none" | "create" | "join">("none");
   const [name, setName] = useState("");
