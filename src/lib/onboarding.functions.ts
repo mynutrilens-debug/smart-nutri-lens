@@ -11,7 +11,7 @@ const OnboardingInput = z.object({
   weight_kg: z.number().min(30).max(250),
   target_weight_kg: z.number().min(30).max(250).optional(),
   activity_level: z.enum(["sedentary", "light", "moderate", "active", "athlete"]),
-  physique_goal: z.enum(["weight_loss", "fat_loss", "muscle_gain", "maintenance", "recomp"]),
+  physique_goal: z.enum(["weight_loss", "fat_loss", "muscle_gain", "maintenance", "recomp", "bulking"]),
   diet_preference: z.string().min(1).max(60),
   region: z.string().max(60).optional().nullable(),
   cuisine: z.string().max(60).optional().nullable(),
@@ -21,31 +21,68 @@ const OnboardingInput = z.object({
 
 export type OnboardingPayload = z.infer<typeof OnboardingInput>;
 
+// BMI is a HEALTH CLASSIFIER only — never used to size calories.
+// Pipeline: BMR (Mifflin-St Jeor) → TDEE (activity multiplier) → goal adjustment.
+// Protein 1.6–2.4 g/kg, Fat 0.6–1.0 g/kg, remaining calories → carbs.
 function computeTargets(p: OnboardingPayload) {
   const bmr =
     p.gender === "male"
       ? 10 * p.weight_kg + 6.25 * p.height_cm - 5 * p.age + 5
       : 10 * p.weight_kg + 6.25 * p.height_cm - 5 * p.age - 161;
-  const mult: Record<string, number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, athlete: 1.9 };
+
+  const mult: Record<string, number> = {
+    sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, athlete: 1.9,
+  };
   const tdee = bmr * (mult[p.activity_level] ?? 1.4);
-  let calories = tdee;
-  if (p.physique_goal === "weight_loss" || p.physique_goal === "fat_loss") calories = tdee - 500;
-  if (p.physique_goal === "muscle_gain") calories = tdee + 300;
-  calories = Math.round(calories);
-  const protein = Math.round(p.weight_kg * (p.physique_goal === "muscle_gain" ? 2.0 : 1.8));
-  const fat = Math.round((calories * 0.25) / 9);
+
+  // Goal-based calorie adjustment (fraction of TDEE)
+  const goalAdj: Record<string, number> = {
+    fat_loss: -0.225,      // −20–25% (midpoint)
+    weight_loss: -0.15,    // −10–20%
+    maintenance: 0,
+    recomp: 0,             // ±5% around TDEE; protein does the work
+    muscle_gain: 0.10,     // +5–15% (lean)
+    bulking: 0.175,        // +15–20%
+  };
+  const calories = Math.round(tdee * (1 + (goalAdj[p.physique_goal] ?? 0)));
+
+  // Protein 1.6–2.4 g/kg based on goal
+  const proteinPerKg =
+    p.physique_goal === "fat_loss" ? 2.2 :
+    p.physique_goal === "weight_loss" ? 2.0 :
+    p.physique_goal === "recomp" ? 2.2 :
+    p.physique_goal === "muscle_gain" ? 2.0 :
+    p.physique_goal === "bulking" ? 1.8 :
+    1.8;
+  const protein = Math.round(p.weight_kg * proteinPerKg);
+
+  // Fat 0.6–1.0 g/kg
+  const fatPerKg =
+    p.physique_goal === "fat_loss" ? 0.7 :
+    p.physique_goal === "bulking" ? 1.0 :
+    p.physique_goal === "muscle_gain" ? 0.9 :
+    0.8;
+  const fat = Math.round(p.weight_kg * fatPerKg);
+
+  // Remaining calories → carbs (min 50g)
   const carbs = Math.max(50, Math.round((calories - protein * 4 - fat * 9) / 4));
+
   const bmi = p.weight_kg / Math.pow(p.height_cm / 100, 2);
+  const bmiCategory =
+    bmi < 18.5 ? "underweight" : bmi < 25 ? "normal" : bmi < 30 ? "overweight" : "obese";
   const bodyFat =
     p.gender === "male" ? 1.2 * bmi + 0.23 * p.age - 16.2 : 1.2 * bmi + 0.23 * p.age - 5.4;
+
   return {
     calories,
     protein_g: protein,
     carbs_g: carbs,
     fat_g: fat,
     bmi: Number(bmi.toFixed(1)),
+    bmi_category: bmiCategory,
     body_fat_pct: Number(Math.max(5, Math.min(45, bodyFat)).toFixed(1)),
     muscle_mass_pct: Number((p.gender === "male" ? 45 - bodyFat * 0.3 : 38 - bodyFat * 0.3).toFixed(1)),
+    bmr: Math.round(bmr),
     tdee: Math.round(tdee),
   };
 }
@@ -172,32 +209,56 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const healthLine = n > 0
       ? `- Health signals (7-day avg from Apple Health / Health Connect): steps ${avg("steps")}, active min ${avg("active_minutes")}, calories burned ${avg("calories_burned")}, resting HR ${avg("resting_heart_rate") || avg("avg_heart_rate") || "n/a"}, sleep ${Math.round(avg("sleep_minutes") / 60)}h. Tune calorie target to measured activity (not just self-reported) and prefer lighter meals/recovery focus on days after <6h sleep.`
       : `- Health signals: none synced yet.`;
+    // Energy pipeline (BMI is classification only, NOT used to size calories)
+    const bmrCalc =
+      p.gender === "male"
+        ? 10 * (p.weight_kg ?? 70) + 6.25 * (p.height_cm ?? 170) - 5 * (p.age ?? 30) + 5
+        : 10 * (p.weight_kg ?? 70) + 6.25 * (p.height_cm ?? 170) - 5 * (p.age ?? 30) - 161;
+    const activityMult: Record<string, number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, athlete: 1.9 };
+    const tdeeCalc = Math.round(bmrCalc * (activityMult[p.activity_level as string] ?? 1.4));
+    const sleepAvgMin = n > 0 ? avg("sleep_minutes") : 0;
+
     const prompt = `You are a certified nutrition and fitness coach. Build a PERSONALIZED daily diet plan. Return STRICT JSON only.
 
 USER PROFILE
 - Gender: ${p.gender}, Age: ${p.age}
-- Height: ${p.height_cm}cm, Weight: ${p.weight_kg}kg, BMI: ${bmi} (${bmiCat})
-- Goal: ${p.physique_goal}, Activity: ${p.activity_level}
-- Diet preference: ${p.diet_preference} (honor strictly — e.g. "Non-Veg (No Beef)" excludes beef; "Vegan" excludes all animal products incl. dairy/eggs/honey; "Vegetarian" excludes meat/fish/eggs unless eggetarian; "Keto" <30g net carbs/day; "Diabetic-Friendly" low-GI, no refined sugar; "High-Protein" ≥30% calories from protein)
+- Height: ${p.height_cm}cm, Weight: ${p.weight_kg}kg
+- BMI: ${bmi} (${bmiCat}) — CLASSIFICATION ONLY, do NOT use BMI to size calories
+- BMR (Mifflin-St Jeor): ${Math.round(bmrCalc)} kcal · TDEE (BMR × activity): ${tdeeCalc} kcal
+- Goal: ${p.physique_goal} · Activity: ${p.activity_level}
+- Diet preference: ${p.diet_preference} (honor strictly — "Non-Veg (No Beef)" excludes beef; "Vegan" excludes all animal products incl. dairy/eggs/honey; "Vegetarian" excludes meat/fish/eggs unless eggetarian; "Keto" <30g net carbs/day; "Diabetic-Friendly" low-GI, no refined sugar; "High-Protein" ≥30% cals from protein)
 ${cuisineLine}
 - Allergies (STRICTLY AVOID): ${(p.allergies ?? []).join(", ") || "none"}
-- Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
-- Daily targets: ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g
-- Plan date (vary dishes day-to-day): ${new Date().toISOString().slice(0, 10)} · rotation slot #${rotationSeed} of 7 (use this to rotate cuisines/cooking styles across the week)
+- Medical conditions / deficiencies to address: ${(p.medical_conditions ?? []).join(", ") || "none"}
+- Precomputed daily targets (already goal-adjusted from TDEE, protein 1.6–2.4 g/kg, fat 0.6–1.0 g/kg, rest = carbs): ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g — match these within ±5%.
+- Plan date: ${new Date().toISOString().slice(0, 10)} · rotation slot #${rotationSeed} of 7
 ${avoidLine}
 ${healthLine}
 
-RULES
-- Tailor calories/macros to BMI + goal (deficit for weight/fat loss, surplus for muscle gain, balanced for maintenance/recomp).
+CALORIE / MACRO RULES (already applied in the targets above — reproduce them faithfully)
+- Fat Loss → TDEE −20 to −25%   |  Weight Loss → TDEE −10 to −20%
+- Maintenance → TDEE            |  Recomp → TDEE ±5%
+- Lean Muscle Gain → TDEE +5 to +15%  |  Bulking → TDEE +15 to +20%
+- Protein 1.6–2.4 g/kg · Fat 0.6–1.0 g/kg · remaining kcal → carbs
+- NEVER use BMI as the calorie driver — BMI only informs food-quality guidance (e.g. obese/overweight → more fiber, low-GI; underweight → calorie-dense).
+
+MEAL / PERSONALIZATION RULES
 - Use AUTHENTIC region/cuisine dishes by name. Affordable, locally available foods.
-- Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
-- Include shake recommendations tuned to goal:
-  * muscle_gain / underweight → high-cal mass shakes (banana + oats + peanut butter + milk + whey)
+- Meal frequency: 3 main meals + 1 snack + pre/post-workout if training that day. Split calories realistically (breakfast 25%, lunch 30%, dinner 25%, snack 10%, pre+post 10%).
+- Cover daily micronutrient needs: leafy greens (iron/folate), dairy or fortified plant milk (calcium/B12), colored veg/fruit (A, C, K, antioxidants), nuts/seeds (Mg, Zn, omega-3), whole grains (B-complex, fiber ≥25g). If a medical condition names a deficiency (e.g. iron, B12, vit D), explicitly bias foods toward it.
+- Hydration: recommend water intake in liters (35 ml/kg body weight, adjust up for active users).
+- Sleep-aware: if sleep <6h (avg sleep min: ${sleepAvgMin}), reduce caffeine after noon, add magnesium/tryptophan-rich dinner (banana, oats, dairy, turkey/paneer).
+- Budget-friendly: prefer staples (lentils, eggs, seasonal veg, local grains) over imported/expensive items unless user profile signals premium.
+- Gym access assumed for muscle_gain/bulking/recomp goals — include pre & post workout meals; for sedentary/light users, drop pre_workout and use a lighter snack instead.
+- Shakes tuned to goal:
+  * muscle_gain / bulking / underweight → high-cal mass shakes (banana + oats + peanut butter + milk + whey)
   * weight_loss / fat_loss → low-cal detox / protein (green tea, honey-lemon water, cucumber-mint, jeera water, whey + water)
   * maintenance / recomp → balanced protein smoothies
-  * diabetic-friendly → unsweetened, low-GI options only
+  * diabetic-friendly → unsweetened, low-GI only
+- Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
 - Never include allergens. Respect medical conditions and diet preference strictly.
-- VARIETY IS CRITICAL: every meal (breakfast, pre_workout, post_workout, lunch, snack, dinner) MUST be a DIFFERENT dish from the AVOID list above. Do not repeat yesterday's meals. Rotate protein sources, grains, and cooking styles day-to-day so the plan feels fresh every day of the week.
+- VARIETY IS CRITICAL: every meal MUST be DIFFERENT from the AVOID list. Rotate protein sources, grains, and cooking styles day-to-day.
+
 
 Return ONLY this JSON (no markdown):
 {
