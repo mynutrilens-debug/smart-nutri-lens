@@ -138,6 +138,12 @@ function Onboarding() {
         region,
         cuisine: region === "India" ? cuisine : "",
         allergies, medical_conditions: medical,
+        budget, lifestyle,
+        meal_frequency: mealFrequency,
+        sleep_hours: sleepHours,
+        water_intake_l: waterL,
+        workout_habit: workoutHabit,
+        deficiencies,
       }});
       // Fire and forget — plan can finish in background
       generateAiPlan().catch(() => {});
