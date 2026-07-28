@@ -84,6 +84,13 @@ function Onboarding() {
   const [cuisine, setCuisine] = useState("Maharashtrian");
   const [allergies, setAllergies] = useState<string[]>([]);
   const [medical, setMedical] = useState<string[]>([]);
+  const [budget, setBudget] = useState<"low" | "medium" | "high">("medium");
+  const [lifestyle, setLifestyle] = useState<string>("Desk-job");
+  const [mealFrequency, setMealFrequency] = useState<number>(4);
+  const [sleepHours, setSleepHours] = useState<number>(7);
+  const [waterL, setWaterL] = useState<number>(2.5);
+  const [workoutHabit, setWorkoutHabit] = useState<string>("Gym 3x/wk");
+  const [deficiencies, setDeficiencies] = useState<string[]>([]);
 
   const heightCm = unitH === "cm" ? height : Math.round(height * 30.48);
   const weightKg = unitW === "kg" ? weight : Math.round(weight * 0.4536);
