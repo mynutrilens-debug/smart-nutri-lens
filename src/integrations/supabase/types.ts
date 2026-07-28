@@ -219,10 +219,12 @@ export type Database = {
           allergies: string[] | null
           avatar_url: string | null
           body_fat_pct: number | null
+          budget: string | null
           carbs_goal_g: number
           created_at: string
           cuisine: string | null
           daily_calorie_goal: number
+          deficiencies: string[]
           diet_preference: string | null
           display_name: string | null
           fat_goal_g: number
@@ -231,6 +233,8 @@ export type Database = {
           health_sync_enabled: boolean
           height_cm: number | null
           last_active_date: string | null
+          lifestyle: string | null
+          meal_frequency: number | null
           medical_conditions: string[] | null
           muscle_mass_pct: number | null
           onboarded_at: string | null
@@ -238,12 +242,15 @@ export type Database = {
           protein_goal_g: number
           region: string | null
           resting_hr: number | null
+          sleep_hours: number | null
           sleep_minutes: number | null
           streak_count: number
           target_weight_kg: number | null
           updated_at: string
           user_id: string
+          water_intake_l: number | null
           weight_kg: number | null
+          workout_habit: string | null
         }
         Insert: {
           active_minutes_today?: number | null
@@ -254,10 +261,12 @@ export type Database = {
           allergies?: string[] | null
           avatar_url?: string | null
           body_fat_pct?: number | null
+          budget?: string | null
           carbs_goal_g?: number
           created_at?: string
           cuisine?: string | null
           daily_calorie_goal?: number
+          deficiencies?: string[]
           diet_preference?: string | null
           display_name?: string | null
           fat_goal_g?: number
@@ -266,6 +275,8 @@ export type Database = {
           health_sync_enabled?: boolean
           height_cm?: number | null
           last_active_date?: string | null
+          lifestyle?: string | null
+          meal_frequency?: number | null
           medical_conditions?: string[] | null
           muscle_mass_pct?: number | null
           onboarded_at?: string | null
@@ -273,12 +284,15 @@ export type Database = {
           protein_goal_g?: number
           region?: string | null
           resting_hr?: number | null
+          sleep_hours?: number | null
           sleep_minutes?: number | null
           streak_count?: number
           target_weight_kg?: number | null
           updated_at?: string
           user_id: string
+          water_intake_l?: number | null
           weight_kg?: number | null
+          workout_habit?: string | null
         }
         Update: {
           active_minutes_today?: number | null
@@ -289,10 +303,12 @@ export type Database = {
           allergies?: string[] | null
           avatar_url?: string | null
           body_fat_pct?: number | null
+          budget?: string | null
           carbs_goal_g?: number
           created_at?: string
           cuisine?: string | null
           daily_calorie_goal?: number
+          deficiencies?: string[]
           diet_preference?: string | null
           display_name?: string | null
           fat_goal_g?: number
@@ -301,6 +317,8 @@ export type Database = {
           health_sync_enabled?: boolean
           height_cm?: number | null
           last_active_date?: string | null
+          lifestyle?: string | null
+          meal_frequency?: number | null
           medical_conditions?: string[] | null
           muscle_mass_pct?: number | null
           onboarded_at?: string | null
@@ -308,12 +326,15 @@ export type Database = {
           protein_goal_g?: number
           region?: string | null
           resting_hr?: number | null
+          sleep_hours?: number | null
           sleep_minutes?: number | null
           streak_count?: number
           target_weight_kg?: number | null
           updated_at?: string
           user_id?: string
+          water_intake_l?: number | null
           weight_kg?: number | null
+          workout_habit?: string | null
         }
         Relationships: []
       }
