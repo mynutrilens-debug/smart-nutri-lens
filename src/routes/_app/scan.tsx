@@ -219,6 +219,9 @@ function Scan() {
             ))}
           </div>
 
+          {/* Vitamin & mineral breakdown */}
+          <VitaminBadges micros={analysis.micronutrients} />
+
           <div className="grid grid-cols-2 gap-2">
             <button onClick={() => { setAnalysis(null); setPreview(null); setEdit(null); }}
               className="py-3 rounded-2xl glass font-medium flex items-center justify-center gap-2"><X className="h-4 w-4" /> Discard</button>
