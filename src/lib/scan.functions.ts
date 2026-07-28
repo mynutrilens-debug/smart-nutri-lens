@@ -87,6 +87,17 @@ export const analyzeFood = createServerFn({ method: "POST" })
         carbs_g: Math.max(0, Number(a?.carbs_g) || 0),
         fat_g: Math.max(0, Number(a?.fat_g) || 0),
       })),
+      micronutrients: {
+        fiber_g: Math.max(0, Number((parsed as any).micronutrients?.fiber_g) || 0),
+        b12_mcg: Math.max(0, Number((parsed as any).micronutrients?.b12_mcg) || 0),
+        vitamin_d_iu: Math.max(0, Number((parsed as any).micronutrients?.vitamin_d_iu) || 0),
+        iron_mg: Math.max(0, Number((parsed as any).micronutrients?.iron_mg) || 0),
+        calcium_mg: Math.max(0, Number((parsed as any).micronutrients?.calcium_mg) || 0),
+        magnesium_mg: Math.max(0, Number((parsed as any).micronutrients?.magnesium_mg) || 0),
+        zinc_mg: Math.max(0, Number((parsed as any).micronutrients?.zinc_mg) || 0),
+        omega3_mg: Math.max(0, Number((parsed as any).micronutrients?.omega3_mg) || 0),
+        vitamin_c_mg: Math.max(0, Number((parsed as any).micronutrients?.vitamin_c_mg) || 0),
+      },
     };
   });
 
