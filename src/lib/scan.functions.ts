@@ -9,6 +9,17 @@ const ScanInput = z.object({
 });
 
 type Alternative = { name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number };
+type Micronutrients = {
+  fiber_g: number;
+  b12_mcg: number;
+  vitamin_d_iu: number;
+  iron_mg: number;
+  calcium_mg: number;
+  magnesium_mg: number;
+  zinc_mg: number;
+  omega3_mg: number;
+  vitamin_c_mg: number;
+};
 type Analysis = {
   name: string;
   meal_type: "breakfast" | "lunch" | "dinner" | "snack";
@@ -19,12 +30,14 @@ type Analysis = {
   confidence: number;
   notes: string;
   alternatives: Alternative[];
+  micronutrients: Micronutrients;
 };
 
-const SYSTEM = `You are a nutrition vision expert. Identify the food in the image and return realistic per-serving macronutrients.
-Return STRICT JSON: { "name": string, "meal_type": "breakfast"|"lunch"|"dinner"|"snack", "calories": int, "protein_g": number, "carbs_g": number, "fat_g": number, "confidence": number (0-1), "notes": string, "alternatives": [{ "name": string, "calories": int, "protein_g": number, "carbs_g": number, "fat_g": number }] }.
+const SYSTEM = `You are a nutrition vision expert. Identify the food in the image and return realistic per-serving macronutrients AND micronutrients.
+Return STRICT JSON: { "name": string, "meal_type": "breakfast"|"lunch"|"dinner"|"snack", "calories": int, "protein_g": number, "carbs_g": number, "fat_g": number, "confidence": number (0-1), "notes": string, "alternatives": [{ "name": string, "calories": int, "protein_g": number, "carbs_g": number, "fat_g": number }], "micronutrients": { "fiber_g": number, "b12_mcg": number, "vitamin_d_iu": number, "iron_mg": number, "calcium_mg": number, "magnesium_mg": number, "zinc_mg": number, "omega3_mg": number, "vitamin_c_mg": number } }.
 Estimate portion based on visible cues. If ambiguous, pick the most likely common serving.
-ALWAYS include 3-4 visually-similar alternative foods in "alternatives" (e.g. paneer vs tofu, chicken vs turkey, white rice vs basmati, sweet potato vs pumpkin) with their own macros for the same portion size. No prose, only JSON.`;
+ALWAYS include 3-4 visually-similar alternative foods in "alternatives" with their own macros for the same portion size.
+ALWAYS estimate realistic micronutrient values based on the food type (e.g. spinach → high iron/vitC, dairy → high calcium/B12, salmon → high vitD/omega3, nuts → high magnesium/zinc). Use 0 only when truly absent. No prose, only JSON.`;
 
 export const analyzeFood = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
