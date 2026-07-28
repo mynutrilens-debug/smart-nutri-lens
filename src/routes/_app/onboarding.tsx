@@ -298,13 +298,69 @@ function Onboarding() {
 
       {step === 5 && (
         <Card>
-          <Eyebrow icon={Heart}>Medical</Eyebrow>
-          <h2 className="text-2xl font-bold">Any health conditions?</h2>
-          <p className="mt-1 text-sm text-muted-foreground">We'll adapt your plan accordingly.</p>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <Eyebrow icon={Heart}>Health & lifestyle</Eyebrow>
+          <h2 className="text-2xl font-bold">Personalize your plan</h2>
+          <p className="mt-1 text-sm text-muted-foreground">The more we know, the smarter your meals & vitamins.</p>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Any health conditions?</label>
+          <div className="mt-2 flex flex-wrap gap-2">
             {COMMON_MEDICAL.map((m) => (
               <Chip key={m} active={medical.includes(m)} onClick={() => toggle(medical, m, setMedical)} icon={ShieldAlert}>{m}</Chip>
             ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Vitamin / mineral deficiencies (tap any)</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {DEFICIENCIES.map((d) => (
+              <Chip key={d} active={deficiencies.includes(d)} onClick={() => toggle(deficiencies, d, setDeficiencies)}>{d}</Chip>
+            ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Budget for groceries</label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {BUDGETS.map((b) => (
+              <button key={b.v} onClick={() => setBudget(b.v)} aria-pressed={budget === b.v}
+                className={`glass rounded-2xl p-3 text-left border-2 transition-all ${budget === b.v ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)]" : "border-white/10"}`}>
+                <div className="text-xs font-semibold">{b.l}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{b.d}</div>
+              </button>
+            ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Lifestyle</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {LIFESTYLES.map((l) => (
+              <Chip key={l} active={lifestyle === l} onClick={() => setLifestyle(l)}>{l}</Chip>
+            ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Workout habit</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {WORKOUT_HABITS.map((w) => (
+              <Chip key={w} active={workoutHabit === w} onClick={() => setWorkoutHabit(w)}>{w}</Chip>
+            ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Meals per day</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {MEAL_FREQ.map((n) => (
+              <Chip key={n} active={mealFrequency === n} onClick={() => setMealFrequency(n)}>{n} meals</Chip>
+            ))}
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1.5">Sleep (h/night)</label>
+              <div className="glass rounded-2xl p-2">
+                <WheelPicker min={4} max={11} step={0.5} value={sleepHours} onChange={setSleepHours} unit="h" formatter={(v) => v.toFixed(1)} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1.5">Water (L/day)</label>
+              <div className="glass rounded-2xl p-2">
+                <WheelPicker min={1} max={6} step={0.1} value={waterL} onChange={setWaterL} unit="L" formatter={(v) => v.toFixed(1)} />
+              </div>
+            </div>
           </div>
         </Card>
       )}
