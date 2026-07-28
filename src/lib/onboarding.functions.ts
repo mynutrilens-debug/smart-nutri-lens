@@ -17,6 +17,14 @@ const OnboardingInput = z.object({
   cuisine: z.string().max(60).optional().nullable(),
   allergies: z.array(z.string().max(40)).max(20).default([]),
   medical_conditions: z.array(z.string().max(60)).max(20).default([]),
+  // New lifestyle & personalization inputs
+  budget: z.enum(["low", "medium", "high"]).optional().nullable(),
+  lifestyle: z.string().max(40).optional().nullable(),
+  meal_frequency: z.number().int().min(2).max(6).optional().nullable(),
+  sleep_hours: z.number().min(3).max(12).optional().nullable(),
+  water_intake_l: z.number().min(0.5).max(8).optional().nullable(),
+  workout_habit: z.string().max(40).optional().nullable(),
+  deficiencies: z.array(z.string().max(40)).max(20).default([]),
 });
 
 export type OnboardingPayload = z.infer<typeof OnboardingInput>;
