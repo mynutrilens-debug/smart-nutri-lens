@@ -5,6 +5,7 @@ import { Camera, Upload, Sparkles, Loader2, Check, X, Image as ImageIcon, Pencil
 import { analyzeFood } from "@/lib/scan.functions";
 import { logFood, listFoods } from "@/lib/food.functions";
 import { hapticTap, pickNativeFoodImage } from "@/lib/native";
+import { VitaminBadges } from "@/components/mobile/VitaminBadges";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/scan")({ component: Scan });
