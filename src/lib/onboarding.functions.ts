@@ -244,7 +244,11 @@ USER PROFILE
 - Diet preference: ${p.diet_preference} (honor strictly — "Non-Veg (No Beef)" excludes beef; "Vegan" excludes all animal products incl. dairy/eggs/honey; "Vegetarian" excludes meat/fish/eggs unless eggetarian; "Keto" <30g net carbs/day; "Diabetic-Friendly" low-GI, no refined sugar; "High-Protein" ≥30% cals from protein)
 ${cuisineLine}
 - Allergies (STRICTLY AVOID): ${(p.allergies ?? []).join(", ") || "none"}
-- Medical conditions / deficiencies to address: ${(p.medical_conditions ?? []).join(", ") || "none"}
+- Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
+- Tracked vitamin/mineral DEFICIENCIES to correct: ${((p as any).deficiencies ?? []).join(", ") || "none reported"}
+- Budget: ${(p as any).budget ?? "medium"} · Lifestyle: ${(p as any).lifestyle ?? "unspecified"} · Workout habit: ${(p as any).workout_habit ?? "unspecified"}
+- Preferred meal frequency: ${(p as any).meal_frequency ?? 4} meals/day
+- Self-reported sleep: ${(p as any).sleep_hours ?? "?"}h · Water goal: ${(p as any).water_intake_l ?? "?"}L
 - Precomputed daily targets (already goal-adjusted from TDEE, protein 1.6–2.4 g/kg, fat 0.6–1.0 g/kg, rest = carbs): ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g — match these within ±5%.
 - Plan date: ${new Date().toISOString().slice(0, 10)} · rotation slot #${rotationSeed} of 7
 ${avoidLine}
@@ -257,14 +261,28 @@ CALORIE / MACRO RULES (already applied in the targets above — reproduce them f
 - Protein 1.6–2.4 g/kg · Fat 0.6–1.0 g/kg · remaining kcal → carbs
 - NEVER use BMI as the calorie driver — BMI only informs food-quality guidance (e.g. obese/overweight → more fiber, low-GI; underweight → calorie-dense).
 
+MICRONUTRIENT & DEFICIENCY RULES (CRITICAL)
+- Reference RDAs (adult): Vitamin B12 2.4 mcg · Vitamin D3 600–800 IU (15–20 mcg) · Iron 8–18 mg · Calcium 1000 mg · Magnesium 310–420 mg · Zinc 8–11 mg · Omega-3 (EPA+DHA) 250–500 mg · Fiber ≥25 g · Vitamin C 75–90 mg.
+- Bias meals HEAVILY toward foods that fix each listed deficiency:
+  * B12 → eggs, dairy, fish, fortified plant milk / nutritional yeast (vegans)
+  * D3 → fatty fish, egg yolk, mushrooms sun-exposed, fortified milk + sunlight tip
+  * Iron → red meat, liver, spinach, lentils, chickpeas, tofu, jaggery + pair with vitamin-C source for absorption; avoid tea/coffee with meals
+  * Calcium → dairy, ragi, sesame, tofu, leafy greens
+  * Magnesium → pumpkin seeds, almonds, cashews, dark chocolate, black beans, oats
+  * Zinc → pumpkin seeds, chickpeas, cashews, meat, curd
+  * Omega-3 → salmon, sardines, mackerel, flaxseed, chia, walnuts (add algal-oil note for vegans)
+- Every meal must list a "micronutrients" object with realistic numeric estimates for the units below.
+- Daily plan must meet ≥80% of each listed deficiency's RDA across meals + snacks.
+
 MEAL / PERSONALIZATION RULES
 - Use AUTHENTIC region/cuisine dishes by name. Affordable, locally available foods.
-- Meal frequency: 3 main meals + 1 snack + pre/post-workout if training that day. Split calories realistically (breakfast 25%, lunch 30%, dinner 25%, snack 10%, pre+post 10%).
-- Cover daily micronutrient needs: leafy greens (iron/folate), dairy or fortified plant milk (calcium/B12), colored veg/fruit (A, C, K, antioxidants), nuts/seeds (Mg, Zn, omega-3), whole grains (B-complex, fiber ≥25g). If a medical condition names a deficiency (e.g. iron, B12, vit D), explicitly bias foods toward it.
-- Hydration: recommend water intake in liters (35 ml/kg body weight, adjust up for active users).
-- Sleep-aware: if sleep <6h (avg sleep min: ${sleepAvgMin}), reduce caffeine after noon, add magnesium/tryptophan-rich dinner (banana, oats, dairy, turkey/paneer).
-- Budget-friendly: prefer staples (lentils, eggs, seasonal veg, local grains) over imported/expensive items unless user profile signals premium.
-- Gym access assumed for muscle_gain/bulking/recomp goals — include pre & post workout meals; for sedentary/light users, drop pre_workout and use a lighter snack instead.
+- Meal frequency: honor user preference (${(p as any).meal_frequency ?? 4}). 3 main meals + snack + pre/post-workout if training. Split calories realistically (breakfast 25%, lunch 30%, dinner 25%, snack 10%, pre+post 10%).
+- Cover daily micronutrient needs: leafy greens (iron/folate), dairy or fortified plant milk (calcium/B12), colored veg/fruit (A, C, K), nuts/seeds (Mg, Zn, omega-3), whole grains (B-complex, fiber ≥25g).
+- Hydration: recommend water intake in liters (35 ml/kg body weight, adjust up for active users). User's goal is ${(p as any).water_intake_l ?? "auto"}L.
+- Sleep-aware: if sleep <6h (self-reported ${(p as any).sleep_hours ?? "?"}h, tracked avg min: ${sleepAvgMin}), reduce caffeine after noon, add magnesium/tryptophan-rich dinner (banana, oats, dairy, turkey/paneer).
+- Budget-aware: for "${(p as any).budget ?? "medium"}" budget — low → lentils/eggs/seasonal veg/local grains; medium → add lean meats, dairy, seasonal fruits; high → salmon, berries, quinoa, whey/creatine ok.
+- Lifestyle-aware: ${(p as any).lifestyle ?? "generic"} — desk-job: fewer carbs midday, more protein+fiber; field-work/labor: bigger complex-carb lunch; student: quick 5-min prep options.
+- Workout habit: ${(p as any).workout_habit ?? "unspecified"} — include pre & post workout meals for muscle_gain/bulking/recomp goals; skip for sedentary.
 - Shakes tuned to goal:
   * muscle_gain / bulking / underweight → high-cal mass shakes (banana + oats + peanut butter + milk + whey)
   * weight_loss / fat_loss → low-cal detox / protein (green tea, honey-lemon water, cucumber-mint, jeera water, whey + water)
@@ -272,29 +290,31 @@ MEAL / PERSONALIZATION RULES
   * diabetic-friendly → unsweetened, low-GI only
 - Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
 - Never include allergens. Respect medical conditions and diet preference strictly.
-- VARIETY IS CRITICAL: every meal MUST be DIFFERENT from the AVOID list. Rotate protein sources, grains, and cooking styles day-to-day.
+- VARIETY IS CRITICAL: every meal MUST be DIFFERENT from the AVOID list.
 
 
-Return ONLY this JSON (no markdown):
+Return ONLY this JSON (no markdown). EVERY meal MUST include the "micronutrients" object.
 {
-  "summary": "1-2 sentence coach summary referencing BMI, goal & cuisine",
+  "summary": "1-2 sentence coach summary referencing BMI, goal, cuisine & any deficiencies being corrected",
   "bmi": ${bmi},
   "bmi_category": "${bmiCat}",
   "region": "${region}",
   "cuisine": "${cuisine}",
-  "daily_targets": { "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
+  "daily_targets": { "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "water_l": 0 },
+  "micronutrient_targets": { "b12_mcg": 2.4, "vitamin_d_iu": 800, "iron_mg": 15, "calcium_mg": 1000, "magnesium_mg": 400, "zinc_mg": 10, "omega3_mg": 500, "vitamin_c_mg": 90 },
+  "deficiency_focus": ["list of deficiencies this plan targets"],
   "meals": {
-    "breakfast":    { "name": "dish name", "items": "…with portions…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
-    "pre_workout":  { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "timing": "30-45 min before" },
-    "post_workout": { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "timing": "within 30 min after" },
-    "lunch":        { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
-    "snack":        { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 },
-    "dinner":       { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0 }
+    "breakfast":    { "name": "dish name", "items": "…with portions…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
+    "pre_workout":  { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "timing": "30-45 min before", "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
+    "post_workout": { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "timing": "within 30 min after", "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
+    "lunch":        { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
+    "snack":        { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
+    "dinner":       { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } }
   },
   "shakes": [
     { "name": "", "ingredients": "", "calories": 0, "protein_g": 0, "when": "morning|pre|post|evening" }
   ],
-  "tips": ["3-5 short, goal & cuisine specific tips"],
+  "tips": ["3-5 short, goal & cuisine specific tips — call out any deficiency being addressed"],
   "workout": [
     { "day": "Mon", "focus": "Push", "exercises": [{ "name": "Bench Press", "sets": 4, "reps": "8-10" }] }
   ]
