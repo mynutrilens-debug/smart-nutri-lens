@@ -7,6 +7,7 @@ import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell
 import { toast } from "sonner";
 import { RecipeSheet } from "@/components/mobile/RecipeSheet";
 import { MealThumb } from "@/components/mobile/MealThumb";
+import { VitaminBadges } from "@/components/mobile/VitaminBadges";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_app/diet")({
