@@ -7,6 +7,7 @@ import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell
 import { toast } from "sonner";
 import { RecipeSheet } from "@/components/mobile/RecipeSheet";
 import { MealThumb } from "@/components/mobile/MealThumb";
+import { VitaminBadges } from "@/components/mobile/VitaminBadges";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_app/diet")({
@@ -258,6 +259,28 @@ function Diet() {
                     <span className="font-semibold uppercase tracking-wider text-[10px]">{plan.bmi_category}</span>
                   </p>
                 )}
+                {Array.isArray(plan.deficiency_focus) && plan.deficiency_focus.length > 0 && (
+                  <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 p-2">
+                    <div className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold mb-1">
+                      Correcting deficiencies
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {plan.deficiency_focus.map((d: string, i: number) => (
+                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                          {d}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {plan.micronutrient_targets && (
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                      Daily micronutrient targets
+                    </div>
+                    <VitaminBadges micros={plan.micronutrient_targets} compact />
+                  </div>
+                )}
                 {Array.isArray(plan.tips) && plan.tips.length > 0 && (
                   <ul className="space-y-1">
                     {plan.tips.map((t: string, i: number) => (
@@ -340,8 +363,13 @@ function Diet() {
                 </button>
 
                 {isExpanded && (
-                  <div className="px-3 pb-3 animate-fade-in">
+                  <div className="px-3 pb-3 animate-fade-in space-y-2">
                     <p className="text-[11px] text-foreground/80 leading-relaxed pl-[42px]">{meal.items}</p>
+                    {meal.micronutrients && (
+                      <div className="pl-[42px]">
+                        <VitaminBadges micros={meal.micronutrients} compact />
+                      </div>
+                    )}
                   </div>
                 )}
 

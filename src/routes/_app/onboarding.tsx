@@ -47,6 +47,15 @@ const REGIONS = ["India", "Global", "Middle East", "East Asia", "Europe", "Ameri
 const INDIAN_CUISINES = ["Maharashtrian", "Kerala", "Tamil", "Rajasthani", "Punjabi", "Bengali", "Gujarati", "South Indian", "North Indian", "Hyderabadi", "Goan"];
 const COMMON_ALLERGIES = ["Peanuts", "Tree nuts", "Dairy", "Eggs", "Gluten", "Soy", "Shellfish", "Fish"];
 const COMMON_MEDICAL = ["Diabetes", "Hypertension", "PCOS", "Thyroid", "Cholesterol", "Asthma", "None"];
+const DEFICIENCIES = ["Vitamin B12", "Vitamin D3", "Iron", "Calcium", "Magnesium", "Zinc", "Omega-3", "Vitamin C", "Folate", "Protein"];
+const BUDGETS: { v: "low" | "medium" | "high"; l: string; d: string }[] = [
+  { v: "low", l: "Budget", d: "Lentils, eggs, seasonal veg" },
+  { v: "medium", l: "Balanced", d: "Add dairy, meats, fruits" },
+  { v: "high", l: "Premium", d: "Salmon, berries, whey" },
+];
+const LIFESTYLES = ["Desk-job", "Field-work", "Student", "Home-maker", "Shift-work", "Traveller"];
+const WORKOUT_HABITS = ["None", "Home workouts", "Gym 3x/wk", "Gym 5x/wk", "Sports", "Yoga"];
+const MEAL_FREQ = [3, 4, 5, 6];
 
 function Onboarding() {
   const navigate = useNavigate();
@@ -75,6 +84,13 @@ function Onboarding() {
   const [cuisine, setCuisine] = useState("Maharashtrian");
   const [allergies, setAllergies] = useState<string[]>([]);
   const [medical, setMedical] = useState<string[]>([]);
+  const [budget, setBudget] = useState<"low" | "medium" | "high">("medium");
+  const [lifestyle, setLifestyle] = useState<string>("Desk-job");
+  const [mealFrequency, setMealFrequency] = useState<number>(4);
+  const [sleepHours, setSleepHours] = useState<number>(7);
+  const [waterL, setWaterL] = useState<number>(2.5);
+  const [workoutHabit, setWorkoutHabit] = useState<string>("Gym 3x/wk");
+  const [deficiencies, setDeficiencies] = useState<string[]>([]);
 
   const heightCm = unitH === "cm" ? height : Math.round(height * 30.48);
   const weightKg = unitW === "kg" ? weight : Math.round(weight * 0.4536);
@@ -122,6 +138,12 @@ function Onboarding() {
         region,
         cuisine: region === "India" ? cuisine : "",
         allergies, medical_conditions: medical,
+        budget, lifestyle,
+        meal_frequency: mealFrequency,
+        sleep_hours: sleepHours,
+        water_intake_l: waterL,
+        workout_habit: workoutHabit,
+        deficiencies,
       }});
       // Fire and forget — plan can finish in background
       generateAiPlan().catch(() => {});
@@ -276,13 +298,69 @@ function Onboarding() {
 
       {step === 5 && (
         <Card>
-          <Eyebrow icon={Heart}>Medical</Eyebrow>
-          <h2 className="text-2xl font-bold">Any health conditions?</h2>
-          <p className="mt-1 text-sm text-muted-foreground">We'll adapt your plan accordingly.</p>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <Eyebrow icon={Heart}>Health & lifestyle</Eyebrow>
+          <h2 className="text-2xl font-bold">Personalize your plan</h2>
+          <p className="mt-1 text-sm text-muted-foreground">The more we know, the smarter your meals & vitamins.</p>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Any health conditions?</label>
+          <div className="mt-2 flex flex-wrap gap-2">
             {COMMON_MEDICAL.map((m) => (
               <Chip key={m} active={medical.includes(m)} onClick={() => toggle(medical, m, setMedical)} icon={ShieldAlert}>{m}</Chip>
             ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Vitamin / mineral deficiencies (tap any)</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {DEFICIENCIES.map((d) => (
+              <Chip key={d} active={deficiencies.includes(d)} onClick={() => toggle(deficiencies, d, setDeficiencies)}>{d}</Chip>
+            ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Budget for groceries</label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {BUDGETS.map((b) => (
+              <button key={b.v} onClick={() => setBudget(b.v)} aria-pressed={budget === b.v}
+                className={`glass rounded-2xl p-3 text-left border-2 transition-all ${budget === b.v ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)]" : "border-white/10"}`}>
+                <div className="text-xs font-semibold">{b.l}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{b.d}</div>
+              </button>
+            ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Lifestyle</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {LIFESTYLES.map((l) => (
+              <Chip key={l} active={lifestyle === l} onClick={() => setLifestyle(l)}>{l}</Chip>
+            ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Workout habit</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {WORKOUT_HABITS.map((w) => (
+              <Chip key={w} active={workoutHabit === w} onClick={() => setWorkoutHabit(w)}>{w}</Chip>
+            ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Meals per day</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {MEAL_FREQ.map((n) => (
+              <Chip key={n} active={mealFrequency === n} onClick={() => setMealFrequency(n)}>{n} meals</Chip>
+            ))}
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1.5">Sleep (h/night)</label>
+              <div className="glass rounded-2xl p-2">
+                <WheelPicker min={4} max={11} step={0.5} value={sleepHours} onChange={setSleepHours} unit="h" formatter={(v) => v.toFixed(1)} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1.5">Water (L/day)</label>
+              <div className="glass rounded-2xl p-2">
+                <WheelPicker min={1} max={6} step={0.1} value={waterL} onChange={setWaterL} unit="L" formatter={(v) => v.toFixed(1)} />
+              </div>
+            </div>
           </div>
         </Card>
       )}
