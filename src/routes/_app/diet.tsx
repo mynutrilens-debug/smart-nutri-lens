@@ -341,8 +341,13 @@ function Diet() {
                 </button>
 
                 {isExpanded && (
-                  <div className="px-3 pb-3 animate-fade-in">
+                  <div className="px-3 pb-3 animate-fade-in space-y-2">
                     <p className="text-[11px] text-foreground/80 leading-relaxed pl-[42px]">{meal.items}</p>
+                    {meal.micronutrients && (
+                      <div className="pl-[42px]">
+                        <VitaminBadges micros={meal.micronutrients} compact />
+                      </div>
+                    )}
                   </div>
                 )}
 
