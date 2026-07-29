@@ -275,14 +275,24 @@ MICRONUTRIENT & DEFICIENCY RULES (CRITICAL)
 - Daily plan must meet ≥80% of each listed deficiency's RDA across meals + snacks.
 
 MEAL / PERSONALIZATION RULES
-- Use AUTHENTIC region/cuisine dishes by name. Affordable, locally available foods.
-- Meal frequency: honor user preference (${(p as any).meal_frequency ?? 4}). 3 main meals + snack + pre/post-workout if training. Split calories realistically (breakfast 25%, lunch 30%, dinner 25%, snack 10%, pre+post 10%).
+- Use AUTHENTIC region/cuisine dishes by name. Prioritize WHOLE FOODS (dals, sabzi, roti, rice, millets, curd, eggs, paneer, fish, chicken, seasonal fruits/veg, nuts/seeds). Avoid ultra-processed items, packaged cereals, and protein-bar-only "meals".
+- Meal frequency: honor user preference (${(p as any).meal_frequency ?? 4}). Plan 3 main meals + snack + pre/post-workout if training.
+- REALISTIC CALORIE DISTRIBUTION (must be followed — do NOT front-load the day):
+  * Breakfast: 20–25% of daily kcal — light-to-moderate, easy to digest, NEVER the largest meal. Typical Indian: poha + egg, upma + curd, 2 idli + sambar + boiled egg, oats + milk + nuts, paratha (1) + curd. No 700+ kcal breakfasts.
+  * Mid-morning snack (optional, ~5%): fruit, buttermilk, nuts.
+  * Lunch: 30–35% — the LARGEST meal of the day (peak digestion + activity window). Full thali style: 2 roti / 1 cup rice + dal + sabzi + salad + curd + protein (dal/paneer/chicken/fish/egg).
+  * Afternoon snack: 5–10% — sprouts, chana chaat, fruit + nuts, roasted makhana, Greek yogurt.
+  * Dinner: 20–25% — MODERATE and lighter than lunch, finish 2–3h before sleep. Prefer soup + roti + sabzi + dal, khichdi + curd, grilled protein + veg. Low refined carbs at night.
+  * Pre-workout (if training): ~5–8%, 30–45 min before — quick carbs + small protein (banana + peanut butter, dates + milk, toast + egg white).
+  * Post-workout (if training): ~10%, within 30–45 min — fast protein + carbs (whey + banana, paneer bhurji + roti, chicken + rice, chana + curd). Scale up for muscle_gain/bulking, keep lean for fat_loss.
+- PROTEIN FLOOR: every MAIN meal (breakfast, lunch, dinner) MUST contain 25–40 g protein. Post-workout ≥ 20 g. If vegetarian, combine dal + curd + paneer / soy / sprouts to hit the floor — do NOT ship a main meal under 25 g protein.
+- Sustainability: meals must be practical for long-term adherence — familiar Indian formats, one-pot options for busy days, batch-cookable dals/sabzi, minimal exotic ingredients.
 - Cover daily micronutrient needs: leafy greens (iron/folate), dairy or fortified plant milk (calcium/B12), colored veg/fruit (A, C, K), nuts/seeds (Mg, Zn, omega-3), whole grains (B-complex, fiber ≥25g).
 - Hydration: recommend water intake in liters (35 ml/kg body weight, adjust up for active users). User's goal is ${(p as any).water_intake_l ?? "auto"}L.
 - Sleep-aware: if sleep <6h (self-reported ${(p as any).sleep_hours ?? "?"}h, tracked avg min: ${sleepAvgMin}), reduce caffeine after noon, add magnesium/tryptophan-rich dinner (banana, oats, dairy, turkey/paneer).
 - Budget-aware: for "${(p as any).budget ?? "medium"}" budget — low → lentils/eggs/seasonal veg/local grains; medium → add lean meats, dairy, seasonal fruits; high → salmon, berries, quinoa, whey/creatine ok.
-- Lifestyle-aware: ${(p as any).lifestyle ?? "generic"} — desk-job: fewer carbs midday, more protein+fiber; field-work/labor: bigger complex-carb lunch; student: quick 5-min prep options.
-- Workout habit: ${(p as any).workout_habit ?? "unspecified"} — include pre & post workout meals for muscle_gain/bulking/recomp goals; skip for sedentary.
+- Lifestyle-aware: ${(p as any).lifestyle ?? "generic"} — desk-job: lighter carbs midday, more protein+fiber; field-work/labor: bigger complex-carb lunch; student: quick 5-min prep options.
+- Workout habit: ${(p as any).workout_habit ?? "unspecified"} — include pre & post workout meals for muscle_gain/bulking/recomp/fat_loss trainees; skip for sedentary.
 - Shakes tuned to goal:
   * muscle_gain / bulking / underweight → high-cal mass shakes (banana + oats + peanut butter + milk + whey)
   * weight_loss / fat_loss → low-cal detox / protein (green tea, honey-lemon water, cucumber-mint, jeera water, whey + water)
@@ -291,6 +301,8 @@ MEAL / PERSONALIZATION RULES
 - Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
 - Never include allergens. Respect medical conditions and diet preference strictly.
 - VARIETY IS CRITICAL: every meal MUST be DIFFERENT from the AVOID list.
+- SELF-CHECK before returning: sum(meal calories) ≈ daily_targets.calories (±5%), breakfast ≤ 25% of daily kcal, lunch ≥ dinner kcal, each main meal ≥ 25 g protein. If any fails, revise before emitting JSON.
+
 
 
 Return ONLY this JSON (no markdown). EVERY meal MUST include the "micronutrients" object.
