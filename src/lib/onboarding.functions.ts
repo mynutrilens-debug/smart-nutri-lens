@@ -202,6 +202,58 @@ export const generateAiPlan = createServerFn({ method: "POST" })
       : `- No recent dishes on record — pick a fresh variety.`;
     const rotationSeed = Math.floor(Date.now() / 86400000) % 7; // 0..6, rotates daily
 
+    // ─── VARIETY CONTROLLER ────────────────────────────────────────────────
+    // Rotate protein sources, grains, and vegetables so no ingredient repeats
+    // more than ~twice a week. Pools stay inside Indian eating habits.
+    const _region = String((p as any).region || "Global");
+    const _isIndia = _region.toLowerCase() === "india";
+    const _diet = String(p.diet_preference || "").toLowerCase();
+    const _isVegan = _diet.includes("vegan");
+    const _isVeg = _isVegan || _diet.includes("vegetarian");
+    const _noBeef = _diet.includes("no beef") || _isVeg;
+
+    const proteinPool = _isVegan
+      ? ["tofu", "tempeh", "chana (chickpea)", "rajma (kidney bean)", "moong dal", "masoor dal", "urad dal", "soya chunks", "peanuts", "sprouts", "hemp seeds"]
+      : _isVeg
+        ? ["paneer", "curd/dahi", "eggs", "chana", "rajma", "moong dal", "toor dal", "masoor dal", "soya chunks", "sprouts", "besan"]
+        : _noBeef
+          ? ["chicken breast", "eggs", "fish (rohu/pomfret)", "prawns", "paneer", "curd", "chana", "rajma", "moong dal", "soya chunks", "mutton (lean, occasional)"]
+          : ["chicken", "eggs", "fish", "prawns", "lean beef", "paneer", "curd", "chana", "rajma", "moong dal"];
+
+    const grainPool = _isIndia
+      ? ["basmati rice", "brown rice", "hand-pounded rice", "whole-wheat roti", "bajra bhakri", "jowar bhakri", "ragi roti", "millet khichdi", "oats", "poha", "daliya", "upma rava"]
+      : ["rice", "quinoa", "oats", "whole-wheat bread", "buckwheat", "millet", "barley"];
+
+    const vegPool = _isIndia
+      ? ["palak", "methi", "bhindi", "baingan", "lauki", "tinda", "tori", "cauliflower", "cabbage", "beans", "carrot", "capsicum", "tomato-onion", "mixed sabzi", "sarson saag", "drumstick (moringa)"]
+      : ["spinach", "broccoli", "zucchini", "bell pepper", "carrot", "cauliflower", "green beans", "kale", "mushroom"];
+
+    const _recentText = Array.from(recentDishes).join(" ").toLowerCase();
+    const _usedRecently = (pool: string[]) =>
+      pool.filter((x) => _recentText.includes(x.split(" ")[0].toLowerCase()));
+    const _freshFrom = (pool: string[], want: number) => {
+      const used = new Set(_usedRecently(pool));
+      const fresh = pool.filter((x) => !used.has(x));
+      const src = fresh.length ? fresh : pool;
+      const shift = (rotationSeed * 3) % src.length;
+      const rotated = [...src.slice(shift), ...src.slice(0, shift)];
+      const picks = rotated.slice(0, want);
+      if (picks.length < want) picks.push(...pool.filter((x) => !picks.includes(x)).slice(0, want - picks.length));
+      return picks;
+    };
+
+    const todayProteins = _freshFrom(proteinPool, 4);
+    const todayGrains = _freshFrom(grainPool, 3);
+    const todayVeg = _freshFrom(vegPool, 4);
+    const varietyLine =
+      `- VARIETY ROTATION (use these ingredients TODAY, and do NOT lean on ingredients that dominate the AVOID list):\n` +
+      `  · Protein sources to feature: ${todayProteins.join(", ")}\n` +
+      `  · Grains / staples: ${todayGrains.join(", ")}\n` +
+      `  · Vegetables: ${todayVeg.join(", ")}\n` +
+      `  · No single protein, grain, or vegetable may appear in more than 2 meals today. Over a 7-day view, no ingredient should repeat more than 2× per week — pick fresh alternates from the Indian pantry when needed. Rotate cooking style too (steamed / grilled / sautéed / curry / tandoori / stir-fry).`;
+
+
+
 
     const heightM = (p.height_cm ?? 170) / 100;
     const bmi = Number(((p.weight_kg ?? 70) / (heightM * heightM)).toFixed(1));
@@ -252,7 +304,9 @@ ${cuisineLine}
 - Precomputed daily targets (already goal-adjusted from TDEE, protein 1.6–2.4 g/kg, fat 0.6–1.0 g/kg, rest = carbs): ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g — match these within ±5%.
 - Plan date: ${new Date().toISOString().slice(0, 10)} · rotation slot #${rotationSeed} of 7
 ${avoidLine}
+${varietyLine}
 ${healthLine}
+
 
 CALORIE / MACRO RULES (already applied in the targets above — reproduce them faithfully)
 - Fat Loss → TDEE −20 to −25%   |  Weight Loss → TDEE −10 to −20%
