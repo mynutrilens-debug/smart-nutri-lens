@@ -166,6 +166,21 @@ function Diet() {
     },
     onSuccess: () => toast.success("Logged"),
   });
+  const [swappingKey, setSwappingKey] = useState<string | null>(null);
+  const [swapHistory, setSwapHistory] = useState<Record<string, string[]>>({});
+  const swap = useMutation({
+    mutationFn: (input: { mealKey: string; avoid: string[] }) =>
+      swapMeal({ data: { meal_key: input.mealKey as any, avoid: input.avoid } }),
+    onMutate: (v) => setSwappingKey(v.mealKey),
+    onSuccess: (res: any, v) => {
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      setSwapHistory((h) => ({ ...h, [v.mealKey]: [...(h[v.mealKey] ?? []), res?.meal?.name].filter(Boolean) }));
+      toast.success(`Swapped → ${res?.meal?.name ?? "new meal"}`);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not swap meal"),
+    onSettled: () => setSwappingKey(null),
+  });
+
 
   const plan: any = dash?.profile?.ai_plan;
   const meals = plan?.meals ?? null;
