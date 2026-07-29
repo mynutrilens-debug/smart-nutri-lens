@@ -3,7 +3,9 @@ import { useSuspenseQuery, useMutation, useQueryClient, useQuery } from "@tansta
 import { foodsQuery, dashboardQuery } from "@/lib/queries";
 import { deleteFood, logFood } from "@/lib/food.functions";
 import { generateAiPlan } from "@/lib/onboarding.functions";
-import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check, ChefHat, ChevronDown } from "lucide-react";
+import { swapMeal } from "@/lib/meal-swap.functions";
+import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check, ChefHat, ChevronDown, Shuffle } from "lucide-react";
+
 import { toast } from "sonner";
 import { RecipeSheet } from "@/components/mobile/RecipeSheet";
 import { MealThumb } from "@/components/mobile/MealThumb";
