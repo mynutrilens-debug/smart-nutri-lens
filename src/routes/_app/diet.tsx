@@ -3,9 +3,7 @@ import { useSuspenseQuery, useMutation, useQueryClient, useQuery } from "@tansta
 import { foodsQuery, dashboardQuery } from "@/lib/queries";
 import { deleteFood, logFood } from "@/lib/food.functions";
 import { generateAiPlan } from "@/lib/onboarding.functions";
-import { swapMeal } from "@/lib/meal-swap.functions";
-import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check, ChefHat, ChevronDown, Shuffle } from "lucide-react";
-
+import { Camera, Sunrise, Sun, Moon, Cookie, Trash2, Sparkles, Loader2, Dumbbell, Zap, GlassWater, Lightbulb, Plus, Check, ChefHat, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { RecipeSheet } from "@/components/mobile/RecipeSheet";
 import { MealThumb } from "@/components/mobile/MealThumb";
@@ -166,21 +164,6 @@ function Diet() {
     },
     onSuccess: () => toast.success("Logged"),
   });
-  const [swappingKey, setSwappingKey] = useState<string | null>(null);
-  const [swapHistory, setSwapHistory] = useState<Record<string, string[]>>({});
-  const swap = useMutation({
-    mutationFn: (input: { mealKey: string; avoid: string[] }) =>
-      swapMeal({ data: { meal_key: input.mealKey as any, avoid: input.avoid } }),
-    onMutate: (v) => setSwappingKey(v.mealKey),
-    onSuccess: (res: any, v) => {
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
-      setSwapHistory((h) => ({ ...h, [v.mealKey]: [...(h[v.mealKey] ?? []), res?.meal?.name].filter(Boolean) }));
-      toast.success(`Swapped → ${res?.meal?.name ?? "new meal"}`);
-    },
-    onError: (e: any) => toast.error(e.message ?? "Could not swap meal"),
-    onSettled: () => setSwappingKey(null),
-  });
-
 
   const plan: any = dash?.profile?.ai_plan;
   const meals = plan?.meals ?? null;
@@ -397,22 +380,6 @@ function Diet() {
                   >
                     <ChefHat className="h-3 w-3 text-emerald-400" /> Recipe
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const avoid = [meal.name, ...(swapHistory[m.k] ?? [])].filter(Boolean) as string[];
-                      swap.mutate({ mealKey: m.k, avoid });
-                    }}
-                    disabled={swappingKey === m.k}
-                    className="h-7 px-2.5 rounded-full bg-white/5 border border-white/10 text-foreground/90 text-[10px] font-semibold flex items-center gap-1 active:scale-95 hover:bg-white/10 transition disabled:opacity-60"
-                    title="Swap for an equivalent meal (same calories, macros, micros)"
-                  >
-                    {swappingKey === m.k
-                      ? <Loader2 className="h-3 w-3 animate-spin text-emerald-400" />
-                      : <Shuffle className="h-3 w-3 text-emerald-400" />}
-                    Swap
-                  </button>
-
                   {logged ? (
                     <span className="h-7 px-2.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-semibold flex items-center gap-1 border border-emerald-500/30">
                       <Check className="h-3 w-3" /> Logged
