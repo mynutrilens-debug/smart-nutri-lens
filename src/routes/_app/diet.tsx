@@ -397,6 +397,22 @@ function Diet() {
                   >
                     <ChefHat className="h-3 w-3 text-emerald-400" /> Recipe
                   </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const avoid = [meal.name, ...(swapHistory[m.k] ?? [])].filter(Boolean) as string[];
+                      swap.mutate({ mealKey: m.k, avoid });
+                    }}
+                    disabled={swappingKey === m.k}
+                    className="h-7 px-2.5 rounded-full bg-white/5 border border-white/10 text-foreground/90 text-[10px] font-semibold flex items-center gap-1 active:scale-95 hover:bg-white/10 transition disabled:opacity-60"
+                    title="Swap for an equivalent meal (same calories, macros, micros)"
+                  >
+                    {swappingKey === m.k
+                      ? <Loader2 className="h-3 w-3 animate-spin text-emerald-400" />
+                      : <Shuffle className="h-3 w-3 text-emerald-400" />}
+                    Swap
+                  </button>
+
                   {logged ? (
                     <span className="h-7 px-2.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-semibold flex items-center gap-1 border border-emerald-500/30">
                       <Check className="h-3 w-3" /> Logged
