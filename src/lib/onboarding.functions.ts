@@ -304,7 +304,9 @@ ${cuisineLine}
 - Precomputed daily targets (already goal-adjusted from TDEE, protein 1.6–2.4 g/kg, fat 0.6–1.0 g/kg, rest = carbs): ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g — match these within ±5%.
 - Plan date: ${new Date().toISOString().slice(0, 10)} · rotation slot #${rotationSeed} of 7
 ${avoidLine}
+${varietyLine}
 ${healthLine}
+
 
 CALORIE / MACRO RULES (already applied in the targets above — reproduce them faithfully)
 - Fat Loss → TDEE −20 to −25%   |  Weight Loss → TDEE −10 to −20%
