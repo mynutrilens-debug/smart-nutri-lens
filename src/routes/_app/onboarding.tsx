@@ -366,9 +366,13 @@ function Onboarding() {
       )}
 
       {step === 6 && (
-        <TransformationPreview
-          gender={gender} weightKg={weightKg} heightCm={heightCm}
+        <FitnessRoadmap
+          gender={gender} age={age} weightKg={weightKg} heightCm={heightCm}
           computed={computed} bmiState={bmiState} goal={goal}
+          goalLabel={GOALS.find((g) => g.v === goal)?.l ?? "Your goal"}
+          activity={activity} sleepHours={sleepHours} waterL={waterL}
+          workoutHabit={workoutHabit} diet={diet} mealFrequency={mealFrequency}
+          deficiencies={deficiencies} medical={medical}
         />
       )}
 
