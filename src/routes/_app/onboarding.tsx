@@ -9,9 +9,8 @@ import {
   Activity, Target, Apple, ShieldAlert, User, Check, Zap, TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
-import bodyMale from "@/assets/body-male.jpg";
-import bodyFemale from "@/assets/body-female.jpg";
 import { WheelPicker } from "@/components/mobile/WheelPicker";
+import { FitnessRoadmap } from "@/components/mobile/FitnessRoadmap";
 
 export const Route = createFileRoute("/_app/onboarding")({
   component: Onboarding,
@@ -366,9 +365,13 @@ function Onboarding() {
       )}
 
       {step === 6 && (
-        <TransformationPreview
-          gender={gender} weightKg={weightKg} heightCm={heightCm}
+        <FitnessRoadmap
+          gender={gender} age={age} weightKg={weightKg} heightCm={heightCm}
           computed={computed} bmiState={bmiState} goal={goal}
+          goalLabel={GOALS.find((g) => g.v === goal)?.l ?? "Your goal"}
+          activity={activity} sleepHours={sleepHours} waterL={waterL}
+          workoutHabit={workoutHabit} diet={diet} mealFrequency={mealFrequency}
+          deficiencies={deficiencies} medical={medical}
         />
       )}
 
@@ -390,7 +393,7 @@ function Onboarding() {
             <button disabled={save.isPending} onClick={() => save.mutate()}
               style={{ background: "var(--gradient-hero)" }}
               className="flex-1 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 text-primary-foreground glow-ring disabled:opacity-70">
-              {save.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Building your plan…</> : <><Zap className="h-4 w-4" /> Let's Start My Journey</>}
+              {save.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Building your plan…</> : <><Zap className="h-4 w-4" /> Start My 4-Week Journey →</>}
             </button>
           )}
         </div>
@@ -462,107 +465,6 @@ function UnitField({ label, unit, setUnit, units, value, onChange, min, max, ste
   );
 }
 
-function TransformationPreview({ gender, weightKg, heightCm, computed, bmiState, goal }: any) {
-  const img = gender === "male" ? bodyMale : bodyFemale;
-  const goalLabel = GOALS.find((g) => g.v === goal)?.l ?? "Your goal";
-  return (
-    <div className="animate-slide-up relative z-10 space-y-5">
-      <div>
-        <Eyebrow icon={Sparkles}>AI Analysis</Eyebrow>
-        <h2 className="text-3xl font-bold leading-tight">Your Body <span className="bg-gradient-to-r from-[oklch(0.82_0.16_215)] to-[oklch(0.62_0.26_260)] bg-clip-text text-transparent">Transformation</span></h2>
-        <p className="mt-1 text-sm text-muted-foreground">4-week prediction based on your profile & science</p>
-      </div>
-
-      {/* Before / After */}
-      <div className="grid grid-cols-2 gap-3">
-        <BodyCard label="NOW" img={img} weight={weightKg} bf={computed.body_fat} bmi={computed.bmi} state={bmiState} />
-        <BodyCard label="AFTER 4 WEEKS" img={img} weight={computed.after_weight} bf={computed.after_bf}
-          bmi={Number((computed.after_weight / Math.pow(heightCm / 100, 2)).toFixed(1))} state="On track" glow />
-      </div>
-
-      {/* Goal banner */}
-      <div className="glass rounded-2xl p-4 flex items-center gap-3 border border-[oklch(0.72_0.22_240)]/30">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[oklch(0.82_0.16_215)] to-[oklch(0.62_0.26_260)] flex items-center justify-center glow-ring">
-          <Target className="h-5 w-5 text-primary-foreground" />
-        </div>
-        <div>
-          <div className="text-xs text-muted-foreground">Your goal</div>
-          <div className="font-semibold">{goalLabel}</div>
-        </div>
-        <TrendingUp className="ml-auto h-5 w-5 text-[oklch(0.78_0.18_210)]" />
-      </div>
-
-      {/* Daily targets */}
-      <div>
-        <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Daily targets</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <Stat icon={Flame} label="Calories" value={computed.calories} unit="kcal" />
-          <Stat icon={Dumbbell} label="Protein" value={computed.protein} unit="g" />
-          <Stat label="Carbs" value={computed.carbs} unit="g" />
-          <Stat label="Fat" value={computed.fat} unit="g" />
-        </div>
-      </div>
-
-      {/* Body comp */}
-      <div className="glass rounded-3xl p-5">
-        <h3 className="text-sm font-semibold mb-3">Body Composition</h3>
-        <Meter label="Muscle Mass" value={computed.muscle} />
-        <Meter label="Body Fat" value={Math.round(computed.body_fat)} warn />
-        <Meter label="Water" value={computed.water} />
-      </div>
-
-      {/* AI insight */}
-      <div className="glass rounded-3xl p-5 border border-[oklch(0.72_0.22_240)]/30">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[oklch(0.78_0.18_210)] mb-1.5">
-          <Sparkles className="h-4 w-4" /> AI Insight
-        </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Consistency beats intensity. Hit your protein daily, train 4× this week, and you'll see real change by day 28.
-          Your transformation starts the moment you tap below.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function BodyCard({ label, img, weight, bf, bmi, state, glow }: any) {
-  return (
-    <div className={`glass rounded-3xl p-3 overflow-hidden relative ${glow ? "border border-[oklch(0.72_0.22_240)]/40 shadow-[0_0_30px_oklch(0.72_0.22_240/0.25)]" : ""}`}>
-      <div className={`text-[10px] uppercase tracking-widest mb-1 ${glow ? "text-[oklch(0.78_0.18_210)]" : "text-muted-foreground"}`}>{label}</div>
-      <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-black/30">
-        <img src={img} alt={label} className={`w-full h-full object-cover ${glow ? "" : "grayscale-[40%] brightness-90"}`} />
-        {glow && <div className="absolute inset-0 ring-2 ring-[oklch(0.72_0.22_240)]/40 rounded-2xl shadow-[inset_0_0_40px_oklch(0.72_0.22_240/0.3)]" />}
-      </div>
-      <div className="mt-2 grid grid-cols-2 gap-1 text-[11px]">
-        <Mini label="Weight" v={`${weight}kg`} />
-        <Mini label="BF" v={`${bf}%`} />
-        <Mini label="BMI" v={`${bmi}`} />
-        <Mini label="" v={state} accent={glow} />
-      </div>
-    </div>
-  );
-}
-function Mini({ label, v, accent }: any) {
-  return (
-    <div className="bg-white/5 rounded-lg px-2 py-1">
-      {label && <div className="text-[9px] text-muted-foreground uppercase">{label}</div>}
-      <div className={`font-semibold ${accent ? "text-[oklch(0.78_0.18_210)]" : ""}`}>{v}</div>
-    </div>
-  );
-}
-function Stat({ icon: Icon, label, value, unit }: any) {
-  return (
-    <div className="glass rounded-2xl p-3.5">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        {Icon && <Icon className="h-3.5 w-3.5" />} {label}
-      </div>
-      <div className="mt-1 flex items-baseline gap-1">
-        <span className="text-2xl font-bold tabular-nums">{value}</span>
-        <span className="text-[11px] text-muted-foreground">{unit}</span>
-      </div>
-    </div>
-  );
-}
 function Meter({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
   return (
     <div className="mb-3 last:mb-0">
@@ -580,3 +482,4 @@ function Meter({ label, value, warn }: { label: string; value: number; warn?: bo
     </div>
   );
 }
+
