@@ -393,7 +393,7 @@ function Onboarding() {
             <button disabled={save.isPending} onClick={() => save.mutate()}
               style={{ background: "var(--gradient-hero)" }}
               className="flex-1 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 text-primary-foreground glow-ring disabled:opacity-70">
-              {save.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Building your plan…</> : <><Zap className="h-4 w-4" /> Let's Start My Journey</>}
+              {save.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Building your plan…</> : <><Zap className="h-4 w-4" /> Start My 4-Week Journey →</>}
             </button>
           )}
         </div>
