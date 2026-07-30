@@ -9,9 +9,8 @@ import {
   Activity, Target, Apple, ShieldAlert, User, Check, Zap, TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
-import bodyMale from "@/assets/body-male.jpg";
-import bodyFemale from "@/assets/body-female.jpg";
 import { WheelPicker } from "@/components/mobile/WheelPicker";
+import { FitnessRoadmap } from "@/components/mobile/FitnessRoadmap";
 
 export const Route = createFileRoute("/_app/onboarding")({
   component: Onboarding,
