@@ -124,6 +124,7 @@ export type Database = {
           steps: number | null
           updated_at: string
           user_id: string
+          water_ml: number
           weight_kg: number | null
           workouts_count: number | null
         }
@@ -143,6 +144,7 @@ export type Database = {
           steps?: number | null
           updated_at?: string
           user_id: string
+          water_ml?: number
           weight_kg?: number | null
           workouts_count?: number | null
         }
@@ -162,6 +164,7 @@ export type Database = {
           steps?: number | null
           updated_at?: string
           user_id?: string
+          water_ml?: number
           weight_kg?: number | null
           workouts_count?: number | null
         }

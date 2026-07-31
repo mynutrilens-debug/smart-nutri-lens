@@ -2,6 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { getDashboard } from "./dashboard.functions";
 import { listFoods } from "./food.functions";
 import { listWorkouts } from "./workout.functions";
+import { getProgress } from "./progress.functions";
 
 export const dashboardQuery = queryOptions({
   queryKey: ["dashboard"],
@@ -19,4 +20,10 @@ export const workoutsQuery = queryOptions({
   queryKey: ["workouts"],
   queryFn: () => listWorkouts(),
   staleTime: 15_000,
+});
+
+export const progressQuery = queryOptions({
+  queryKey: ["progress"],
+  queryFn: () => getProgress(),
+  staleTime: 30_000,
 });
