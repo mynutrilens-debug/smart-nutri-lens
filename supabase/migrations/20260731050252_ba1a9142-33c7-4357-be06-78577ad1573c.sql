@@ -1,0 +1,1 @@
+ALTER TABLE public.health_snapshots ADD COLUMN IF NOT EXISTS water_ml integer NOT NULL DEFAULT 0;
