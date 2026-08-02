@@ -1,7 +1,7 @@
 // Server-only notification engine: builds personalized, deep-linked messages
 // and delivers them through FCM. All entry points are safe to call repeatedly —
 // notification_log dedupe keys guarantee one send per user per slot per day.
-import { sendFcmToToken, type PushPayload } from "./fcm.server";
+import { sendFcmToToken, isFcmConfigured, type PushPayload } from "./fcm.server";
 
 export type NotifyInput = {
   userId: string;
@@ -22,6 +22,7 @@ async function admin() {
 
 /** Deliver one notification to every device the user has registered. */
 export async function deliver(input: NotifyInput): Promise<boolean> {
+  if (!isFcmConfigured()) return false;
   const db = await admin();
   const url = input.url ?? "/home";
 
