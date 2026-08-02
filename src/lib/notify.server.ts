@@ -126,7 +126,7 @@ export async function runReminderSweep() {
     .from("push_subscriptions")
     .select("user_id")
     .order("user_id");
-  const userIds = Array.from(new Set((subs ?? []).map((s: any) => s.user_id)));
+  const userIds: string[] = Array.from(new Set((subs ?? []).map((s: any) => String(s.user_id))));
   if (!userIds.length) return results;
   results.candidates = userIds.length;
 
