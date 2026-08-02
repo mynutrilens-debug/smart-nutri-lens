@@ -415,6 +415,11 @@ function Profile() {
           activeMinutes={p?.active_minutes_today}
         />
       </section>
+
+      {/* Smart notifications */}
+      <section className="animate-slide-up" style={{ animationDelay: ".24s" }}>
+        <NotificationSettings />
+      </section>
     </div>
   );
 }
