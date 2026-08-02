@@ -24,6 +24,7 @@ import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
 import { Route as ApiPublicFirebaseConfigRouteImport } from './routes/api/public/firebase-config'
 import { Route as AppSquadsSquadIdRouteImport } from './routes/_app/squads.$squadId'
+import { Route as ApiPublicNotificationsRunRouteImport } from './routes/api/public/notifications/run'
 import { Route as AppSquadsJoinCodeRouteImport } from './routes/_app/squads.join.$code'
 
 const LoginRoute = LoginRouteImport.update({
@@ -101,6 +102,12 @@ const AppSquadsSquadIdRoute = AppSquadsSquadIdRouteImport.update({
   path: '/$squadId',
   getParentRoute: () => AppSquadsRoute,
 } as any)
+const ApiPublicNotificationsRunRoute =
+  ApiPublicNotificationsRunRouteImport.update({
+    id: '/api/public/notifications/run',
+    path: '/api/public/notifications/run',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppSquadsJoinCodeRoute = AppSquadsJoinCodeRouteImport.update({
   id: '/join/$code',
   path: '/join/$code',
@@ -123,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/squads/join/$code': typeof AppSquadsJoinCodeRoute
+  '/api/public/notifications/run': typeof ApiPublicNotificationsRunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,6 +148,7 @@ export interface FileRoutesByTo {
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/squads/join/$code': typeof AppSquadsJoinCodeRoute
+  '/api/public/notifications/run': typeof ApiPublicNotificationsRunRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,6 +168,7 @@ export interface FileRoutesById {
   '/api/public/firebase-config': typeof ApiPublicFirebaseConfigRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/_app/squads/join/$code': typeof AppSquadsJoinCodeRoute
+  '/api/public/notifications/run': typeof ApiPublicNotificationsRunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/api/public/firebase-config'
     | '/api/public/razorpay-webhook'
     | '/squads/join/$code'
+    | '/api/public/notifications/run'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/api/public/firebase-config'
     | '/api/public/razorpay-webhook'
     | '/squads/join/$code'
+    | '/api/public/notifications/run'
   id:
     | '__root__'
     | '/'
@@ -213,6 +225,7 @@ export interface FileRouteTypes {
     | '/api/public/firebase-config'
     | '/api/public/razorpay-webhook'
     | '/_app/squads/join/$code'
+    | '/api/public/notifications/run'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -221,6 +234,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiPublicFirebaseConfigRoute: typeof ApiPublicFirebaseConfigRoute
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
+  ApiPublicNotificationsRunRoute: typeof ApiPublicNotificationsRunRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -330,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSquadsSquadIdRouteImport
       parentRoute: typeof AppSquadsRoute
     }
+    '/api/public/notifications/run': {
+      id: '/api/public/notifications/run'
+      path: '/api/public/notifications/run'
+      fullPath: '/api/public/notifications/run'
+      preLoaderRoute: typeof ApiPublicNotificationsRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/squads/join/$code': {
       id: '/_app/squads/join/$code'
       path: '/join/$code'
@@ -386,6 +407,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ApiPublicFirebaseConfigRoute: ApiPublicFirebaseConfigRoute,
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
+  ApiPublicNotificationsRunRoute: ApiPublicNotificationsRunRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
