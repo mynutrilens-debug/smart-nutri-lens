@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MealHistory, type FoodLog } from "@/components/mobile/MealHistory";
 import { LineChart, BarChart, ScoreRing, CHART_COLORS } from "@/components/mobile/ProgressCharts";
 import { HealthSyncCard } from "@/components/mobile/HealthSyncCard";
+import { NotificationSettings } from "@/components/mobile/NotificationSettings";
 import {
   Flame, Scale, Loader2, Save, Sparkles, TrendingDown, TrendingUp, Target,
   Droplets, Activity, Trophy, Plus, Minus, Check, LogOut, Pencil,
