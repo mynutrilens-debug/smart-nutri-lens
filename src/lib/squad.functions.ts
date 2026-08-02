@@ -90,6 +90,14 @@ export const joinSquadByCode = createServerFn({ method: "POST" })
       display_name: profile?.display_name ?? "Athlete",
     });
     if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+    if (!error) {
+      try {
+        const { notifySquadJoin } = await import("@/lib/notify.server");
+        await notifySquadJoin(squadRow.id, userId, profile?.display_name ?? "A new member");
+      } catch (e) {
+        console.warn("[squad] join notification skipped", e);
+      }
+    }
     return { squad_id: squadRow.id };
   });
 
