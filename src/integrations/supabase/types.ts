@@ -170,6 +170,93 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_log: {
+        Row: {
+          body: string
+          created_at: string
+          dedupe_key: string
+          id: string
+          kind: string
+          title: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          kind: string
+          title: string
+          url?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          kind?: string
+          title?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_prefs: {
+        Row: {
+          breakfast_at: string
+          created_at: string
+          dinner_at: string
+          lunch_at: string
+          meals_enabled: boolean
+          quiet_end: string
+          quiet_start: string
+          squad_enabled: boolean
+          streak_enabled: boolean
+          tz_offset_minutes: number
+          updated_at: string
+          user_id: string
+          water_enabled: boolean
+          workout_at: string
+          workout_enabled: boolean
+        }
+        Insert: {
+          breakfast_at?: string
+          created_at?: string
+          dinner_at?: string
+          lunch_at?: string
+          meals_enabled?: boolean
+          quiet_end?: string
+          quiet_start?: string
+          squad_enabled?: boolean
+          streak_enabled?: boolean
+          tz_offset_minutes?: number
+          updated_at?: string
+          user_id: string
+          water_enabled?: boolean
+          workout_at?: string
+          workout_enabled?: boolean
+        }
+        Update: {
+          breakfast_at?: string
+          created_at?: string
+          dinner_at?: string
+          lunch_at?: string
+          meals_enabled?: boolean
+          quiet_end?: string
+          quiet_start?: string
+          squad_enabled?: boolean
+          streak_enabled?: boolean
+          tz_offset_minutes?: number
+          updated_at?: string
+          user_id?: string
+          water_enabled?: boolean
+          workout_at?: string
+          workout_enabled?: boolean
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -376,6 +463,8 @@ export type Database = {
           display_name: string | null
           id: string
           joined_at: string
+          last_points: number
+          last_rank: number | null
           squad_id: string
           user_id: string
         }
@@ -383,6 +472,8 @@ export type Database = {
           display_name?: string | null
           id?: string
           joined_at?: string
+          last_points?: number
+          last_rank?: number | null
           squad_id: string
           user_id: string
         }
@@ -390,6 +481,8 @@ export type Database = {
           display_name?: string | null
           id?: string
           joined_at?: string
+          last_points?: number
+          last_rank?: number | null
           squad_id?: string
           user_id?: string
         }
