@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { listChatMessages, sendChatMessage, clearChatHistory } from "@/lib/chat.functions";
 import { useUpgradeGate, UpgradeModal } from "@/components/mobile/UpgradeGate";
+import nutribotLogo from "@/assets/nutribot-logo.png";
 
 const SUGGESTIONS = [
   "I have a B12 deficiency — what foods should I eat?",
