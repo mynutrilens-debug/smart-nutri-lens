@@ -31,7 +31,7 @@ export function NutriBotFab() {
           className="absolute -inset-1 rounded-full bg-emerald-500/30 blur-md animate-pulse"
           aria-hidden
         />
-        <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-[0_12px_30px_-6px_rgba(16,185,129,0.65)] border border-emerald-300/40 active:scale-95 transition-transform">
+        <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 shadow-[0_12px_30px_-6px_rgba(16,185,129,0.65)] border border-emerald-400/50 active:scale-95 transition-transform">
           <img src={nutribotLogo} alt="NutriBot" loading="lazy" width={40} height={40} className="h-9 w-9 object-contain drop-shadow" />
           <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white border-2 border-zinc-950" />
         </span>
