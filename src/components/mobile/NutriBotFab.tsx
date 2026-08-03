@@ -32,7 +32,7 @@ export function NutriBotFab() {
           aria-hidden
         />
         <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-[0_12px_30px_-6px_rgba(16,185,129,0.65)] border border-emerald-300/40 active:scale-95 transition-transform">
-          <Sparkles className="h-5 w-5 text-black" strokeWidth={2.5} />
+          <img src={nutribotLogo} alt="NutriBot" loading="lazy" width={40} height={40} className="h-9 w-9 object-contain drop-shadow" />
           <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white border-2 border-zinc-950" />
         </span>
       </button>
