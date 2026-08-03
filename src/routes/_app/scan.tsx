@@ -95,7 +95,7 @@ function Scan() {
       <header className="animate-slide-up">
         <p className="text-xs text-muted-foreground">AI Vision</p>
         <h1 className="text-2xl font-bold tracking-tight">Scan your meal</h1>
-        <p className="text-sm text-muted-foreground mt-1">Point your camera at any food — Gemini will estimate the macros.</p>
+        <p className="text-sm text-muted-foreground mt-1">Point your camera at any food — MyNutriLens will estimate the macros.</p>
       </header>
 
       {/* Scan window */}

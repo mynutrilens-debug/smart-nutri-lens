@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { listChatMessages, sendChatMessage, clearChatHistory } from "@/lib/chat.functions";
 import { useUpgradeGate, UpgradeModal } from "@/components/mobile/UpgradeGate";
+import nutribotLogo from "@/assets/nutribot-logo.png";
 
 const SUGGESTIONS = [
   "I have a B12 deficiency — what foods should I eat?",
@@ -58,8 +59,8 @@ export function ChatPanel({ onClose, embedded = false }: { onClose?: () => void;
     <div className="flex flex-col h-full bg-zinc-950 text-white">
       <header className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-zinc-950/80 backdrop-blur shrink-0">
         <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg">
-            <Sparkles className="h-4 w-4 text-black" />
+          <div className="h-9 w-9 rounded-full bg-zinc-900 border border-emerald-400/40 flex items-center justify-center shadow-lg overflow-hidden">
+            <img src={nutribotLogo} alt="NutriBot" loading="lazy" width={32} height={32} className="h-7 w-7 object-contain" />
           </div>
           <div>
             <div className="font-semibold leading-tight">NutriBot</div>
