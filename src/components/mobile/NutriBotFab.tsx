@@ -1,8 +1,8 @@
 import { useLocation } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ChatPanel } from "./ChatPanel";
+import nutribotLogo from "@/assets/nutribot-logo.png";
 
 export function NutriBotFab() {
   const { pathname } = useLocation();
