@@ -22,7 +22,17 @@ async function admin() {
 
 /** Deliver one notification to every device the user has registered. */
 export async function deliver(input: NotifyInput): Promise<boolean> {
-  if (!isFcmConfigured()) return false;
+  return (await deliverDetailed(input)).sent > 0;
+}
+
+export type DeliverResult = {
+  sent: number;
+  devices: number;
+  reason: "ok" | "unconfigured" | "duplicate" | "no_device" | "send_failed";
+};
+
+export async function deliverDetailed(input: NotifyInput): Promise<DeliverResult> {
+  if (!isFcmConfigured()) return { sent: 0, devices: 0, reason: "unconfigured" };
   const db = await admin();
   const url = input.url ?? "/home";
 
@@ -35,13 +45,16 @@ export async function deliver(input: NotifyInput): Promise<boolean> {
     body: input.body,
     url,
   });
-  if (logErr) return false; // duplicate or write failure → skip send
+  if (logErr) {
+    console.warn("[notify] log insert skipped", logErr.message);
+    return { sent: 0, devices: 0, reason: "duplicate" };
+  }
 
   const { data: subs } = await db
     .from("push_subscriptions")
     .select("id, token")
     .eq("user_id", input.userId);
-  if (!subs?.length) return false;
+  if (!subs?.length) return { sent: 0, devices: 0, reason: "no_device" };
 
   const payload: PushPayload = {
     title: input.title,
@@ -58,8 +71,13 @@ export async function deliver(input: NotifyInput): Promise<boolean> {
       await db.from("push_subscriptions").delete().eq("id", sub.id);
     }
   }
-  return sent > 0;
+  return {
+    sent,
+    devices: subs.length,
+    reason: sent > 0 ? "ok" : "send_failed",
+  };
 }
+
 
 // ---------------------------------------------------------------- helpers
 
