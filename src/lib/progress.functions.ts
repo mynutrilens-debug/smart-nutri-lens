@@ -98,3 +98,24 @@ export const logWater = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+export const getMealMonth = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const [y, m] = data.month.split("-").map(Number);
+    const start = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0));
+    const end = new Date(Date.UTC(y, m, 1, 0, 0, 0));
+
+    const { data: rows, error } = await supabase
+      .from("food_logs")
+      .select("id,name,meal_type,calories,protein_g,carbs_g,fat_g,image_url,notes,logged_at")
+      .eq("user_id", userId)
+      .gte("logged_at", start.toISOString())
+      .lt("logged_at", end.toISOString())
+      .order("logged_at", { ascending: false })
+      .limit(2000);
+    if (error) throw new Error(error.message);
+    return { month: data.month, foods: rows ?? [] };
+  });
