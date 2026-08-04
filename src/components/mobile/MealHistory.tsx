@@ -29,6 +29,8 @@ export type FoodLog = {
   logged_at: string;
 };
 
+type MonthData = Awaited<ReturnType<typeof getMealMonth>>;
+
 const MEAL_TONE: Record<string, string> = {
   breakfast: "text-amber-300 border-amber-300/25 bg-amber-300/10",
   lunch: "text-primary border-primary/25 bg-primary/10",
@@ -96,7 +98,7 @@ export function MealHistory({ foods }: { foods: FoodLog[] }) {
     queryKey: ["meal-month", month],
     queryFn: () => fetchMonth({ data: { month } }),
     staleTime: 60_000,
-    placeholderData: { month, foods: seed as FoodLog[] },
+    placeholderData: { month, foods: seed } as unknown as MonthData,
   });
 
   const monthFoods = (data?.foods ?? seed) as FoodLog[];
@@ -321,8 +323,8 @@ function DaySheet({
     staleTime: 60_000,
     placeholderData: {
       month,
-      foods: seedFoods.filter((f) => dayKey(new Date(f.logged_at)).startsWith(month)) as FoodLog[],
-    },
+      foods: seedFoods.filter((f) => dayKey(new Date(f.logged_at)).startsWith(month)),
+    } as unknown as MonthData,
   });
 
   const items = useMemo(() => {
