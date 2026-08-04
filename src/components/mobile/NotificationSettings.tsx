@@ -75,12 +75,15 @@ export function NotificationSettings() {
       return res;
     },
     onSuccess: (res: any) => {
-      if (res?.ok) toast.success("Notifications enabled — check your device");
+      if (res?.ok) toast.success(`Test push sent to ${res.sent} device${res.sent === 1 ? "" : "s"}`);
       else if (res?.reason === "not_configured") toast.error("Push isn't configured on the server yet");
+      else if (res?.reason === "no_device") toast.error("No device token stored — try again");
+      else if (res?.reason === "send_failed") toast.error("Firebase rejected the send — check the project key");
       else toast.success("Device registered for reminders");
     },
-    onError: () => toast.error("Notification permission was blocked"),
+    onError: (e: any) => toast.error(e?.message === "Permission denied" ? "Notification permission was blocked" : "Couldn't register this device"),
   });
+
 
   const toggles: Array<{ key: keyof Prefs; label: string; hint: string; icon: React.ReactNode }> = [
     { key: "meals_enabled", label: "Meal reminders", hint: "Breakfast, lunch & dinner nudges", icon: <Utensils className="h-3.5 w-3.5" /> },
