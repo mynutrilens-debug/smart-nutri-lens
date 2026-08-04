@@ -239,6 +239,81 @@ export async function hapticTap() {
   } catch {}
 }
 
+const PUSH_CHANNEL_ID = 'mynutrilens_default';
+
+let pushListenersReady = false;
+
+/**
+ * Foreground/background plumbing: Android drops FCM `notification` payloads
+ * while the app is in the foreground, so we re-post them as local
+ * notifications. Taps (push or local) deep-link into the app.
+ */
+async function ensurePushHandlers() {
+  if (pushListenersReady) return;
+  pushListenersReady = true;
+  const [{ PushNotifications }, { LocalNotifications }] = await Promise.all([
+    import('@capacitor/push-notifications'),
+    import('@capacitor/local-notifications'),
+  ]);
+
+  if (Capacitor.getPlatform() === 'android') {
+    // Channel must exist before Android 8+ will display anything.
+    await PushNotifications.createChannel({
+      id: PUSH_CHANNEL_ID,
+      name: 'MyNutriLens reminders',
+      description: 'Meal, water, workout and squad nudges',
+      importance: 5,
+      visibility: 1,
+      lights: true,
+      lightColor: '#22E5A0',
+      vibration: true,
+    }).catch(() => {});
+    await LocalNotifications.createChannel({
+      id: PUSH_CHANNEL_ID,
+      name: 'MyNutriLens reminders',
+      description: 'Meal, water, workout and squad nudges',
+      importance: 5,
+      visibility: 1,
+      vibration: true,
+    }).catch(() => {});
+  }
+  await LocalNotifications.requestPermissions().catch(() => {});
+
+  PushNotifications.addListener('pushNotificationReceived', async notification => {
+    const url = (notification.data?.url as string) || '/home';
+    const title = notification.title || (notification.data?.title as string) || 'MyNutriLens';
+    const body = notification.body || (notification.data?.body as string) || '';
+    try {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: Math.floor(Math.random() * 2_000_000_000),
+            title,
+            body,
+            channelId: PUSH_CHANNEL_ID,
+            smallIcon: 'ic_stat_icon',
+            iconColor: '#22E5A0',
+            extra: { url },
+          },
+        ],
+      });
+    } catch {
+      // If local notifications are unavailable, at least route in-app.
+      console.warn('[push] foreground display failed');
+    }
+  });
+
+  PushNotifications.addListener('pushNotificationActionPerformed', action => {
+    const url = (action.notification.data?.url as string) || '/home';
+    nativeHandlers.onOpenPath?.(url);
+  });
+
+  LocalNotifications.addListener('localNotificationActionPerformed', action => {
+    const url = (action.notification.extra?.url as string) || '/home';
+    nativeHandlers.onOpenPath?.(url);
+  });
+}
+
 /**
  * Register the device for Capacitor native push (FCM on Android, APNs on iOS).
  * Returns the device token once received, or null if push isn't available.
@@ -247,8 +322,12 @@ export async function registerNativePush(): Promise<{ token: string; platform: '
   if (!isNative()) return null;
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
-    const perm = await PushNotifications.requestPermissions();
+    let perm = await PushNotifications.checkPermissions();
+    if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
+      perm = await PushNotifications.requestPermissions();
+    }
     if (perm.receive !== 'granted') return null;
+    await ensurePushHandlers();
     return await new Promise(resolve => {
       let settled = false;
       const finish = (value: { token: string; platform: 'android' | 'ios' } | null) => {
@@ -260,13 +339,17 @@ export async function registerNativePush(): Promise<{ token: string; platform: '
         const platform = (Capacitor.getPlatform() === 'ios' ? 'ios' : 'android') as 'android' | 'ios';
         finish({ token: token.value, platform });
       });
-      PushNotifications.addListener('registrationError', () => finish(null));
+      PushNotifications.addListener('registrationError', err => {
+        console.warn('[push] registration error', err);
+        finish(null);
+      });
       PushNotifications.register().catch(() => finish(null));
-      setTimeout(() => finish(null), 8000);
+      setTimeout(() => finish(null), 15000);
     });
   } catch (e) {
     console.warn('[native] push registration skipped', e);
     return null;
   }
 }
+
 

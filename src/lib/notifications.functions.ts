@@ -72,12 +72,12 @@ export const sendTestNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { deliver } = await import("@/lib/notify.server");
+    const { deliverDetailed } = await import("@/lib/notify.server");
     const { isFcmConfigured } = await import("@/lib/fcm.server");
     if (!isFcmConfigured()) {
-      return { ok: false, reason: "not_configured" as const };
+      return { ok: false, reason: "not_configured" as const, devices: 0, sent: 0 };
     }
-    const sent = await deliver({
+    const res = await deliverDetailed({
       userId,
       kind: "test",
       dedupeKey: `test:${Date.now()}`,
@@ -85,5 +85,6 @@ export const sendTestNotification = createServerFn({ method: "POST" })
       body: "You'll get meal, water, workout and squad nudges right on time.",
       url: "/home",
     });
-    return { ok: sent, reason: sent ? ("sent" as const) : ("no_device" as const) };
+    return { ok: res.sent > 0, reason: res.reason, devices: res.devices, sent: res.sent };
   });
+

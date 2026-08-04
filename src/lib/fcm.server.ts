@@ -129,16 +129,19 @@ export async function sendFcmToToken(
           message: {
             token: deviceToken,
             notification: { title: payload.title, body: payload.body },
-            data: { url, tag: payload.tag ?? "" },
+            data: { url, tag: payload.tag ?? "", title: payload.title, body: payload.body },
             android: {
               priority: "HIGH",
               notification: {
+                channel_id: "mynutrilens_default",
                 icon: "ic_stat_icon",
-                color: "#22e5a0",
-                click_action: "FLUTTER_NOTIFICATION_CLICK",
+                color: "#22E5A0",
+                default_sound: true,
+                notification_priority: "PRIORITY_HIGH",
               },
             },
             apns: {
+              headers: { "apns-priority": "10" },
               payload: { aps: { sound: "default", badge: 1 } },
             },
             webpush: {
@@ -151,19 +154,26 @@ export async function sendFcmToToken(
             },
           },
         }),
+
       },
     );
     if (res.ok) return "ok";
     const text = await res.text();
+    console.error("[fcm] send failed", res.status, text);
+    // Only prune tokens the platform explicitly rejects as unregistered.
+    // INVALID_ARGUMENT usually means a malformed payload, not a dead token —
+    // deleting on that would silently wipe healthy devices.
     if (
       res.status === 404 ||
       text.includes("UNREGISTERED") ||
-      text.includes("INVALID_ARGUMENT")
+      text.includes("NOT_FOUND") ||
+      text.includes("SenderId mismatch") ||
+      text.includes("SENDER_ID_MISMATCH")
     ) {
       return "invalid";
     }
-    console.error("[fcm] send failed", res.status, text);
     return "error";
+
   } catch (e) {
     console.error("[fcm] send error", e);
     return "error";
