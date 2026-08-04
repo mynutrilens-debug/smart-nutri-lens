@@ -129,16 +129,19 @@ export async function sendFcmToToken(
           message: {
             token: deviceToken,
             notification: { title: payload.title, body: payload.body },
-            data: { url, tag: payload.tag ?? "" },
+            data: { url, tag: payload.tag ?? "", title: payload.title, body: payload.body },
             android: {
               priority: "HIGH",
               notification: {
+                channel_id: "mynutrilens_default",
                 icon: "ic_stat_icon",
-                color: "#22e5a0",
-                click_action: "FLUTTER_NOTIFICATION_CLICK",
+                color: "#22E5A0",
+                default_sound: true,
+                notification_priority: "PRIORITY_HIGH",
               },
             },
             apns: {
+              headers: { "apns-priority": "10" },
               payload: { aps: { sound: "default", badge: 1 } },
             },
             webpush: {
@@ -151,6 +154,7 @@ export async function sendFcmToToken(
             },
           },
         }),
+
       },
     );
     if (res.ok) return "ok";
