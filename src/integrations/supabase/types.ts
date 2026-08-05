@@ -208,10 +208,13 @@ export type Database = {
           breakfast_at: string
           created_at: string
           dinner_at: string
+          local_reminders: boolean
           lunch_at: string
           meals_enabled: boolean
           quiet_end: string
           quiet_start: string
+          sleep_at: string
+          sleep_enabled: boolean
           squad_enabled: boolean
           streak_enabled: boolean
           tz_offset_minutes: number
@@ -225,10 +228,13 @@ export type Database = {
           breakfast_at?: string
           created_at?: string
           dinner_at?: string
+          local_reminders?: boolean
           lunch_at?: string
           meals_enabled?: boolean
           quiet_end?: string
           quiet_start?: string
+          sleep_at?: string
+          sleep_enabled?: boolean
           squad_enabled?: boolean
           streak_enabled?: boolean
           tz_offset_minutes?: number
@@ -242,10 +248,13 @@ export type Database = {
           breakfast_at?: string
           created_at?: string
           dinner_at?: string
+          local_reminders?: boolean
           lunch_at?: string
           meals_enabled?: boolean
           quiet_end?: string
           quiet_start?: string
+          sleep_at?: string
+          sleep_enabled?: boolean
           squad_enabled?: boolean
           streak_enabled?: boolean
           tz_offset_minutes?: number
