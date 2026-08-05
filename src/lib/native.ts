@@ -333,6 +333,10 @@ export async function registerNativePush(): Promise<{ token: string; platform: '
       const finish = (value: { token: string; platform: 'android' | 'ios' } | null) => {
         if (settled) return;
         settled = true;
+        // Cache the token for the diagnostics panel.
+        void import('@/lib/local-notifications')
+          .then(m => m.rememberFcmToken(value?.token ?? null))
+          .catch(() => {});
         resolve(value);
       };
       PushNotifications.addListener('registration', token => {
