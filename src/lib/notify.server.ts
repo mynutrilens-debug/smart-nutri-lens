@@ -277,18 +277,20 @@ export async function runReminderSweep() {
           url: "/diet",
         });
       }
-      // Nudge to scan if nothing logged by mid-afternoon
-      if (due(minutes, 16 * 60) && todaysFoods.length === 0) {
-        queue.push({
-          userId,
-          kind: "meal_none",
-          dedupeKey: `meal_none:${dateKey}`,
-          title: "📸 Nothing logged yet today",
-          body: "One quick scan and your macros update instantly. Takes 5 seconds.",
-          url: "/scan",
-        });
-      }
     }
+
+    // Data-driven nudge (not a fixed recurring reminder) — always server-side.
+    if (prefs.meals_enabled && due(minutes, 16 * 60) && todaysFoods.length === 0) {
+      queue.push({
+        userId,
+        kind: "meal_none",
+        dedupeKey: `meal_none:${dateKey}`,
+        title: "📸 Nothing logged yet today",
+        body: "One quick scan and your macros update instantly. Takes 5 seconds.",
+        url: "/scan",
+      });
+    }
+
 
     // --- Water -----------------------------------------------------------
     if (prefs.water_enabled && !localHandlesReminders) {
