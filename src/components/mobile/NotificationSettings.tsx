@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -10,7 +10,13 @@ import { savePushToken } from "@/lib/push.functions";
 import { requestWebPushToken } from "@/lib/firebase";
 import { isNative } from "@/lib/native";
 import { registerNativePush } from "@/lib/native";
-import { Bell, BellRing, Utensils, Droplets, Dumbbell, Users, Flame, ChevronDown } from "lucide-react";
+import {
+  syncLocalReminders,
+  getScheduledCount,
+  scheduleTestReminder,
+  buildReminderPlan,
+} from "@/lib/local-reminders";
+import { Bell, BellRing, Utensils, Droplets, Dumbbell, Users, Flame, ChevronDown, Moon, AlarmClock } from "lucide-react";
 import { toast } from "sonner";
 
 type Prefs = {
@@ -20,15 +26,18 @@ type Prefs = {
   workout_enabled: boolean;
   squad_enabled: boolean;
   streak_enabled: boolean;
+  sleep_enabled: boolean;
   breakfast_at: string;
   lunch_at: string;
   dinner_at: string;
   workout_at: string;
+  sleep_at: string;
   quiet_start: string;
   quiet_end: string;
 };
 
 const hhmm = (v: string) => (v || "").slice(0, 5);
+
 
 export function NotificationSettings() {
   const qc = useQueryClient();
