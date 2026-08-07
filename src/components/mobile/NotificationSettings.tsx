@@ -198,6 +198,30 @@ export function NotificationSettings() {
             {enablePush.isPending ? "Enabling…" : "Enable on this device & send test"}
           </button>
 
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2.5">
+            <div className="flex items-center gap-3">
+              <AlarmClock className="h-4 w-4 text-primary" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium">Scheduled on device</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Recurring reminders handled locally — they fire even offline
+                </p>
+              </div>
+              <span className="text-sm font-bold tabular-nums text-primary">
+                {isNative() ? (scheduled ?? planned) : planned}
+              </span>
+            </div>
+            <button
+              onClick={() => testLocal.mutate()}
+              disabled={testLocal.isPending}
+              className="w-full rounded-lg border border-white/10 bg-white/[0.03] py-2 text-[11px] font-semibold active:scale-[0.98] transition disabled:opacity-60"
+            >
+              {testLocal.isPending ? "Scheduling…" : "Verify — remind me in 2 minutes"}
+            </button>
+          </div>
+
+
+
           <div className="space-y-2">
             {toggles.map((t) => {
               const on = Boolean(prefs?.[t.key]);
