@@ -31,13 +31,9 @@ export const getNotificationSettings = createServerFn({ method: "GET" })
       lunch_at: "13:00",
       dinner_at: "20:00",
       workout_at: "18:00",
-      sleep_enabled: true,
-      sleep_at: "22:30",
-      local_reminders: true,
       quiet_start: "22:30",
       quiet_end: "07:00",
     };
-
     return { prefs, recent: recent ?? [] };
   });
 
@@ -56,15 +52,11 @@ export const updateNotificationSettings = createServerFn({ method: "POST" })
         lunch_at: timeSchema.optional(),
         dinner_at: timeSchema.optional(),
         workout_at: timeSchema.optional(),
-        sleep_enabled: z.boolean().optional(),
-        sleep_at: timeSchema.optional(),
-        local_reminders: z.boolean().optional(),
         quiet_start: timeSchema.optional(),
         quiet_end: timeSchema.optional(),
       })
       .parse(d),
   )
-
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await (supabase.from("notification_prefs") as any).upsert(
