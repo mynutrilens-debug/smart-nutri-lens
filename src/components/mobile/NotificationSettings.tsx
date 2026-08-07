@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -10,7 +10,13 @@ import { savePushToken } from "@/lib/push.functions";
 import { requestWebPushToken } from "@/lib/firebase";
 import { isNative } from "@/lib/native";
 import { registerNativePush } from "@/lib/native";
-import { Bell, BellRing, Utensils, Droplets, Dumbbell, Users, Flame, ChevronDown } from "lucide-react";
+import {
+  syncLocalReminders,
+  getScheduledCount,
+  scheduleTestReminder,
+  buildReminderPlan,
+} from "@/lib/local-reminders";
+import { Bell, BellRing, Utensils, Droplets, Dumbbell, Users, Flame, ChevronDown, Moon, AlarmClock } from "lucide-react";
 import { toast } from "sonner";
 
 type Prefs = {
@@ -20,15 +26,18 @@ type Prefs = {
   workout_enabled: boolean;
   squad_enabled: boolean;
   streak_enabled: boolean;
+  sleep_enabled: boolean;
   breakfast_at: string;
   lunch_at: string;
   dinner_at: string;
   workout_at: string;
+  sleep_at: string;
   quiet_start: string;
   quiet_end: string;
 };
 
 const hhmm = (v: string) => (v || "").slice(0, 5);
+
 
 export function NotificationSettings() {
   const qc = useQueryClient();
@@ -47,6 +56,41 @@ export function NotificationSettings() {
   const prefs = data?.prefs as Prefs | undefined;
   const recent = (data?.recent ?? []) as Array<{ id: string; title: string; body: string; created_at: string }>;
 
+  const [scheduled, setScheduled] = useState<number | null>(null);
+  const refreshScheduled = async () => {
+    if (!isNative()) return;
+    setScheduled(await getScheduledCount());
+  };
+
+  // Reschedule on-device reminders whenever prefs land or change.
+  useEffect(() => {
+    if (!prefs || !isNative()) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await syncLocalReminders(prefs);
+        if (!cancelled) setScheduled(await getScheduledCount());
+      } catch {
+        /* permission denied or plugin unavailable */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    prefs?.meals_enabled,
+    prefs?.water_enabled,
+    prefs?.workout_enabled,
+    prefs?.sleep_enabled,
+    prefs?.breakfast_at,
+    prefs?.lunch_at,
+    prefs?.dinner_at,
+    prefs?.workout_at,
+    prefs?.sleep_at,
+    prefs?.quiet_start,
+    prefs?.quiet_end,
+  ]);
+
   const save = useMutation({
     mutationFn: (patch: Partial<Prefs>) => saveSettings({ data: patch as never }),
     onMutate: async (patch) => {
@@ -55,8 +99,30 @@ export function NotificationSettings() {
       );
     },
     onError: () => toast.error("Couldn't save that setting"),
+    onSuccess: async (_res, patch) => {
+      if (!isNative() || !prefs) return;
+      // Schedule immediately after saving — don't wait for the refetch.
+      const next = { ...prefs, ...patch };
+      const count = await syncLocalReminders(next).catch(() => 0);
+      setScheduled(await getScheduledCount());
+      toast.success(`${count} reminder${count === 1 ? "" : "s"} scheduled on this device`);
+    },
     onSettled: () => qc.invalidateQueries({ queryKey: ["notification-settings"] }),
   });
+
+  const testLocal = useMutation({
+    mutationFn: async () => {
+      const ok = await scheduleTestReminder(2);
+      if (!ok) throw new Error("Permission denied");
+      await refreshScheduled();
+    },
+    onSuccess: () => toast.success("Test reminder set for 2 minutes from now"),
+    onError: () =>
+      toast.error(
+        isNative() ? "Notification permission was blocked" : "Open the app on your phone to test reminders",
+      ),
+  });
+
 
   const enablePush = useMutation({
     mutationFn: async () => {
@@ -87,8 +153,9 @@ export function NotificationSettings() {
 
   const toggles: Array<{ key: keyof Prefs; label: string; hint: string; icon: React.ReactNode }> = [
     { key: "meals_enabled", label: "Meal reminders", hint: "Breakfast, lunch & dinner nudges", icon: <Utensils className="h-3.5 w-3.5" /> },
-    { key: "water_enabled", label: "Water reminders", hint: "\"3 glasses away from your goal\"", icon: <Droplets className="h-3.5 w-3.5" /> },
+    { key: "water_enabled", label: "Water reminders", hint: "Spaced hydration nudges through the day", icon: <Droplets className="h-3.5 w-3.5" /> },
     { key: "workout_enabled", label: "Workout reminders", hint: "Today's AI split, on time", icon: <Dumbbell className="h-3.5 w-3.5" /> },
+    { key: "sleep_enabled", label: "Sleep reminder", hint: "Wind-down ping before bed", icon: <Moon className="h-3.5 w-3.5" /> },
     { key: "squad_enabled", label: "Squad alerts", hint: "Rank changes, XP, invites", icon: <Users className="h-3.5 w-3.5" /> },
     { key: "streak_enabled", label: "Streak rescue", hint: "Late-night save your streak ping", icon: <Flame className="h-3.5 w-3.5" /> },
   ];
@@ -98,7 +165,11 @@ export function NotificationSettings() {
     { key: "lunch_at", label: "Lunch" },
     { key: "dinner_at", label: "Dinner" },
     { key: "workout_at", label: "Workout" },
+    { key: "sleep_at", label: "Sleep" },
   ];
+
+  const planned = prefs ? buildReminderPlan(prefs).length : 0;
+
 
   return (
     <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
@@ -126,6 +197,30 @@ export function NotificationSettings() {
             <BellRing className="h-3.5 w-3.5" />
             {enablePush.isPending ? "Enabling…" : "Enable on this device & send test"}
           </button>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2.5">
+            <div className="flex items-center gap-3">
+              <AlarmClock className="h-4 w-4 text-primary" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium">Scheduled on device</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Recurring reminders handled locally — they fire even offline
+                </p>
+              </div>
+              <span className="text-sm font-bold tabular-nums text-primary">
+                {isNative() ? (scheduled ?? planned) : planned}
+              </span>
+            </div>
+            <button
+              onClick={() => testLocal.mutate()}
+              disabled={testLocal.isPending}
+              className="w-full rounded-lg border border-white/10 bg-white/[0.03] py-2 text-[11px] font-semibold active:scale-[0.98] transition disabled:opacity-60"
+            >
+              {testLocal.isPending ? "Scheduling…" : "Verify — remind me in 2 minutes"}
+            </button>
+          </div>
+
+
 
           <div className="space-y-2">
             {toggles.map((t) => {
