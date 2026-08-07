@@ -56,11 +56,15 @@ export const updateNotificationSettings = createServerFn({ method: "POST" })
         lunch_at: timeSchema.optional(),
         dinner_at: timeSchema.optional(),
         workout_at: timeSchema.optional(),
+        sleep_enabled: z.boolean().optional(),
+        sleep_at: timeSchema.optional(),
+        local_reminders: z.boolean().optional(),
         quiet_start: timeSchema.optional(),
         quiet_end: timeSchema.optional(),
       })
       .parse(d),
   )
+
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await (supabase.from("notification_prefs") as any).upsert(
