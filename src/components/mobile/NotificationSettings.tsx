@@ -56,6 +56,41 @@ export function NotificationSettings() {
   const prefs = data?.prefs as Prefs | undefined;
   const recent = (data?.recent ?? []) as Array<{ id: string; title: string; body: string; created_at: string }>;
 
+  const [scheduled, setScheduled] = useState<number | null>(null);
+  const refreshScheduled = async () => {
+    if (!isNative()) return;
+    setScheduled(await getScheduledCount());
+  };
+
+  // Reschedule on-device reminders whenever prefs land or change.
+  useEffect(() => {
+    if (!prefs || !isNative()) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await syncLocalReminders(prefs);
+        if (!cancelled) setScheduled(await getScheduledCount());
+      } catch {
+        /* permission denied or plugin unavailable */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    prefs?.meals_enabled,
+    prefs?.water_enabled,
+    prefs?.workout_enabled,
+    prefs?.sleep_enabled,
+    prefs?.breakfast_at,
+    prefs?.lunch_at,
+    prefs?.dinner_at,
+    prefs?.workout_at,
+    prefs?.sleep_at,
+    prefs?.quiet_start,
+    prefs?.quiet_end,
+  ]);
+
   const save = useMutation({
     mutationFn: (patch: Partial<Prefs>) => saveSettings({ data: patch as never }),
     onMutate: async (patch) => {
@@ -64,8 +99,30 @@ export function NotificationSettings() {
       );
     },
     onError: () => toast.error("Couldn't save that setting"),
+    onSuccess: async (_res, patch) => {
+      if (!isNative() || !prefs) return;
+      // Schedule immediately after saving — don't wait for the refetch.
+      const next = { ...prefs, ...patch };
+      const count = await syncLocalReminders(next).catch(() => 0);
+      setScheduled(await getScheduledCount());
+      toast.success(`${count} reminder${count === 1 ? "" : "s"} scheduled on this device`);
+    },
     onSettled: () => qc.invalidateQueries({ queryKey: ["notification-settings"] }),
   });
+
+  const testLocal = useMutation({
+    mutationFn: async () => {
+      const ok = await scheduleTestReminder(2);
+      if (!ok) throw new Error("Permission denied");
+      await refreshScheduled();
+    },
+    onSuccess: () => toast.success("Test reminder set for 2 minutes from now"),
+    onError: () =>
+      toast.error(
+        isNative() ? "Notification permission was blocked" : "Open the app on your phone to test reminders",
+      ),
+  });
+
 
   const enablePush = useMutation({
     mutationFn: async () => {
