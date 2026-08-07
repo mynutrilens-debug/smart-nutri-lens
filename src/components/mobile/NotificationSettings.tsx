@@ -153,8 +153,9 @@ export function NotificationSettings() {
 
   const toggles: Array<{ key: keyof Prefs; label: string; hint: string; icon: React.ReactNode }> = [
     { key: "meals_enabled", label: "Meal reminders", hint: "Breakfast, lunch & dinner nudges", icon: <Utensils className="h-3.5 w-3.5" /> },
-    { key: "water_enabled", label: "Water reminders", hint: "\"3 glasses away from your goal\"", icon: <Droplets className="h-3.5 w-3.5" /> },
+    { key: "water_enabled", label: "Water reminders", hint: "Spaced hydration nudges through the day", icon: <Droplets className="h-3.5 w-3.5" /> },
     { key: "workout_enabled", label: "Workout reminders", hint: "Today's AI split, on time", icon: <Dumbbell className="h-3.5 w-3.5" /> },
+    { key: "sleep_enabled", label: "Sleep reminder", hint: "Wind-down ping before bed", icon: <Moon className="h-3.5 w-3.5" /> },
     { key: "squad_enabled", label: "Squad alerts", hint: "Rank changes, XP, invites", icon: <Users className="h-3.5 w-3.5" /> },
     { key: "streak_enabled", label: "Streak rescue", hint: "Late-night save your streak ping", icon: <Flame className="h-3.5 w-3.5" /> },
   ];
@@ -164,7 +165,11 @@ export function NotificationSettings() {
     { key: "lunch_at", label: "Lunch" },
     { key: "dinner_at", label: "Dinner" },
     { key: "workout_at", label: "Workout" },
+    { key: "sleep_at", label: "Sleep" },
   ];
+
+  const planned = prefs ? buildReminderPlan(prefs).length : 0;
+
 
   return (
     <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
