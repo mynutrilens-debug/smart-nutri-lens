@@ -1,13 +1,9 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { BottomNav } from "@/components/mobile/BottomNav";
 import { TrialBanner } from "@/components/mobile/TrialBanner";
 import { NutriBotFab } from "@/components/mobile/NutriBotFab";
 import { supabase } from "@/integrations/supabase/client";
-import { isNative } from "@/lib/native";
-import { getNotificationSettings } from "@/lib/notifications.functions";
-import { initLocalReminderLifecycle } from "@/lib/local-notifications";
 
 export const Route = createFileRoute("/_app")({
   component: AppShell,
@@ -16,22 +12,6 @@ export const Route = createFileRoute("/_app")({
 function AppShell() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
-  const fetchSettings = useServerFn(getNotificationSettings);
-
-  // Re-arm on-device recurring reminders on every app start/resume so they
-  // survive reboots, force-quits and timezone changes without any backend.
-  useEffect(() => {
-    if (!ready || !isNative()) return;
-    void initLocalReminderLifecycle(async () => {
-      try {
-        const res = (await fetchSettings()) as any;
-        return res?.prefs ?? null;
-      } catch {
-        return null;
-      }
-    });
-  }, [ready, fetchSettings]);
-
 
   useEffect(() => {
     let active = true;

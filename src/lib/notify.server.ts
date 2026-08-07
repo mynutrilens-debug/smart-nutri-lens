@@ -89,13 +89,10 @@ type Prefs = {
   workout_enabled: boolean;
   squad_enabled: boolean;
   streak_enabled: boolean;
-  sleep_enabled: boolean;
-  local_reminders: boolean;
   breakfast_at: string;
   lunch_at: string;
   dinner_at: string;
   workout_at: string;
-  sleep_at: string;
   quiet_start: string;
   quiet_end: string;
 };
@@ -107,13 +104,10 @@ const DEFAULT_PREFS: Omit<Prefs, "user_id"> = {
   workout_enabled: true,
   squad_enabled: true,
   streak_enabled: true,
-  sleep_enabled: true,
-  local_reminders: true,
   breakfast_at: "08:30",
   lunch_at: "13:00",
   dinner_at: "20:00",
   workout_at: "18:00",
-  sleep_at: "22:30",
   quiet_start: "22:30",
   quiet_end: "07:00",
 };
@@ -149,18 +143,9 @@ export async function runReminderSweep() {
 
   const { data: subs } = await db
     .from("push_subscriptions")
-    .select("user_id, platform")
+    .select("user_id")
     .order("user_id");
   const userIds: string[] = Array.from(new Set((subs ?? []).map((s: any) => String(s.user_id))));
-  // Hybrid architecture: devices running the native app schedule their own
-  // recurring reminders locally (Capacitor Local Notifications), so the server
-  // must NOT also push meal/water/workout nudges to them — FCM is reserved for
-  // dynamic, server-driven events (streaks, squads, AI insights, account).
-  const hasNativeDevice = new Set<string>(
-    (subs ?? [])
-      .filter((s: any) => s.platform === "android" || s.platform === "ios")
-      .map((s: any) => String(s.user_id)),
-  );
   if (!userIds.length) return results;
   results.candidates = userIds.length;
 
@@ -204,9 +189,6 @@ export async function runReminderSweep() {
     const { minutes, dateKey } = localNow(prefs.tz_offset_minutes);
     if (isQuiet(prefs, minutes)) continue;
 
-    const localHandlesReminders =
-      hasNativeDevice.has(userId) && prefs.local_reminders !== false;
-
     const profile = profileBy.get(userId) ?? {};
     const name = (profile.display_name || "").split(" ")[0] || "champ";
     const calorieGoal = profile.daily_calorie_goal ?? 2200;
@@ -243,7 +225,7 @@ export async function runReminderSweep() {
     const queue: NotifyInput[] = [];
 
     // --- Meals -----------------------------------------------------------
-    if (prefs.meals_enabled && !localHandlesReminders) {
+    if (prefs.meals_enabled) {
       if (due(minutes, toMinutes(prefs.breakfast_at)) && !has("breakfast")) {
         queue.push({
           userId,
@@ -277,23 +259,21 @@ export async function runReminderSweep() {
           url: "/diet",
         });
       }
+      // Nudge to scan if nothing logged by mid-afternoon
+      if (due(minutes, 16 * 60) && todaysFoods.length === 0) {
+        queue.push({
+          userId,
+          kind: "meal_none",
+          dedupeKey: `meal_none:${dateKey}`,
+          title: "📸 Nothing logged yet today",
+          body: "One quick scan and your macros update instantly. Takes 5 seconds.",
+          url: "/scan",
+        });
+      }
     }
-
-    // Data-driven nudge (not a fixed recurring reminder) — always server-side.
-    if (prefs.meals_enabled && due(minutes, 16 * 60) && todaysFoods.length === 0) {
-      queue.push({
-        userId,
-        kind: "meal_none",
-        dedupeKey: `meal_none:${dateKey}`,
-        title: "📸 Nothing logged yet today",
-        body: "One quick scan and your macros update instantly. Takes 5 seconds.",
-        url: "/scan",
-      });
-    }
-
 
     // --- Water -----------------------------------------------------------
-    if (prefs.water_enabled && !localHandlesReminders) {
+    if (prefs.water_enabled) {
       const waterMl = snap?.water_ml ?? 0;
       const glassesLeft = Math.max(0, Math.ceil((WATER_GOAL_ML - waterMl) / GLASS_ML));
       for (const [slot, at] of [
@@ -318,7 +298,7 @@ export async function runReminderSweep() {
     }
 
     // --- Workout ---------------------------------------------------------
-    if (prefs.workout_enabled && !localHandlesReminders && due(minutes, toMinutes(prefs.workout_at)) && todaysWorkouts.length === 0) {
+    if (prefs.workout_enabled && due(minutes, toMinutes(prefs.workout_at)) && todaysWorkouts.length === 0) {
       queue.push({
         userId,
         kind: "workout",
