@@ -242,6 +242,31 @@ export async function hapticTap() {
 const PUSH_CHANNEL_ID = 'mynutrilens_default';
 
 let pushListenersReady = false;
+let legacySchedulesCleared = false;
+
+/**
+ * Older APK builds created recurring local meal/water/workout alarms. Android
+ * keeps those alarms after an app update or code revert, so they can continue
+ * appearing even though the current build uses server-driven FCM. Remove the
+ * stale schedules once; foreground FCM notifications are posted immediately
+ * and therefore are not present in the pending list during startup.
+ */
+async function clearLegacyLocalSchedules() {
+  if (legacySchedulesCleared) return;
+  legacySchedulesCleared = true;
+  try {
+    const { LocalNotifications } = await import('@capacitor/local-notifications');
+    const pending = await LocalNotifications.getPending();
+    if (pending.notifications.length > 0) {
+      await LocalNotifications.cancel({
+        notifications: pending.notifications.map(({ id }) => ({ id })),
+      });
+      console.info(`[push] cleared ${pending.notifications.length} legacy local schedules`);
+    }
+  } catch (error) {
+    console.warn('[push] legacy schedule cleanup skipped', error);
+  }
+}
 
 /**
  * Foreground/background plumbing: Android drops FCM `notification` payloads
@@ -255,6 +280,8 @@ async function ensurePushHandlers() {
     import('@capacitor/push-notifications'),
     import('@capacitor/local-notifications'),
   ]);
+
+  await clearLegacyLocalSchedules();
 
   if (Capacitor.getPlatform() === 'android') {
     // Channel must exist before Android 8+ will display anything.
