@@ -8,6 +8,8 @@ import {
   Mail, Lock, Loader2, Sparkles, Flame, Dumbbell, CheckCircle2, Salad, Leaf,
 } from "lucide-react";
 import heroBg from "@/assets/fitness-hero-dark.jpg";
+import brandLogo from "@/assets/mynutrilens-logo-light.png";
+
 
 
 export const Route = createFileRoute("/login")({ component: Login });
@@ -78,14 +80,9 @@ function Login() {
 
         {/* Brand */}
         <div className="absolute top-6 left-5 flex items-center gap-2 animate-slide-up">
-          <div className="h-7 w-7 rounded-lg bg-[oklch(0.78_0.20_150/0.15)] border border-[oklch(0.78_0.20_150/0.4)] flex items-center justify-center">
-            <Leaf className="h-4 w-4 text-[oklch(0.85_0.20_140)]" />
-          </div>
-          <span className="text-[15px] font-bold tracking-tight">
-            <span className="text-white">my</span>
-            <span className="text-[oklch(0.85_0.20_140)]">nutrilens</span>
-          </span>
+          <img src={brandLogo} alt="MyNutriLens" width={132} height={76} className="h-9 w-auto object-contain" />
         </div>
+
 
         {/* Floating chips */}
         <FloatChip className="top-20 left-4 animate-float" icon={<CheckCircle2 className="h-3.5 w-3.5 text-[oklch(0.85_0.20_140)]" />} text="+25g Protein" />
