@@ -8,6 +8,8 @@ import {
   Mail, Lock, Loader2, Sparkles, Flame, Dumbbell, CheckCircle2, Salad, Leaf,
 } from "lucide-react";
 import heroBg from "@/assets/fitness-hero-dark.jpg";
+import brandLogo from "@/assets/mynutrilens-logo-light.png";
+
 
 
 export const Route = createFileRoute("/login")({ component: Login });
