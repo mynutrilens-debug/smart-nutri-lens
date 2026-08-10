@@ -402,6 +402,13 @@ Return ONLY this JSON (no markdown). EVERY meal MUST include the "micronutrients
     let plan: any;
     try { plan = JSON.parse(text); } catch { throw new Error("Plan parse failed"); }
 
+    // Enforce meal frequency regardless of what the model returned
+    plan.meals = pruneMealsToSlots(plan?.meals, slots);
+    plan.meal_slots = slots;
+    plan.meal_frequency = slots.length;
+
+
+
     await supabase
       .from("profiles")
       .update({ ai_plan: plan, ai_plan_generated_at: new Date().toISOString() } as any)
