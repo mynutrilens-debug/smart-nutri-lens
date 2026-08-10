@@ -371,7 +371,7 @@ MEAL / PERSONALIZATION RULES
 - Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
 - Never include allergens. Respect medical conditions and diet preference strictly.
 - VARIETY IS CRITICAL: every meal MUST be DIFFERENT from the AVOID list.
-- SELF-CHECK before returning: sum(meal calories) ≈ daily_targets.calories (±5%), breakfast ≤ 25% of daily kcal, lunch ≥ dinner kcal, each main meal ≥ 25 g protein. If any fails, revise before emitting JSON.
+- SELF-CHECK before returning: "meals" contains EXACTLY these ${slots.length} keys (${slots.join(", ")}), sum(meal calories) ≈ daily_targets.calories (±5%), breakfast ≤ 25% of daily kcal (if present), lunch ≥ dinner kcal, each main meal ≥ 25 g protein. If any fails, revise before emitting JSON.
 
 
 
