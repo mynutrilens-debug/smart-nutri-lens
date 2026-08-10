@@ -286,6 +286,21 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const tdeeCalc = Math.round(bmrCalc * (activityMult[p.activity_level as string] ?? 1.4));
     const sleepAvgMin = n > 0 ? avg("sleep_minutes") : 0;
 
+    // Meal frequency → exact slots this plan may contain
+    const mealFreq = Number((p as any).meal_frequency) || 4;
+    const trains = !["sedentary", "none", "never"].includes(String((p as any).workout_habit ?? "").toLowerCase());
+    const slots = mealSlotsFor(mealFreq, trains);
+    const slotList = mealSlotLabels(slots);
+    const micros = `"micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 }`;
+    const timingFor = (s: string) =>
+      s === "pre_workout" ? `"timing": "30-45 min before", ` : s === "post_workout" ? `"timing": "within 30 min after", ` : "";
+    const mealsSchema = `{\n${slots
+      .map(
+        (s) =>
+          `    "${s}": { "name": "dish name", "items": "…with portions…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, ${timingFor(s)}${micros} }`,
+      )
+      .join(",\n")}\n  }`;
+
     const prompt = `You are a certified nutrition and fitness coach. Build a PERSONALIZED daily diet plan. Return STRICT JSON only.
 
 USER PROFILE
