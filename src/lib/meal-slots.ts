@@ -27,10 +27,11 @@ export function mealSlotsFor(frequency?: number | null, trains = true): MealSlot
   const freq = Math.max(2, Math.min(6, Math.round(Number(frequency) || 4)));
   const order: MealSlot[] = trains
     ? ["breakfast", "lunch", "dinner", "snack", "post_workout", "pre_workout"]
-    : ["breakfast", "lunch", "dinner", "snack", "post_workout", "pre_workout"];
+    : ["breakfast", "lunch", "dinner", "snack"];
   const picked =
     freq === 2 ? (["lunch", "dinner"] as MealSlot[]) : order.slice(0, freq);
   return ALL_MEAL_SLOTS.filter((s) => picked.includes(s));
+
 }
 
 export function mealSlotLabels(slots: MealSlot[]): string {
