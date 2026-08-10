@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { callGeminiJson } from "@/lib/ai-gemini.server";
+import { mealSlotsFor, mealSlotLabels, pruneMealsToSlots } from "@/lib/meal-slots";
 
 const OnboardingInput = z.object({
   display_name: z.string().min(1).max(80).optional(),
@@ -285,6 +286,21 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const tdeeCalc = Math.round(bmrCalc * (activityMult[p.activity_level as string] ?? 1.4));
     const sleepAvgMin = n > 0 ? avg("sleep_minutes") : 0;
 
+    // Meal frequency → exact slots this plan may contain
+    const mealFreq = Number((p as any).meal_frequency) || 4;
+    const trains = !["sedentary", "none", "never"].includes(String((p as any).workout_habit ?? "").toLowerCase());
+    const slots = mealSlotsFor(mealFreq, trains);
+    const slotList = mealSlotLabels(slots);
+    const micros = `"micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 }`;
+    const timingFor = (s: string) =>
+      s === "pre_workout" ? `"timing": "30-45 min before", ` : s === "post_workout" ? `"timing": "within 30 min after", ` : "";
+    const mealsSchema = `{\n${slots
+      .map(
+        (s) =>
+          `    "${s}": { "name": "dish name", "items": "…with portions…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, ${timingFor(s)}${micros} }`,
+      )
+      .join(",\n")}\n  }`;
+
     const prompt = `You are a certified nutrition and fitness coach. Build a PERSONALIZED daily diet plan. Return STRICT JSON only.
 
 USER PROFILE
@@ -299,7 +315,7 @@ ${cuisineLine}
 - Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
 - Tracked vitamin/mineral DEFICIENCIES to correct: ${((p as any).deficiencies ?? []).join(", ") || "none reported"}
 - Budget: ${(p as any).budget ?? "medium"} · Lifestyle: ${(p as any).lifestyle ?? "unspecified"} · Workout habit: ${(p as any).workout_habit ?? "unspecified"}
-- Preferred meal frequency: ${(p as any).meal_frequency ?? 4} meals/day
+- MEAL FREQUENCY (HARD CONSTRAINT): exactly ${slots.length} meals/day — ${slotList}. Output ONLY these meal keys, no more, no fewer.
 - Self-reported sleep: ${(p as any).sleep_hours ?? "?"}h · Water goal: ${(p as any).water_intake_l ?? "?"}L
 - Precomputed daily targets (already goal-adjusted from TDEE, protein 1.6–2.4 g/kg, fat 0.6–1.0 g/kg, rest = carbs): ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g — match these within ±5%.
 - Plan date: ${new Date().toISOString().slice(0, 10)} · rotation slot #${rotationSeed} of 7
@@ -330,7 +346,7 @@ MICRONUTRIENT & DEFICIENCY RULES (CRITICAL)
 
 MEAL / PERSONALIZATION RULES
 - Use AUTHENTIC region/cuisine dishes by name. Prioritize WHOLE FOODS (dals, sabzi, roti, rice, millets, curd, eggs, paneer, fish, chicken, seasonal fruits/veg, nuts/seeds). Avoid ultra-processed items, packaged cereals, and protein-bar-only "meals".
-- Meal frequency: honor user preference (${(p as any).meal_frequency ?? 4}). Plan 3 main meals + snack + pre/post-workout if training.
+- Meal count is FIXED at ${slots.length} (${slotList}). Never add extra meals; distribute the FULL daily calorie/macro target across only these ${slots.length} meals (scale each meal up proportionally when there are fewer meals). If a slot below is not in this list, ignore its guidance entirely.
 - REALISTIC CALORIE DISTRIBUTION (must be followed — do NOT front-load the day):
   * Breakfast: 20–25% of daily kcal — light-to-moderate, easy to digest, NEVER the largest meal. Typical Indian: poha + egg, upma + curd, 2 idli + sambar + boiled egg, oats + milk + nuts, paratha (1) + curd. No 700+ kcal breakfasts.
   * Mid-morning snack (optional, ~5%): fruit, buttermilk, nuts.
@@ -355,7 +371,7 @@ MEAL / PERSONALIZATION RULES
 - Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
 - Never include allergens. Respect medical conditions and diet preference strictly.
 - VARIETY IS CRITICAL: every meal MUST be DIFFERENT from the AVOID list.
-- SELF-CHECK before returning: sum(meal calories) ≈ daily_targets.calories (±5%), breakfast ≤ 25% of daily kcal, lunch ≥ dinner kcal, each main meal ≥ 25 g protein. If any fails, revise before emitting JSON.
+- SELF-CHECK before returning: "meals" contains EXACTLY these ${slots.length} keys (${slots.join(", ")}), sum(meal calories) ≈ daily_targets.calories (±5%), breakfast ≤ 25% of daily kcal (if present), lunch ≥ dinner kcal, each main meal ≥ 25 g protein. If any fails, revise before emitting JSON.
 
 
 
@@ -369,14 +385,7 @@ Return ONLY this JSON (no markdown). EVERY meal MUST include the "micronutrients
   "daily_targets": { "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "water_l": 0 },
   "micronutrient_targets": { "b12_mcg": 2.4, "vitamin_d_iu": 800, "iron_mg": 15, "calcium_mg": 1000, "magnesium_mg": 400, "zinc_mg": 10, "omega3_mg": 500, "vitamin_c_mg": 90 },
   "deficiency_focus": ["list of deficiencies this plan targets"],
-  "meals": {
-    "breakfast":    { "name": "dish name", "items": "…with portions…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
-    "pre_workout":  { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "timing": "30-45 min before", "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
-    "post_workout": { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "timing": "within 30 min after", "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
-    "lunch":        { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
-    "snack":        { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
-    "dinner":       { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } }
-  },
+  "meals": ${mealsSchema},
   "shakes": [
     { "name": "", "ingredients": "", "calories": 0, "protein_g": 0, "when": "morning|pre|post|evening" }
   ],
@@ -392,6 +401,13 @@ Return ONLY this JSON (no markdown). EVERY meal MUST include the "micronutrients
     });
     let plan: any;
     try { plan = JSON.parse(text); } catch { throw new Error("Plan parse failed"); }
+
+    // Enforce meal frequency regardless of what the model returned
+    plan.meals = pruneMealsToSlots(plan?.meals, slots);
+    plan.meal_slots = slots;
+    plan.meal_frequency = slots.length;
+
+
 
     await supabase
       .from("profiles")

@@ -1,3 +1,4 @@
+import { mealSlotsFor, pruneMealsToSlots } from "@/lib/meal-slots";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { foodsQuery, dashboardQuery } from "@/lib/queries";
@@ -166,7 +167,11 @@ function Diet() {
   });
 
   const plan: any = dash?.profile?.ai_plan;
-  const meals = plan?.meals ?? null;
+  const allowedSlots: string[] =
+    Array.isArray(plan?.meal_slots) && plan.meal_slots.length
+      ? plan.meal_slots
+      : mealSlotsFor(dash?.profile?.meal_frequency, true);
+  const meals = plan?.meals ? pruneMealsToSlots(plan.meals, allowedSlots as any) : null;
   const mealOrder: { k: string; label: string; icon: any; color: string }[] = [
     { k: "breakfast", label: "Breakfast", icon: Sunrise, color: "#F59E0B" },
     { k: "pre_workout", label: "Pre-workout", icon: Zap, color: "#FBBF24" },
@@ -174,7 +179,8 @@ function Diet() {
     { k: "lunch", label: "Lunch", icon: Sun, color: "#84CC16" },
     { k: "snack", label: "Snack", icon: Cookie, color: "#F97316" },
     { k: "dinner", label: "Dinner", icon: Moon, color: "#A78BFA" },
-  ];
+  ].filter(m => allowedSlots.includes(m.k));
+
 
   const loggedNames = new Set(todays.map(f => f.name?.toLowerCase().trim()).filter(Boolean));
   const isMealLogged = (key: string, meal: any) => loggedNames.has(meal_name(key, meal).toLowerCase().trim());
