@@ -385,14 +385,7 @@ Return ONLY this JSON (no markdown). EVERY meal MUST include the "micronutrients
   "daily_targets": { "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "water_l": 0 },
   "micronutrient_targets": { "b12_mcg": 2.4, "vitamin_d_iu": 800, "iron_mg": 15, "calcium_mg": 1000, "magnesium_mg": 400, "zinc_mg": 10, "omega3_mg": 500, "vitamin_c_mg": 90 },
   "deficiency_focus": ["list of deficiencies this plan targets"],
-  "meals": {
-    "breakfast":    { "name": "dish name", "items": "…with portions…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
-    "pre_workout":  { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "timing": "30-45 min before", "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
-    "post_workout": { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "timing": "within 30 min after", "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
-    "lunch":        { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
-    "snack":        { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } },
-    "dinner":       { "name": "", "items": "…", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 } }
-  },
+  "meals": ${mealsSchema},
   "shakes": [
     { "name": "", "ingredients": "", "calories": 0, "protein_g": 0, "when": "morning|pre|post|evening" }
   ],
