@@ -346,7 +346,7 @@ MICRONUTRIENT & DEFICIENCY RULES (CRITICAL)
 
 MEAL / PERSONALIZATION RULES
 - Use AUTHENTIC region/cuisine dishes by name. Prioritize WHOLE FOODS (dals, sabzi, roti, rice, millets, curd, eggs, paneer, fish, chicken, seasonal fruits/veg, nuts/seeds). Avoid ultra-processed items, packaged cereals, and protein-bar-only "meals".
-- Meal frequency: honor user preference (${(p as any).meal_frequency ?? 4}). Plan 3 main meals + snack + pre/post-workout if training.
+- Meal count is FIXED at ${slots.length} (${slotList}). Never add extra meals; distribute the FULL daily calorie/macro target across only these ${slots.length} meals (scale each meal up proportionally when there are fewer meals). If a slot below is not in this list, ignore its guidance entirely.
 - REALISTIC CALORIE DISTRIBUTION (must be followed — do NOT front-load the day):
   * Breakfast: 20–25% of daily kcal — light-to-moderate, easy to digest, NEVER the largest meal. Typical Indian: poha + egg, upma + curd, 2 idli + sambar + boiled egg, oats + milk + nuts, paratha (1) + curd. No 700+ kcal breakfasts.
   * Mid-morning snack (optional, ~5%): fruit, buttermilk, nuts.
