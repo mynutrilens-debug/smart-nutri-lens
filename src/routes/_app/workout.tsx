@@ -754,7 +754,7 @@ function Workout() {
             <div className="text-[11px] text-muted-foreground">
               Personalized to: {profile.gender ?? "—"}, age {profile.age ?? "—"}, BMI {bmi}, goal {profile.physique_goal ?? "—"}.
             </div>
-            <button disabled={gen.isPending} onClick={() => gen.mutate()}
+            <button disabled={gen.isPending} onClick={() => gen.mutate(true)}
               className="w-full h-12 rounded-2xl text-black font-black flex items-center justify-center gap-2"
               style={{ background: `linear-gradient(135deg, ${NEON}, oklch(0.92 0.2 130))` }}>
               {gen.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
