@@ -120,15 +120,19 @@ function Workout() {
   const [aiOpen, setAiOpen] = useState(false);
   const savedInputs: any = aiPlan?.inputs ?? {};
   const [level, setLevel] = useState<"beginner"|"intermediate"|"pro">(savedInputs.level ?? "intermediate");
-  const [equipment, setEquipment] = useState<"none"|"home"|"gym">(savedInputs.equipment ?? "home");
+  const [location, setLocation] = useState<"home"|"gym">(savedInputs.location ?? (savedInputs.equipment === "gym" ? "gym" : "home"));
+  const [hasEquipment, setHasEquipment] = useState<boolean>(
+    typeof savedInputs.hasEquipment === "boolean" ? savedInputs.hasEquipment : savedInputs.equipment !== "none"
+  );
   const [injuries, setInjuries] = useState<string>(((savedInputs.injuries ?? []) as string[]).join(", "));
 
   const gen = useMutation({
     mutationFn: (force: boolean = false) => generateAiWorkout({ data: {
-      level, equipment,
+      level, location, hasEquipment,
       injuries: injuries.split(",").map((s: string) => s.trim()).filter(Boolean).slice(0, 10),
       force,
     }}),
+
 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["dashboard"] });
