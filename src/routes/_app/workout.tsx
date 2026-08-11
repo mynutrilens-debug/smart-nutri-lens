@@ -336,14 +336,15 @@ function Workout() {
             </p>
           </div>
           <button
-            onClick={() => canReplan && setAiOpen(true)}
-            disabled={!canReplan}
+            onClick={() => canReplan && !gen.isPending && setAiOpen(true)}
+            disabled={!canReplan || gen.isPending}
             title={canReplan ? "" : `Re-plan available in ${daysUntilReplan}d`}
             className="shrink-0 h-10 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 text-black active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: `linear-gradient(135deg, ${NEON}, oklch(0.9 0.2 135))`, boxShadow: `0 8px 24px -6px ${NEON}` }}>
-            <Sparkles className="h-3.5 w-3.5" />
-            {!aiPlan ? "Generate" : canReplan ? "Re-plan" : `Re-plan in ${daysUntilReplan}d`}
+            {gen.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {gen.isPending ? "Building…" : !aiPlan ? "Build plan" : canReplan ? "Re-plan" : `Re-plan in ${daysUntilReplan}d`}
           </button>
+
         </div>
 
         <div className="relative mt-4 grid grid-cols-3 gap-2">
