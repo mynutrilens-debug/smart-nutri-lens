@@ -112,15 +112,19 @@ USER
 - Height: ${p.height_cm}cm, Weight: ${p.weight_kg}kg, BMI: ${bmi} (${bmiCat})
 - Goal: ${p.physique_goal}, Activity: ${p.activity_level}
 - Level: ${data.level}
-- Equipment: ${data.equipment} (none = bodyweight only; home = dumbbells/bands; gym = full access)
+- Training location: ${data.location.toUpperCase()} | Equipment available: ${data.hasEquipment ? "YES" : "NO"}
+- ALLOWED EQUIPMENT (STRICT): ${gearBrief(data.location, data.hasEquipment)}
 - Injuries / limits (AVOID aggravating): ${data.injuries.join(", ") || "none"}
 - Medical: ${(p.medical_conditions ?? []).join(", ") || "none"}
 
 RULES
+- EVERY exercise must be performable with ONLY the allowed equipment above. If unsure, choose a safer allowed alternative. Never mention gear outside the allowed list.
 - Match split to goal: muscle_gain → PPL or U/L hypertrophy; fat_loss/weight_loss → full-body + HIIT + cardio; maintenance/recomp → balanced split; underweight → strength bias.
 - Beginner: simpler compound lifts, lower volume. Pro: advanced techniques (drop sets, tempo, supersets).
 - 1-2 rest/active-recovery days.
+- For bodyweight/band work, express load via reps, tempo, or band tension in the tip.
 - Calorie burn estimates realistic for body weight.
+
 
 Return ONLY this JSON:
 {
