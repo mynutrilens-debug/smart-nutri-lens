@@ -120,15 +120,19 @@ function Workout() {
   const [aiOpen, setAiOpen] = useState(false);
   const savedInputs: any = aiPlan?.inputs ?? {};
   const [level, setLevel] = useState<"beginner"|"intermediate"|"pro">(savedInputs.level ?? "intermediate");
-  const [equipment, setEquipment] = useState<"none"|"home"|"gym">(savedInputs.equipment ?? "home");
+  const [location, setLocation] = useState<"home"|"gym">(savedInputs.location ?? (savedInputs.equipment === "gym" ? "gym" : "home"));
+  const [hasEquipment, setHasEquipment] = useState<boolean>(
+    typeof savedInputs.hasEquipment === "boolean" ? savedInputs.hasEquipment : savedInputs.equipment !== "none"
+  );
   const [injuries, setInjuries] = useState<string>(((savedInputs.injuries ?? []) as string[]).join(", "));
 
   const gen = useMutation({
     mutationFn: (force: boolean = false) => generateAiWorkout({ data: {
-      level, equipment,
+      level, location, hasEquipment,
       injuries: injuries.split(",").map((s: string) => s.trim()).filter(Boolean).slice(0, 10),
       force,
     }}),
+
 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["dashboard"] });
@@ -740,13 +744,22 @@ function Workout() {
                 ))}
               </div>
             </Field>
-            <Field label="Equipment">
+            <Field label="Where do you train?">
               <div className="flex gap-2">
-                {(["none","home","gym"] as const).map(e => (
-                  <Chip key={e} active={equipment===e} onClick={() => setEquipment(e)}>{e}</Chip>
+                {(["home","gym"] as const).map(l => (
+                  <Chip key={l} active={location===l} onClick={() => setLocation(l)}>{l}</Chip>
                 ))}
               </div>
             </Field>
+            <Field label="Equipment">
+              <div className="flex gap-2">
+                <Chip active={hasEquipment} onClick={() => setHasEquipment(true)}>
+                  {location === "gym" ? "Full gym" : "Bands / rope / towel"}
+                </Chip>
+                <Chip active={!hasEquipment} onClick={() => setHasEquipment(false)}>No equipment</Chip>
+              </div>
+            </Field>
+
             <Field label="Injuries / limits (optional)">
               <input value={injuries} onChange={e => setInjuries(e.target.value)}
                 placeholder="e.g. knee, lower back"

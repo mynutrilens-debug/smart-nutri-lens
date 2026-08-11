@@ -42,16 +42,30 @@ export const deleteWorkout = createServerFn({ method: "POST" })
 
 const AiWorkoutInput = z.object({
   level: z.enum(["beginner", "intermediate", "pro"]).default("beginner"),
-  equipment: z.enum(["none", "home", "gym"]).default("home"),
+  location: z.enum(["home", "gym"]).default("home"),
+  hasEquipment: z.boolean().default(true),
   injuries: z.array(z.string().max(60)).max(10).default([]),
   force: z.boolean().default(false),
 });
 
+// Human-readable gear constraint for the prompt, strictly derived from prefs.
+function gearBrief(location: "home" | "gym", hasEquipment: boolean) {
+  if (location === "gym") {
+    return hasEquipment
+      ? "FULL GYM: barbells, dumbbells, cables, machines, smith rack, benches, treadmill/rower. Prescribe gym-specific lifts (barbell squat, bench press, lat pulldown, cable rows, leg press, hack squat)."
+      : "GYM FLOOR, NO EQUIPMENT: only open floor space and bodyweight. No machines, no barbells, no dumbbells.";
+  }
+  return hasEquipment
+    ? "HOME WITH BASIC GEAR ONLY: resistance bands, jump rope, towel, chair/sofa, backpack loaded with books, water bottles/cans, wall, floor mat, stairs. NEVER prescribe barbells, machines, cables, benches or dumbbell-only lifts — substitute with band/backpack/towel variations."
+    : "HOME, ZERO EQUIPMENT: pure bodyweight only (push-ups, squats, lunges, planks, glute bridges, burpees, wall sits, chair dips). No bands, no rope, no weights of any kind.";
+}
+
 // Signature of the key inputs that should invalidate a cached weekly plan.
-function planSignature(p: any, data: { level: string; equipment: string; injuries: string[] }) {
+function planSignature(p: any, data: { level: string; location: string; hasEquipment: boolean; injuries: string[] }) {
   return [
     data.level,
-    data.equipment,
+    data.location,
+    data.hasEquipment ? "gear" : "nogear",
     [...data.injuries].sort().join("|"),
     p.gender ?? "",
     p.age ?? "",
@@ -62,6 +76,7 @@ function planSignature(p: any, data: { level: string; equipment: string; injurie
     (p.medical_conditions ?? []).join("|"),
   ].join("~");
 }
+
 
 export const generateAiWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -97,15 +112,19 @@ USER
 - Height: ${p.height_cm}cm, Weight: ${p.weight_kg}kg, BMI: ${bmi} (${bmiCat})
 - Goal: ${p.physique_goal}, Activity: ${p.activity_level}
 - Level: ${data.level}
-- Equipment: ${data.equipment} (none = bodyweight only; home = dumbbells/bands; gym = full access)
+- Training location: ${data.location.toUpperCase()} | Equipment available: ${data.hasEquipment ? "YES" : "NO"}
+- ALLOWED EQUIPMENT (STRICT): ${gearBrief(data.location, data.hasEquipment)}
 - Injuries / limits (AVOID aggravating): ${data.injuries.join(", ") || "none"}
 - Medical: ${(p.medical_conditions ?? []).join(", ") || "none"}
 
 RULES
+- EVERY exercise must be performable with ONLY the allowed equipment above. If unsure, choose a safer allowed alternative. Never mention gear outside the allowed list.
 - Match split to goal: muscle_gain → PPL or U/L hypertrophy; fat_loss/weight_loss → full-body + HIIT + cardio; maintenance/recomp → balanced split; underweight → strength bias.
 - Beginner: simpler compound lifts, lower volume. Pro: advanced techniques (drop sets, tempo, supersets).
 - 1-2 rest/active-recovery days.
+- For bodyweight/band work, express load via reps, tempo, or band tension in the tip.
 - Calorie burn estimates realistic for body weight.
+
 
 Return ONLY this JSON:
 {
@@ -144,7 +163,7 @@ Return ONLY this JSON:
       generated_at: now.toISOString(),
       expires_at: new Date(now.getTime() + 7 * 86400000).toISOString(),
       signature,
-      inputs: { level: data.level, equipment: data.equipment, injuries: data.injuries },
+      inputs: { level: data.level, location: data.location, hasEquipment: data.hasEquipment, injuries: data.injuries },
     };
     const merged = { ...((p as any).ai_plan ?? {}), workout_plan: saved };
     await supabase.from("profiles").update({ ai_plan: merged }).eq("user_id", userId);
