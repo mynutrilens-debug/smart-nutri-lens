@@ -118,17 +118,18 @@ function Workout() {
 
   // AI generator sheet
   const [aiOpen, setAiOpen] = useState(false);
-  const savedInputs = aiPlan?.inputs ?? {};
+  const savedInputs: any = aiPlan?.inputs ?? {};
   const [level, setLevel] = useState<"beginner"|"intermediate"|"pro">(savedInputs.level ?? "intermediate");
   const [equipment, setEquipment] = useState<"none"|"home"|"gym">(savedInputs.equipment ?? "home");
-  const [injuries, setInjuries] = useState((savedInputs.injuries ?? []).join(", "));
+  const [injuries, setInjuries] = useState<string>(((savedInputs.injuries ?? []) as string[]).join(", "));
 
   const gen = useMutation({
-    mutationFn: (force = false) => generateAiWorkout({ data: {
+    mutationFn: (force: boolean = false) => generateAiWorkout({ data: {
       level, equipment,
-      injuries: injuries.split(",").map(s => s.trim()).filter(Boolean).slice(0, 10),
+      injuries: injuries.split(",").map((s: string) => s.trim()).filter(Boolean).slice(0, 10),
       force,
     }}),
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Your AI plan is ready");
