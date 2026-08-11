@@ -138,7 +138,16 @@ Return ONLY this JSON:
     let plan: any;
     try { plan = JSON.parse(text); } catch { throw new Error("Workout plan parse failed"); }
 
-    const merged = { ...((p as any).ai_plan ?? {}), workout_plan: { ...plan, generated_at: new Date().toISOString(), inputs: data } };
+    const now = new Date();
+    const saved = {
+      ...plan,
+      generated_at: now.toISOString(),
+      expires_at: new Date(now.getTime() + 7 * 86400000).toISOString(),
+      signature,
+      inputs: { level: data.level, equipment: data.equipment, injuries: data.injuries },
+    };
+    const merged = { ...((p as any).ai_plan ?? {}), workout_plan: saved };
     await supabase.from("profiles").update({ ai_plan: merged }).eq("user_id", userId);
-    return plan;
+    return saved;
+
   });
