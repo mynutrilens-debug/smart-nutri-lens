@@ -44,7 +44,24 @@ const AiWorkoutInput = z.object({
   level: z.enum(["beginner", "intermediate", "pro"]).default("beginner"),
   equipment: z.enum(["none", "home", "gym"]).default("home"),
   injuries: z.array(z.string().max(60)).max(10).default([]),
+  force: z.boolean().default(false),
 });
+
+// Signature of the key inputs that should invalidate a cached weekly plan.
+function planSignature(p: any, data: { level: string; equipment: string; injuries: string[] }) {
+  return [
+    data.level,
+    data.equipment,
+    [...data.injuries].sort().join("|"),
+    p.gender ?? "",
+    p.age ?? "",
+    p.height_cm ?? "",
+    Math.round(Number(p.weight_kg ?? 0)),
+    p.physique_goal ?? "",
+    p.activity_level ?? "",
+    (p.medical_conditions ?? []).join("|"),
+  ].join("~");
+}
 
 export const generateAiWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -54,14 +71,17 @@ export const generateAiWorkout = createServerFn({ method: "POST" })
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
     if (!p) throw new Error("Profile not found");
 
-    // 7-day cache: reuse the existing weekly plan until the cycle completes.
-    // Prevents daily regeneration and reduces Gemini token usage. A fresh
-    // 7-day plan auto-generates only after 7 days have elapsed.
+    // 7-day cache: reuse the existing weekly plan until the cycle completes or
+    // the user's key inputs change. Prevents daily regeneration and token burn.
     const cachedPlan = (p as any).ai_plan?.workout_plan;
     const cachedAt = cachedPlan?.generated_at ? new Date(cachedPlan.generated_at) : null;
-    if (cachedPlan && cachedAt && Date.now() - cachedAt.getTime() < 7 * 86400000) {
+    const signature = planSignature(p, data);
+    const fresh = !!(cachedAt && Date.now() - cachedAt.getTime() < 7 * 86400000);
+    const sameInputs = !cachedPlan?.signature || cachedPlan.signature === signature;
+    if (!data.force && cachedPlan && fresh && sameInputs) {
       return cachedPlan;
     }
+
 
 
 
@@ -118,7 +138,16 @@ Return ONLY this JSON:
     let plan: any;
     try { plan = JSON.parse(text); } catch { throw new Error("Workout plan parse failed"); }
 
-    const merged = { ...((p as any).ai_plan ?? {}), workout_plan: { ...plan, generated_at: new Date().toISOString(), inputs: data } };
+    const now = new Date();
+    const saved = {
+      ...plan,
+      generated_at: now.toISOString(),
+      expires_at: new Date(now.getTime() + 7 * 86400000).toISOString(),
+      signature,
+      inputs: { level: data.level, equipment: data.equipment, injuries: data.injuries },
+    };
+    const merged = { ...((p as any).ai_plan ?? {}), workout_plan: saved };
     await supabase.from("profiles").update({ ai_plan: merged }).eq("user_id", userId);
-    return plan;
+    return saved;
+
   });
