@@ -118,22 +118,15 @@ function Workout() {
 
   // AI generator sheet
   const [aiOpen, setAiOpen] = useState(false);
-  const savedInputs: any = aiPlan?.inputs ?? {};
-  const [level, setLevel] = useState<"beginner"|"intermediate"|"pro">(savedInputs.level ?? "intermediate");
-  const [location, setLocation] = useState<"home"|"gym">(savedInputs.location ?? (savedInputs.equipment === "gym" ? "gym" : "home"));
-  const [hasEquipment, setHasEquipment] = useState<boolean>(
-    typeof savedInputs.hasEquipment === "boolean" ? savedInputs.hasEquipment : savedInputs.equipment !== "none"
-  );
-  const [injuries, setInjuries] = useState<string>(((savedInputs.injuries ?? []) as string[]).join(", "));
+  const [level, setLevel] = useState<"beginner"|"intermediate"|"pro">("intermediate");
+  const [equipment, setEquipment] = useState<"none"|"home"|"gym">("home");
+  const [injuries, setInjuries] = useState("");
 
   const gen = useMutation({
-    mutationFn: (force: boolean = false) => generateAiWorkout({ data: {
-      level, location, hasEquipment,
-      injuries: injuries.split(",").map((s: string) => s.trim()).filter(Boolean).slice(0, 10),
-      force,
+    mutationFn: () => generateAiWorkout({ data: {
+      level, equipment,
+      injuries: injuries.split(",").map(s => s.trim()).filter(Boolean).slice(0, 10),
     }}),
-
-
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Your AI plan is ready");
@@ -141,7 +134,6 @@ function Workout() {
     },
     onError: (e: any) => toast.error(e.message ?? "Failed to generate plan"),
   });
-
 
   // Manual log sheet
   const [open, setOpen] = useState(false);
@@ -184,21 +176,7 @@ function Workout() {
   const planGenAt = aiPlan?.generated_at ? new Date(aiPlan.generated_at).getTime() : 0;
   const msSinceGen = planGenAt ? Date.now() - planGenAt : Infinity;
   const daysUntilReplan = Math.max(0, Math.ceil((7 * 86400000 - msSinceGen) / 86400000));
-  const planExpired = !aiPlan || daysUntilReplan === 0;
-  const canReplan = planExpired;
-
-  // Auto-build the weekly plan once: on first open with no plan, or after the
-  // saved 7-day plan expires. The server also re-generates when key profile
-  // inputs change; otherwise the cached plan is returned untouched.
-  const autoTried = useRef(false);
-  useEffect(() => {
-    if (autoTried.current || gen.isPending) return;
-    if (!aiPlan || planExpired) {
-      autoTried.current = true;
-      gen.mutate(false);
-    }
-  }, [aiPlan, planExpired, gen]);
-
+  const canReplan = !aiPlan || daysUntilReplan === 0;
 
   // -------- Live session state --------
   const [session, setSession] = useState<null | {
@@ -340,15 +318,14 @@ function Workout() {
             </p>
           </div>
           <button
-            onClick={() => canReplan && !gen.isPending && setAiOpen(true)}
-            disabled={!canReplan || gen.isPending}
+            onClick={() => canReplan && setAiOpen(true)}
+            disabled={!canReplan}
             title={canReplan ? "" : `Re-plan available in ${daysUntilReplan}d`}
             className="shrink-0 h-10 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 text-black active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: `linear-gradient(135deg, ${NEON}, oklch(0.9 0.2 135))`, boxShadow: `0 8px 24px -6px ${NEON}` }}>
-            {gen.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {gen.isPending ? "Building…" : !aiPlan ? "Build plan" : canReplan ? "Re-plan" : `Re-plan in ${daysUntilReplan}d`}
+            <Sparkles className="h-3.5 w-3.5" />
+            {!aiPlan ? "Generate" : canReplan ? "Re-plan" : `Re-plan in ${daysUntilReplan}d`}
           </button>
-
         </div>
 
         <div className="relative mt-4 grid grid-cols-3 gap-2">
@@ -575,25 +552,16 @@ function Workout() {
         <section className="glass rounded-3xl p-6 text-center animate-slide-up">
           <div className="h-14 w-14 mx-auto rounded-2xl flex items-center justify-center mb-3"
             style={{ background: NEON_SOFT }}>
-            {gen.isPending
-              ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: NEON }} />
-              : <Sparkles className="h-6 w-6" style={{ color: NEON }} />}
+            <Sparkles className="h-6 w-6" style={{ color: NEON }} />
           </div>
-          <h3 className="text-lg font-bold">{gen.isPending ? "Building your weekly plan…" : "No plan yet"}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {gen.isPending
-              ? "Your AI trainer is designing a 7-day split tuned to your BMI and goal."
-              : "We couldn't build your plan automatically. Tap below to try again."}
-          </p>
-          {!gen.isPending && (
-            <button onClick={() => setAiOpen(true)}
-              className="mt-4 h-12 px-6 rounded-2xl text-black font-black active:scale-95"
-              style={{ background: `linear-gradient(135deg, ${NEON}, oklch(0.92 0.2 130))` }}>
-              Build my plan
-            </button>
-          )}
+          <h3 className="text-lg font-bold">No plan yet</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Generate a personalized weekly split tuned to your BMI and goal.</p>
+          <button onClick={() => setAiOpen(true)}
+            className="mt-4 h-12 px-6 rounded-2xl text-black font-black active:scale-95"
+            style={{ background: `linear-gradient(135deg, ${NEON}, oklch(0.92 0.2 130))` }}>
+            Generate my plan
+          </button>
         </section>
-
       )}
 
       {/* Personal records */}
@@ -744,22 +712,13 @@ function Workout() {
                 ))}
               </div>
             </Field>
-            <Field label="Where do you train?">
+            <Field label="Equipment">
               <div className="flex gap-2">
-                {(["home","gym"] as const).map(l => (
-                  <Chip key={l} active={location===l} onClick={() => setLocation(l)}>{l}</Chip>
+                {(["none","home","gym"] as const).map(e => (
+                  <Chip key={e} active={equipment===e} onClick={() => setEquipment(e)}>{e}</Chip>
                 ))}
               </div>
             </Field>
-            <Field label="Equipment">
-              <div className="flex gap-2">
-                <Chip active={hasEquipment} onClick={() => setHasEquipment(true)}>
-                  {location === "gym" ? "Full gym" : "Bands / rope / towel"}
-                </Chip>
-                <Chip active={!hasEquipment} onClick={() => setHasEquipment(false)}>No equipment</Chip>
-              </div>
-            </Field>
-
             <Field label="Injuries / limits (optional)">
               <input value={injuries} onChange={e => setInjuries(e.target.value)}
                 placeholder="e.g. knee, lower back"
@@ -768,7 +727,7 @@ function Workout() {
             <div className="text-[11px] text-muted-foreground">
               Personalized to: {profile.gender ?? "—"}, age {profile.age ?? "—"}, BMI {bmi}, goal {profile.physique_goal ?? "—"}.
             </div>
-            <button disabled={gen.isPending} onClick={() => gen.mutate(true)}
+            <button disabled={gen.isPending} onClick={() => gen.mutate()}
               className="w-full h-12 rounded-2xl text-black font-black flex items-center justify-center gap-2"
               style={{ background: `linear-gradient(135deg, ${NEON}, oklch(0.92 0.2 130))` }}>
               {gen.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}

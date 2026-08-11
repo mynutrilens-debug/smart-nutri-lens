@@ -26,7 +26,7 @@ function Home() {
   const { data: squads = [] } = useQuery({ queryKey: ["squads"], queryFn: () => squadsFn(), staleTime: 60_000 });
 
   useEffect(() => {
-    if (profile && !profile.onboarded_at) navigate({ to: "/onboarding", search: { edit: undefined }, replace: true });
+    if (profile && !profile.onboarded_at) navigate({ to: "/onboarding", search: {}, replace: true });
   }, [profile, navigate]);
 
   const greet = (() => {
