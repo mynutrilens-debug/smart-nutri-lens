@@ -570,16 +570,25 @@ function Workout() {
         <section className="glass rounded-3xl p-6 text-center animate-slide-up">
           <div className="h-14 w-14 mx-auto rounded-2xl flex items-center justify-center mb-3"
             style={{ background: NEON_SOFT }}>
-            <Sparkles className="h-6 w-6" style={{ color: NEON }} />
+            {gen.isPending
+              ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: NEON }} />
+              : <Sparkles className="h-6 w-6" style={{ color: NEON }} />}
           </div>
-          <h3 className="text-lg font-bold">No plan yet</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Generate a personalized weekly split tuned to your BMI and goal.</p>
-          <button onClick={() => setAiOpen(true)}
-            className="mt-4 h-12 px-6 rounded-2xl text-black font-black active:scale-95"
-            style={{ background: `linear-gradient(135deg, ${NEON}, oklch(0.92 0.2 130))` }}>
-            Generate my plan
-          </button>
+          <h3 className="text-lg font-bold">{gen.isPending ? "Building your weekly plan…" : "No plan yet"}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {gen.isPending
+              ? "Your AI trainer is designing a 7-day split tuned to your BMI and goal."
+              : "We couldn't build your plan automatically. Tap below to try again."}
+          </p>
+          {!gen.isPending && (
+            <button onClick={() => setAiOpen(true)}
+              className="mt-4 h-12 px-6 rounded-2xl text-black font-black active:scale-95"
+              style={{ background: `linear-gradient(135deg, ${NEON}, oklch(0.92 0.2 130))` }}>
+              Build my plan
+            </button>
+          )}
         </section>
+
       )}
 
       {/* Personal records */}
