@@ -180,7 +180,21 @@ function Workout() {
   const planGenAt = aiPlan?.generated_at ? new Date(aiPlan.generated_at).getTime() : 0;
   const msSinceGen = planGenAt ? Date.now() - planGenAt : Infinity;
   const daysUntilReplan = Math.max(0, Math.ceil((7 * 86400000 - msSinceGen) / 86400000));
-  const canReplan = !aiPlan || daysUntilReplan === 0;
+  const planExpired = !aiPlan || daysUntilReplan === 0;
+  const canReplan = planExpired;
+
+  // Auto-build the weekly plan once: on first open with no plan, or after the
+  // saved 7-day plan expires. The server also re-generates when key profile
+  // inputs change; otherwise the cached plan is returned untouched.
+  const autoTried = useRef(false);
+  useEffect(() => {
+    if (autoTried.current || gen.isPending) return;
+    if (!aiPlan || planExpired) {
+      autoTried.current = true;
+      gen.mutate(false);
+    }
+  }, [aiPlan, planExpired, gen]);
+
 
   // -------- Live session state --------
   const [session, setSession] = useState<null | {
