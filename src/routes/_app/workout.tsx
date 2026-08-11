@@ -744,13 +744,22 @@ function Workout() {
                 ))}
               </div>
             </Field>
-            <Field label="Equipment">
+            <Field label="Where do you train?">
               <div className="flex gap-2">
-                {(["none","home","gym"] as const).map(e => (
-                  <Chip key={e} active={equipment===e} onClick={() => setEquipment(e)}>{e}</Chip>
+                {(["home","gym"] as const).map(l => (
+                  <Chip key={l} active={location===l} onClick={() => setLocation(l)}>{l}</Chip>
                 ))}
               </div>
             </Field>
+            <Field label="Equipment">
+              <div className="flex gap-2">
+                <Chip active={hasEquipment} onClick={() => setHasEquipment(true)}>
+                  {location === "gym" ? "Full gym" : "Bands / rope / towel"}
+                </Chip>
+                <Chip active={!hasEquipment} onClick={() => setHasEquipment(false)}>No equipment</Chip>
+              </div>
+            </Field>
+
             <Field label="Injuries / limits (optional)">
               <input value={injuries} onChange={e => setInjuries(e.target.value)}
                 placeholder="e.g. knee, lower back"
