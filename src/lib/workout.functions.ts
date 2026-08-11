@@ -163,7 +163,7 @@ Return ONLY this JSON:
       generated_at: now.toISOString(),
       expires_at: new Date(now.getTime() + 7 * 86400000).toISOString(),
       signature,
-      inputs: { level: data.level, equipment: data.equipment, injuries: data.injuries },
+      inputs: { level: data.level, location: data.location, hasEquipment: data.hasEquipment, injuries: data.injuries },
     };
     const merged = { ...((p as any).ai_plan ?? {}), workout_plan: saved };
     await supabase.from("profiles").update({ ai_plan: merged }).eq("user_id", userId);
