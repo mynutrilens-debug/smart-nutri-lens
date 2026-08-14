@@ -348,7 +348,7 @@ MEAL / PERSONALIZATION RULES
 - Use AUTHENTIC region/cuisine dishes by name. Prioritize WHOLE FOODS (dals, sabzi, roti, rice, millets, curd, eggs, paneer, fish, chicken, seasonal fruits/veg, nuts/seeds). Avoid ultra-processed items, packaged cereals, and protein-bar-only "meals".
 - Meal count is FIXED at ${slots.length} (${slotList}). Never add extra meals; distribute the FULL daily calorie/macro target across only these ${slots.length} meals (scale each meal up proportionally when there are fewer meals). If a slot below is not in this list, ignore its guidance entirely.
 - REALISTIC CALORIE DISTRIBUTION (must be followed — do NOT front-load the day):
-  * Breakfast: 20–25% of daily kcal — light-to-moderate, easy to digest, NEVER the largest meal. Typical Indian: poha + egg, upma + curd, 2 idli + sambar + boiled egg, oats + milk + nuts, paratha (1) + curd. No 700+ kcal breakfasts.
+  * Breakfast: 20–25% of daily kcal — LIGHT, healthy and balanced, easy to digest, NEVER heavy or the largest meal. Choose from: oats (milk/curd + fruit + nuts), poha (veg + peanuts), muesli with milk/yogurt, fruits & yogurt bowl, vegetable upma, moong dal chilla, idli with sambar, sprouts chaat, paneer/tofu sandwich, egg sandwich or egg bhurji + toast. Avoid deep-fried (puri, vada), heavy ghee parathas, and any 700+ kcal breakfast.
   * Mid-morning snack (optional, ~5%): fruit, buttermilk, nuts.
   * Lunch: 30–35% — the LARGEST meal of the day (peak digestion + activity window). Full thali style: 2 roti / 1 cup rice + dal + sabzi + salad + curd + protein (dal/paneer/chicken/fish/egg).
   * Afternoon snack: 5–10% — sprouts, chana chaat, fruit + nuts, roasted makhana, Greek yogurt.
@@ -363,9 +363,9 @@ MEAL / PERSONALIZATION RULES
 - Budget-aware: for "${(p as any).budget ?? "medium"}" budget — low → lentils/eggs/seasonal veg/local grains; medium → add lean meats, dairy, seasonal fruits; high → salmon, berries, quinoa, whey/creatine ok.
 - Lifestyle-aware: ${(p as any).lifestyle ?? "generic"} — desk-job: lighter carbs midday, more protein+fiber; field-work/labor: bigger complex-carb lunch; student: quick 5-min prep options.
 - Workout habit: ${(p as any).workout_habit ?? "unspecified"} — include pre & post workout meals for muscle_gain/bulking/recomp/fat_loss trainees; skip for sedentary.
-- Shakes tuned to goal:
-  * muscle_gain / bulking / underweight → high-cal mass shakes (banana + oats + peanut butter + milk + whey)
-  * weight_loss / fat_loss → low-cal detox / protein (green tea, honey-lemon water, cucumber-mint, jeera water, whey + water)
+- Shakes / drinks tuned to goal:
+  * muscle_gain / bulking / underweight → nutritious HIGH-CALORIE shakes: banana + oats + milk + peanut butter; dates + almonds + banana + milk; mango + oats + milk/curd; sapota (chikoo) + milk + nuts; add whey only if available.
+  * weight_loss / fat_loss → LIGHT low-calorie drinks: warm lemon water, jeera (cumin) water, mint-lemon water, cinnamon water, unsweetened green tea, plain buttermilk. Describe these ONLY as low-calorie, hydrating, appetite-supporting or digestion-friendly — NEVER claim any drink burns fat or melts fat; fat loss comes from the overall calorie deficit.
   * maintenance / recomp → balanced protein smoothies
   * diabetic-friendly → unsweetened, low-GI only
 - Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
