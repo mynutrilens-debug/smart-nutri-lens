@@ -19,7 +19,6 @@ type Props = {
   activity: string;
   sleepHours: number;
   waterL: number;
-  workoutHabit: string;
   diet: string;
   mealFrequency: number;
   deficiencies: string[];
@@ -51,7 +50,7 @@ export function FitnessRoadmap(p: Props) {
     );
     // Training consistency
     const training = clamp(
-      { "None": 25, "Home workouts": 58, "Gym 3x/wk": 78, "Gym 5x/wk": 92, "Sports": 80, "Yoga": 62 }[p.workoutHabit] ?? 60,
+      { sedentary: 28, light: 55, moderate: 74, active: 88, athlete: 95 }[p.activity as string] ?? 60,
     );
     const overall = Math.round((body + activityScore + sleep + hydration + nutrition + training) / 6);
 
