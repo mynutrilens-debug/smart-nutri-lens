@@ -120,12 +120,13 @@ function Workout() {
   const [aiOpen, setAiOpen] = useState(false);
   const savedInputs: any = aiPlan?.inputs ?? {};
   const [level, setLevel] = useState<"beginner"|"intermediate"|"pro">(savedInputs.level ?? "intermediate");
+  const [workoutType, setWorkoutType] = useState<"home"|"gym"|"hybrid">(savedInputs.workout_type ?? "home");
   const [equipment, setEquipment] = useState<"none"|"home"|"gym">(savedInputs.equipment ?? "home");
   const [injuries, setInjuries] = useState<string>(((savedInputs.injuries ?? []) as string[]).join(", "));
 
   const gen = useMutation({
     mutationFn: (force: boolean = false) => generateAiWorkout({ data: {
-      level, equipment,
+      level, workout_type: workoutType, equipment,
       injuries: injuries.split(",").map((s: string) => s.trim()).filter(Boolean).slice(0, 10),
       force,
     }}),
@@ -189,11 +190,11 @@ function Workout() {
   const autoTried = useRef(false);
   useEffect(() => {
     if (autoTried.current || gen.isPending) return;
-    if (!aiPlan || planExpired) {
+    if (!aiPlan) {
       autoTried.current = true;
-      gen.mutate(false);
+      setAiOpen(true);
     }
-  }, [aiPlan, planExpired, gen]);
+  }, [aiPlan, gen]);
 
 
   // -------- Live session state --------
@@ -579,13 +580,13 @@ function Workout() {
           <p className="mt-1 text-sm text-muted-foreground">
             {gen.isPending
               ? "Your AI trainer is designing a 7-day split tuned to your BMI and goal."
-              : "We couldn't build your plan automatically. Tap below to try again."}
+              : "Tell us your level, where you train (Home / Gym / Hybrid), equipment and any injuries — then we'll build your split."}
           </p>
           {!gen.isPending && (
             <button onClick={() => setAiOpen(true)}
               className="mt-4 h-12 px-6 rounded-2xl text-black font-black active:scale-95"
               style={{ background: `linear-gradient(135deg, ${NEON}, oklch(0.92 0.2 130))` }}>
-              Build my plan
+              Set preferences & build
             </button>
           )}
         </section>
@@ -737,6 +738,16 @@ function Workout() {
               <div className="flex gap-2">
                 {(["beginner","intermediate","pro"] as const).map(l => (
                   <Chip key={l} active={level===l} onClick={() => setLevel(l)}>{l}</Chip>
+                ))}
+              </div>
+            </Field>
+            <Field label="Where do you train?">
+              <div className="flex gap-2">
+                {(["home","gym","hybrid"] as const).map(w => (
+                  <Chip key={w} active={workoutType===w} onClick={() => {
+                    setWorkoutType(w);
+                    setEquipment(w === "gym" ? "gym" : w === "hybrid" ? "gym" : "home");
+                  }}>{w}</Chip>
                 ))}
               </div>
             </Field>
