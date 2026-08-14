@@ -53,7 +53,6 @@ const BUDGETS: { v: "low" | "medium" | "high"; l: string; d: string }[] = [
   { v: "high", l: "Premium", d: "Salmon, berries, whey" },
 ];
 const LIFESTYLES = ["Desk-job", "Field-work", "Student", "Home-maker", "Shift-work", "Traveller"];
-const WORKOUT_HABITS = ["None", "Home workouts", "Gym 3x/wk", "Gym 5x/wk", "Sports", "Yoga"];
 const MEAL_FREQ = [3, 4, 5, 6];
 
 function Onboarding() {
@@ -88,7 +87,6 @@ function Onboarding() {
   const [mealFrequency, setMealFrequency] = useState<number>(4);
   const [sleepHours, setSleepHours] = useState<number>(7);
   const [waterL, setWaterL] = useState<number>(2.5);
-  const [workoutHabit, setWorkoutHabit] = useState<string>("Gym 3x/wk");
   const [deficiencies, setDeficiencies] = useState<string[]>([]);
 
   const heightCm = unitH === "cm" ? height : Math.round(height * 30.48);
@@ -141,7 +139,6 @@ function Onboarding() {
         meal_frequency: mealFrequency,
         sleep_hours: sleepHours,
         water_intake_l: waterL,
-        workout_habit: workoutHabit,
         deficiencies,
       }});
       // Fire and forget — plan can finish in background
@@ -333,13 +330,6 @@ function Onboarding() {
             ))}
           </div>
 
-          <label className="block mt-5 text-xs text-muted-foreground">Workout habit</label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {WORKOUT_HABITS.map((w) => (
-              <Chip key={w} active={workoutHabit === w} onClick={() => setWorkoutHabit(w)}>{w}</Chip>
-            ))}
-          </div>
-
           <label className="block mt-5 text-xs text-muted-foreground">Meals per day</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {MEAL_FREQ.map((n) => (
@@ -370,7 +360,7 @@ function Onboarding() {
           computed={computed} bmiState={bmiState} goal={goal}
           goalLabel={GOALS.find((g) => g.v === goal)?.l ?? "Your goal"}
           activity={activity} sleepHours={sleepHours} waterL={waterL}
-          workoutHabit={workoutHabit} diet={diet} mealFrequency={mealFrequency}
+          diet={diet} mealFrequency={mealFrequency}
           deficiencies={deficiencies} medical={medical}
         />
       )}
