@@ -363,9 +363,9 @@ MEAL / PERSONALIZATION RULES
 - Budget-aware: for "${(p as any).budget ?? "medium"}" budget — low → lentils/eggs/seasonal veg/local grains; medium → add lean meats, dairy, seasonal fruits; high → salmon, berries, quinoa, whey/creatine ok.
 - Lifestyle-aware: ${(p as any).lifestyle ?? "generic"} — desk-job: lighter carbs midday, more protein+fiber; field-work/labor: bigger complex-carb lunch; student: quick 5-min prep options.
 - Workout habit: ${(p as any).workout_habit ?? "unspecified"} — include pre & post workout meals for muscle_gain/bulking/recomp/fat_loss trainees; skip for sedentary.
-- Shakes tuned to goal:
-  * muscle_gain / bulking / underweight → high-cal mass shakes (banana + oats + peanut butter + milk + whey)
-  * weight_loss / fat_loss → low-cal detox / protein (green tea, honey-lemon water, cucumber-mint, jeera water, whey + water)
+- Shakes / drinks tuned to goal:
+  * muscle_gain / bulking / underweight → nutritious HIGH-CALORIE shakes: banana + oats + milk + peanut butter; dates + almonds + banana + milk; mango + oats + milk/curd; sapota (chikoo) + milk + nuts; add whey only if available.
+  * weight_loss / fat_loss → LIGHT low-calorie drinks: warm lemon water, jeera (cumin) water, mint-lemon water, cinnamon water, unsweetened green tea, plain buttermilk. Describe these ONLY as low-calorie, hydrating, appetite-supporting or digestion-friendly — NEVER claim any drink burns fat or melts fat; fat loss comes from the overall calorie deficit.
   * maintenance / recomp → balanced protein smoothies
   * diabetic-friendly → unsweetened, low-GI only
 - Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
