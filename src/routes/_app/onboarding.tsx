@@ -39,7 +39,8 @@ const GOALS: { v: Goal; l: string; emoji: string }[] = [
 
 const DIETS = [
   "Non-Veg (No Beef)", "Non-Veg", "Vegetarian", "Eggetarian", "Vegan",
-  "Keto", "Diabetic-Friendly", "High-Protein", "Low-Carb", "Mediterranean",
+  "Keto", "Vegetarian Keto", "Eggetarian Keto", "Vegan Keto", "Non-Veg Keto",
+  "Diabetic-Friendly", "High-Protein", "Low-Carb", "Mediterranean",
   "Jain", "Pescatarian",
 ];
 const REGIONS = ["India", "Global", "Middle East", "East Asia", "Europe", "Americas"];
@@ -102,8 +103,11 @@ function Onboarding() {
     if (goal === "weight_loss" || goal === "fat_loss") cal -= 500;
     if (goal === "muscle_gain") cal += 300;
     const protein = Math.round(weightKg * (goal === "muscle_gain" ? 2.0 : 1.8));
-    const fat = Math.round((cal * 0.25) / 9);
-    const carbs = Math.max(50, Math.round((cal - protein * 4 - fat * 9) / 4));
+    const isKeto = diet.toLowerCase().includes("keto");
+    const carbs = isKeto ? 30 : Math.max(50, Math.round((cal - protein * 4 - (cal * 0.25)) / 4));
+    const fat = isKeto
+      ? Math.max(45, Math.round((cal - protein * 4 - carbs * 4) / 9))
+      : Math.round((cal * 0.25) / 9);
     const bmi = weightKg / Math.pow(heightCm / 100, 2);
     const bf = gender === "male" ? 1.2 * bmi + 0.23 * age - 16.2 : 1.2 * bmi + 0.23 * age - 5.4;
     const after_bf = Math.max(8, bf - (goal === "weight_loss" || goal === "fat_loss" ? 4 : 2));
@@ -119,7 +123,7 @@ function Onboarding() {
       muscle: Number((gender === "male" ? 45 - bf * 0.3 : 38 - bf * 0.3).toFixed(0)),
       water: 55,
     };
-  }, [gender, age, heightCm, weightKg, activity, goal]);
+  }, [gender, age, heightCm, weightKg, activity, goal, diet]);
 
   const bmiState = computed.bmi < 18.5 ? "Underweight"
     : computed.bmi < 25 ? "Healthy"

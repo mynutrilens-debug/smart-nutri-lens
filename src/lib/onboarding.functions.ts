@@ -147,6 +147,8 @@ export const saveOnboarding = createServerFn({ method: "POST" })
         fat_goal_g: t.fat_g,
         body_fat_pct: t.body_fat_pct,
         muscle_mass_pct: t.muscle_mass_pct,
+        ai_plan: null,
+        ai_plan_generated_at: null,
         onboarded_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
