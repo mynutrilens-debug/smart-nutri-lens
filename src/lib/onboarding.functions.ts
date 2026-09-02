@@ -241,13 +241,27 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const healthLine = n > 0
       ? `- Health signals (7-day avg from Apple Health / Health Connect): steps ${avg("steps")}, active min ${avg("active_minutes")}, calories burned ${avg("calories_burned")}, resting HR ${avg("resting_heart_rate") || avg("avg_heart_rate") || "n/a"}, sleep ${Math.round(avg("sleep_minutes") / 60)}h. Tune calorie target to measured activity (not just self-reported) and prefer lighter meals/recovery focus on days after <6h sleep.`
       : `- Health signals: none synced yet.`;
-    // Energy pipeline (BMI is classification only, NOT used to size calories)
-    const bmrCalc =
-      p.gender === "male"
-        ? 10 * (p.weight_kg ?? 70) + 6.25 * (p.height_cm ?? 170) - 5 * (p.age ?? 30) + 5
-        : 10 * (p.weight_kg ?? 70) + 6.25 * (p.height_cm ?? 170) - 5 * (p.age ?? 30) - 161;
-    const activityMult: Record<string, number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, athlete: 1.9 };
-    const tdeeCalc = Math.round(bmrCalc * (activityMult[p.activity_level as string] ?? 1.4));
+    // Energy pipeline from the ONE centralized engine (BMI is classification only).
+    const eng = targetsFromProfile(p as any);
+    const bmrCalc = eng?.bmr ?? 0;
+    const tdeeCalc = eng?.tdee ?? 0;
+    // Keep stored goals in sync if weight / activity / goal changed since last save.
+    if (eng && (eng.calories !== p.daily_calorie_goal || eng.protein_g !== p.protein_goal_g)) {
+      await supabase
+        .from("profiles")
+        .update({
+          daily_calorie_goal: eng.calories,
+          protein_goal_g: eng.protein_g,
+          carbs_goal_g: eng.carbs_g,
+          fat_goal_g: eng.fat_g,
+        })
+        .eq("user_id", userId);
+      (p as any).daily_calorie_goal = eng.calories;
+      (p as any).protein_goal_g = eng.protein_g;
+      (p as any).carbs_goal_g = eng.carbs_g;
+      (p as any).fat_goal_g = eng.fat_g;
+    }
+
     const sleepAvgMin = n > 0 ? avg("sleep_minutes") : 0;
 
     // Meal frequency → exact slots this plan may contain
