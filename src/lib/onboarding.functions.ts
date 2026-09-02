@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { callGeminiJson } from "@/lib/ai-gemini.server";
 import { mealSlotsFor, mealSlotLabels, pruneMealsToSlots } from "@/lib/meal-slots";
+import { computeNutritionTargets, targetsFromProfile } from "@/lib/nutrition-engine";
+
 
 const OnboardingInput = z.object({
   display_name: z.string().min(1).max(80).optional(),
@@ -30,71 +32,33 @@ const OnboardingInput = z.object({
 
 export type OnboardingPayload = z.infer<typeof OnboardingInput>;
 
-// BMI is a HEALTH CLASSIFIER only — never used to size calories.
-// Pipeline: BMR (Mifflin-St Jeor) → TDEE (activity multiplier) → goal adjustment.
-// Protein 1.6–2.4 g/kg, Fat 0.6–1.0 g/kg, remaining calories → carbs.
+// Targets come from the ONE centralized engine (BMR → TDEE → goal).
 function computeTargets(p: OnboardingPayload) {
-  const bmr =
-    p.gender === "male"
-      ? 10 * p.weight_kg + 6.25 * p.height_cm - 5 * p.age + 5
-      : 10 * p.weight_kg + 6.25 * p.height_cm - 5 * p.age - 161;
-
-  const mult: Record<string, number> = {
-    sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, athlete: 1.9,
-  };
-  const tdee = bmr * (mult[p.activity_level] ?? 1.4);
-
-  // Goal-based calorie adjustment (fraction of TDEE)
-  const goalAdj: Record<string, number> = {
-    fat_loss: -0.225,      // −20–25% (midpoint)
-    weight_loss: -0.15,    // −10–20%
-    maintenance: 0,
-    recomp: 0,             // ±5% around TDEE; protein does the work
-    muscle_gain: 0.10,     // +5–15% (lean)
-    bulking: 0.175,        // +15–20%
-  };
-  const calories = Math.round(tdee * (1 + (goalAdj[p.physique_goal] ?? 0)));
-
-  // Protein 1.6–2.4 g/kg based on goal
-  const proteinPerKg =
-    p.physique_goal === "fat_loss" ? 2.2 :
-    p.physique_goal === "weight_loss" ? 2.0 :
-    p.physique_goal === "recomp" ? 2.2 :
-    p.physique_goal === "muscle_gain" ? 2.0 :
-    p.physique_goal === "bulking" ? 1.8 :
-    1.8;
-  const protein = Math.round(p.weight_kg * proteinPerKg);
-
-  // Fat 0.6–1.0 g/kg
-  const fatPerKg =
-    p.physique_goal === "fat_loss" ? 0.7 :
-    p.physique_goal === "bulking" ? 1.0 :
-    p.physique_goal === "muscle_gain" ? 0.9 :
-    0.8;
-  const fat = Math.round(p.weight_kg * fatPerKg);
-
-  // Remaining calories → carbs (min 50g)
-  const carbs = Math.max(50, Math.round((calories - protein * 4 - fat * 9) / 4));
-
-  const bmi = p.weight_kg / Math.pow(p.height_cm / 100, 2);
-  const bmiCategory =
-    bmi < 18.5 ? "underweight" : bmi < 25 ? "normal" : bmi < 30 ? "overweight" : "obese";
-  const bodyFat =
-    p.gender === "male" ? 1.2 * bmi + 0.23 * p.age - 16.2 : 1.2 * bmi + 0.23 * p.age - 5.4;
-
+  const t = computeNutritionTargets({
+    gender: p.gender,
+    age: p.age,
+    height_cm: p.height_cm,
+    weight_kg: p.weight_kg,
+    activity_level: p.activity_level,
+    physique_goal: p.physique_goal,
+    target_weight_kg: p.target_weight_kg ?? null,
+  });
   return {
-    calories,
-    protein_g: protein,
-    carbs_g: carbs,
-    fat_g: fat,
-    bmi: Number(bmi.toFixed(1)),
-    bmi_category: bmiCategory,
-    body_fat_pct: Number(Math.max(5, Math.min(45, bodyFat)).toFixed(1)),
-    muscle_mass_pct: Number((p.gender === "male" ? 45 - bodyFat * 0.3 : 38 - bodyFat * 0.3).toFixed(1)),
-    bmr: Math.round(bmr),
-    tdee: Math.round(tdee),
+    calories: t.calories,
+    protein_g: t.protein_g,
+    carbs_g: t.carbs_g,
+    fat_g: t.fat_g,
+    bmi: t.bmi,
+    bmi_category: t.bmi_category,
+    body_fat_pct: t.body_fat_pct,
+    muscle_mass_pct: t.muscle_mass_pct,
+    bmr: t.bmr,
+    tdee: t.tdee,
+    activity_plan: t.activity_plan,
+    engine: t,
   };
 }
+
 
 export const saveOnboarding = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -277,13 +241,27 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const healthLine = n > 0
       ? `- Health signals (7-day avg from Apple Health / Health Connect): steps ${avg("steps")}, active min ${avg("active_minutes")}, calories burned ${avg("calories_burned")}, resting HR ${avg("resting_heart_rate") || avg("avg_heart_rate") || "n/a"}, sleep ${Math.round(avg("sleep_minutes") / 60)}h. Tune calorie target to measured activity (not just self-reported) and prefer lighter meals/recovery focus on days after <6h sleep.`
       : `- Health signals: none synced yet.`;
-    // Energy pipeline (BMI is classification only, NOT used to size calories)
-    const bmrCalc =
-      p.gender === "male"
-        ? 10 * (p.weight_kg ?? 70) + 6.25 * (p.height_cm ?? 170) - 5 * (p.age ?? 30) + 5
-        : 10 * (p.weight_kg ?? 70) + 6.25 * (p.height_cm ?? 170) - 5 * (p.age ?? 30) - 161;
-    const activityMult: Record<string, number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, athlete: 1.9 };
-    const tdeeCalc = Math.round(bmrCalc * (activityMult[p.activity_level as string] ?? 1.4));
+    // Energy pipeline from the ONE centralized engine (BMI is classification only).
+    const eng = targetsFromProfile(p as any);
+    const bmrCalc = eng?.bmr ?? 0;
+    const tdeeCalc = eng?.tdee ?? 0;
+    // Keep stored goals in sync if weight / activity / goal changed since last save.
+    if (eng && (eng.calories !== p.daily_calorie_goal || eng.protein_g !== p.protein_goal_g)) {
+      await supabase
+        .from("profiles")
+        .update({
+          daily_calorie_goal: eng.calories,
+          protein_goal_g: eng.protein_g,
+          carbs_goal_g: eng.carbs_g,
+          fat_goal_g: eng.fat_g,
+        })
+        .eq("user_id", userId);
+      (p as any).daily_calorie_goal = eng.calories;
+      (p as any).protein_goal_g = eng.protein_g;
+      (p as any).carbs_goal_g = eng.carbs_g;
+      (p as any).fat_goal_g = eng.fat_g;
+    }
+
     const sleepAvgMin = n > 0 ? avg("sleep_minutes") : 0;
 
     // Meal frequency → exact slots this plan may contain
@@ -317,7 +295,8 @@ ${cuisineLine}
 - Budget: ${(p as any).budget ?? "medium"} · Lifestyle: ${(p as any).lifestyle ?? "unspecified"} · Workout habit: ${(p as any).workout_habit ?? "unspecified"}
 - MEAL FREQUENCY (HARD CONSTRAINT): exactly ${slots.length} meals/day — ${slotList}. Output ONLY these meal keys, no more, no fewer.
 - Self-reported sleep: ${(p as any).sleep_hours ?? "?"}h · Water goal: ${(p as any).water_intake_l ?? "?"}L
-- Precomputed daily targets (already goal-adjusted from TDEE, protein 1.6–2.4 g/kg, fat 0.6–1.0 g/kg, rest = carbs): ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g — match these within ±5%.
+- Precomputed daily targets (BMR → TDEE → goal adjustment; protein ${eng?.protein_per_kg ?? 1.8} g/kg of ${eng?.protein_basis_kg ?? p.weight_kg}kg basis, fat ${eng?.fat_pct_of_calories ?? 28}% of calories, rest = carbs): ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g — match these within ±5% and make meal macros sum to the daily total within ±5%.
+- Recommended activity (do NOT tell the user to eat back exercise calories): ${eng?.activity_plan.steps_per_day ?? "8,000–10,000 steps"} · ${eng?.activity_plan.strength_sessions_per_week ?? "3–4 strength sessions"} · ${eng?.activity_plan.cardio_minutes_per_week ?? "150 min cardio/week"}
 - Plan date: ${new Date().toISOString().slice(0, 10)} · rotation slot #${rotationSeed} of 7
 ${avoidLine}
 ${varietyLine}
@@ -325,11 +304,13 @@ ${healthLine}
 
 
 CALORIE / MACRO RULES (already applied in the targets above — reproduce them faithfully)
-- Fat Loss → TDEE −20 to −25%   |  Weight Loss → TDEE −10 to −20%
-- Maintenance → TDEE            |  Recomp → TDEE ±5%
-- Lean Muscle Gain → TDEE +5 to +15%  |  Bulking → TDEE +15 to +20%
-- Protein 1.6–2.4 g/kg · Fat 0.6–1.0 g/kg · remaining kcal → carbs
+- Calories come ONLY from BMR (Mifflin-St Jeor) → TDEE (activity factor 1.20/1.375/1.55/1.725/1.90) → goal adjustment.
+- Fat loss / obese → TDEE −10 to −20%  |  Maintenance & recomp → TDEE  |  Underweight / weight gain → TDEE +10 to +15%
+- Protein 1.6–2.0 g/kg (target/ideal weight for overweight–obese, current weight for underweight) · Fat 25–35% of calories · remaining kcal → carbs
+- Macros must mathematically match the calorie target within ±5%.
+- NEVER use fixed calorie values based on gender or BMI, never set a fixed "calories to burn" target, and never suggest eating back calories burned in exercise.
 - NEVER use BMI as the calorie driver — BMI only informs food-quality guidance (e.g. obese/overweight → more fiber, low-GI; underweight → calorie-dense).
+
 
 MICRONUTRIENT & DEFICIENCY RULES (CRITICAL)
 - Reference RDAs (adult): Vitamin B12 2.4 mcg · Vitamin D3 600–800 IU (15–20 mcg) · Iron 8–18 mg · Calcium 1000 mg · Magnesium 310–420 mg · Zinc 8–11 mg · Omega-3 (EPA+DHA) 250–500 mg · Fiber ≥25 g · Vitamin C 75–90 mg.
