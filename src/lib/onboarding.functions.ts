@@ -295,7 +295,8 @@ ${cuisineLine}
 - Budget: ${(p as any).budget ?? "medium"} · Lifestyle: ${(p as any).lifestyle ?? "unspecified"} · Workout habit: ${(p as any).workout_habit ?? "unspecified"}
 - MEAL FREQUENCY (HARD CONSTRAINT): exactly ${slots.length} meals/day — ${slotList}. Output ONLY these meal keys, no more, no fewer.
 - Self-reported sleep: ${(p as any).sleep_hours ?? "?"}h · Water goal: ${(p as any).water_intake_l ?? "?"}L
-- Precomputed daily targets (already goal-adjusted from TDEE, protein 1.6–2.4 g/kg, fat 0.6–1.0 g/kg, rest = carbs): ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g — match these within ±5%.
+- Precomputed daily targets (BMR → TDEE → goal adjustment; protein ${eng?.protein_per_kg ?? 1.8} g/kg of ${eng?.protein_basis_kg ?? p.weight_kg}kg basis, fat ${eng?.fat_pct_of_calories ?? 28}% of calories, rest = carbs): ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g — match these within ±5% and make meal macros sum to the daily total within ±5%.
+- Recommended activity (do NOT tell the user to eat back exercise calories): ${eng?.activity_plan.steps_per_day ?? "8,000–10,000 steps"} · ${eng?.activity_plan.strength_sessions_per_week ?? "3–4 strength sessions"} · ${eng?.activity_plan.cardio_minutes_per_week ?? "150 min cardio/week"}
 - Plan date: ${new Date().toISOString().slice(0, 10)} · rotation slot #${rotationSeed} of 7
 ${avoidLine}
 ${varietyLine}
@@ -303,11 +304,13 @@ ${healthLine}
 
 
 CALORIE / MACRO RULES (already applied in the targets above — reproduce them faithfully)
-- Fat Loss → TDEE −20 to −25%   |  Weight Loss → TDEE −10 to −20%
-- Maintenance → TDEE            |  Recomp → TDEE ±5%
-- Lean Muscle Gain → TDEE +5 to +15%  |  Bulking → TDEE +15 to +20%
-- Protein 1.6–2.4 g/kg · Fat 0.6–1.0 g/kg · remaining kcal → carbs
+- Calories come ONLY from BMR (Mifflin-St Jeor) → TDEE (activity factor 1.20/1.375/1.55/1.725/1.90) → goal adjustment.
+- Fat loss / obese → TDEE −10 to −20%  |  Maintenance & recomp → TDEE  |  Underweight / weight gain → TDEE +10 to +15%
+- Protein 1.6–2.0 g/kg (target/ideal weight for overweight–obese, current weight for underweight) · Fat 25–35% of calories · remaining kcal → carbs
+- Macros must mathematically match the calorie target within ±5%.
+- NEVER use fixed calorie values based on gender or BMI, never set a fixed "calories to burn" target, and never suggest eating back calories burned in exercise.
 - NEVER use BMI as the calorie driver — BMI only informs food-quality guidance (e.g. obese/overweight → more fiber, low-GI; underweight → calorie-dense).
+
 
 MICRONUTRIENT & DEFICIENCY RULES (CRITICAL)
 - Reference RDAs (adult): Vitamin B12 2.4 mcg · Vitamin D3 600–800 IU (15–20 mcg) · Iron 8–18 mg · Calcium 1000 mg · Magnesium 310–420 mg · Zinc 8–11 mg · Omega-3 (EPA+DHA) 250–500 mg · Fiber ≥25 g · Vitamin C 75–90 mg.
