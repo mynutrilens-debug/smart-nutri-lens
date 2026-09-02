@@ -34,12 +34,42 @@ export const getDashboard = createServerFn({ method: "GET" })
 
     const burned = (todayWorkouts.data ?? []).reduce((a, w) => a + (w.calories_burned ?? 0), 0);
 
+    // Keep goals in sync with the centralized engine (weight/activity/goal changes).
+    let prof = profile.data as any;
+    const eng = targetsFromProfile(prof);
+    if (
+      eng &&
+      (eng.calories !== prof?.daily_calorie_goal ||
+        eng.protein_g !== prof?.protein_goal_g ||
+        eng.carbs_g !== prof?.carbs_goal_g ||
+        eng.fat_g !== prof?.fat_goal_g)
+    ) {
+      await supabase
+        .from("profiles")
+        .update({
+          daily_calorie_goal: eng.calories,
+          protein_goal_g: eng.protein_g,
+          carbs_goal_g: eng.carbs_g,
+          fat_goal_g: eng.fat_g,
+        })
+        .eq("user_id", userId);
+      prof = {
+        ...prof,
+        daily_calorie_goal: eng.calories,
+        protein_goal_g: eng.protein_g,
+        carbs_goal_g: eng.carbs_g,
+        fat_goal_g: eng.fat_g,
+      };
+    }
+
     return {
-      profile: profile.data,
+      profile: prof,
       totals,
       burned,
+      targets: eng,
       weights: weights.data ?? [],
       insight: insight.data,
       recentFoods: foods.slice(0, 5),
     };
   });
+
