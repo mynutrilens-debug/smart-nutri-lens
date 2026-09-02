@@ -30,71 +30,33 @@ const OnboardingInput = z.object({
 
 export type OnboardingPayload = z.infer<typeof OnboardingInput>;
 
-// BMI is a HEALTH CLASSIFIER only — never used to size calories.
-// Pipeline: BMR (Mifflin-St Jeor) → TDEE (activity multiplier) → goal adjustment.
-// Protein 1.6–2.4 g/kg, Fat 0.6–1.0 g/kg, remaining calories → carbs.
+// Targets come from the ONE centralized engine (BMR → TDEE → goal).
 function computeTargets(p: OnboardingPayload) {
-  const bmr =
-    p.gender === "male"
-      ? 10 * p.weight_kg + 6.25 * p.height_cm - 5 * p.age + 5
-      : 10 * p.weight_kg + 6.25 * p.height_cm - 5 * p.age - 161;
-
-  const mult: Record<string, number> = {
-    sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, athlete: 1.9,
-  };
-  const tdee = bmr * (mult[p.activity_level] ?? 1.4);
-
-  // Goal-based calorie adjustment (fraction of TDEE)
-  const goalAdj: Record<string, number> = {
-    fat_loss: -0.225,      // −20–25% (midpoint)
-    weight_loss: -0.15,    // −10–20%
-    maintenance: 0,
-    recomp: 0,             // ±5% around TDEE; protein does the work
-    muscle_gain: 0.10,     // +5–15% (lean)
-    bulking: 0.175,        // +15–20%
-  };
-  const calories = Math.round(tdee * (1 + (goalAdj[p.physique_goal] ?? 0)));
-
-  // Protein 1.6–2.4 g/kg based on goal
-  const proteinPerKg =
-    p.physique_goal === "fat_loss" ? 2.2 :
-    p.physique_goal === "weight_loss" ? 2.0 :
-    p.physique_goal === "recomp" ? 2.2 :
-    p.physique_goal === "muscle_gain" ? 2.0 :
-    p.physique_goal === "bulking" ? 1.8 :
-    1.8;
-  const protein = Math.round(p.weight_kg * proteinPerKg);
-
-  // Fat 0.6–1.0 g/kg
-  const fatPerKg =
-    p.physique_goal === "fat_loss" ? 0.7 :
-    p.physique_goal === "bulking" ? 1.0 :
-    p.physique_goal === "muscle_gain" ? 0.9 :
-    0.8;
-  const fat = Math.round(p.weight_kg * fatPerKg);
-
-  // Remaining calories → carbs (min 50g)
-  const carbs = Math.max(50, Math.round((calories - protein * 4 - fat * 9) / 4));
-
-  const bmi = p.weight_kg / Math.pow(p.height_cm / 100, 2);
-  const bmiCategory =
-    bmi < 18.5 ? "underweight" : bmi < 25 ? "normal" : bmi < 30 ? "overweight" : "obese";
-  const bodyFat =
-    p.gender === "male" ? 1.2 * bmi + 0.23 * p.age - 16.2 : 1.2 * bmi + 0.23 * p.age - 5.4;
-
+  const t = computeNutritionTargets({
+    gender: p.gender,
+    age: p.age,
+    height_cm: p.height_cm,
+    weight_kg: p.weight_kg,
+    activity_level: p.activity_level,
+    physique_goal: p.physique_goal,
+    target_weight_kg: p.target_weight_kg ?? null,
+  });
   return {
-    calories,
-    protein_g: protein,
-    carbs_g: carbs,
-    fat_g: fat,
-    bmi: Number(bmi.toFixed(1)),
-    bmi_category: bmiCategory,
-    body_fat_pct: Number(Math.max(5, Math.min(45, bodyFat)).toFixed(1)),
-    muscle_mass_pct: Number((p.gender === "male" ? 45 - bodyFat * 0.3 : 38 - bodyFat * 0.3).toFixed(1)),
-    bmr: Math.round(bmr),
-    tdee: Math.round(tdee),
+    calories: t.calories,
+    protein_g: t.protein_g,
+    carbs_g: t.carbs_g,
+    fat_g: t.fat_g,
+    bmi: t.bmi,
+    bmi_category: t.bmi_category,
+    body_fat_pct: t.body_fat_pct,
+    muscle_mass_pct: t.muscle_mass_pct,
+    bmr: t.bmr,
+    tdee: t.tdee,
+    activity_plan: t.activity_plan,
+    engine: t,
   };
 }
+
 
 export const saveOnboarding = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
