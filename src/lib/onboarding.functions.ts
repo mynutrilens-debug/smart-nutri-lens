@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { callGeminiJson } from "@/lib/ai-gemini.server";
 import { mealSlotsFor, mealSlotLabels, pruneMealsToSlots } from "@/lib/meal-slots";
+import { computeNutritionTargets } from "@/lib/nutrition-engine";
+
 
 const OnboardingInput = z.object({
   display_name: z.string().min(1).max(80).optional(),

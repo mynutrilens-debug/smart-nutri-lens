@@ -93,33 +93,27 @@ function Onboarding() {
   const weightKg = unitW === "kg" ? weight : Math.round(weight * 0.4536);
 
   const computed = useMemo(() => {
-    const bmr = gender === "male"
-      ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
-      : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
-    const mult = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, athlete: 1.9 }[activity];
-    const tdee = bmr * mult;
-    let cal = tdee;
-    if (goal === "weight_loss" || goal === "fat_loss") cal -= 500;
-    if (goal === "muscle_gain") cal += 300;
-    const protein = Math.round(weightKg * (goal === "muscle_gain" ? 2.0 : 1.8));
-    const fat = Math.round((cal * 0.25) / 9);
-    const carbs = Math.max(50, Math.round((cal - protein * 4 - fat * 9) / 4));
-    const bmi = weightKg / Math.pow(heightCm / 100, 2);
-    const bf = gender === "male" ? 1.2 * bmi + 0.23 * age - 16.2 : 1.2 * bmi + 0.23 * age - 5.4;
-    const after_bf = Math.max(8, bf - (goal === "weight_loss" || goal === "fat_loss" ? 4 : 2));
+    const t = computeNutritionTargets({
+      gender, age, height_cm: heightCm, weight_kg: weightKg,
+      activity_level: activity, physique_goal: goal,
+    });
+    const after_bf = Math.max(8, t.body_fat_pct - (goal === "weight_loss" || goal === "fat_loss" ? 4 : 2));
     const after_w = goal === "weight_loss" || goal === "fat_loss"
-      ? weightKg - 4 : goal === "muscle_gain" ? weightKg + 3 : weightKg - 1;
+      ? weightKg - 4 : goal === "muscle_gain" || goal === "bulking" ? weightKg + 3 : weightKg - 1;
     return {
-      calories: Math.round(cal),
-      protein, fat, carbs,
-      bmi: Number(bmi.toFixed(1)),
-      body_fat: Number(Math.max(8, Math.min(40, bf)).toFixed(1)),
+      calories: t.calories,
+      protein: t.protein_g, fat: t.fat_g, carbs: t.carbs_g,
+      bmr: t.bmr, tdee: t.tdee,
+      activity_plan: t.activity_plan,
+      bmi: t.bmi,
+      body_fat: t.body_fat_pct,
       after_bf: Number(after_bf.toFixed(1)),
       after_weight: Number(after_w.toFixed(1)),
-      muscle: Number((gender === "male" ? 45 - bf * 0.3 : 38 - bf * 0.3).toFixed(0)),
+      muscle: Math.round(t.muscle_mass_pct),
       water: 55,
     };
   }, [gender, age, heightCm, weightKg, activity, goal]);
+
 
   const bmiState = computed.bmi < 18.5 ? "Underweight"
     : computed.bmi < 25 ? "Healthy"
