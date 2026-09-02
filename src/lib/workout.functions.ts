@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { targetsFromProfile } from "@/lib/nutrition-engine";
 import { callGeminiJson } from "@/lib/ai-gemini.server";
 
 const WorkoutInput = z.object({
@@ -88,9 +89,10 @@ export const generateAiWorkout = createServerFn({ method: "POST" })
 
 
 
-    const heightM = (p.height_cm ?? 170) / 100;
-    const bmi = Number(((p.weight_kg ?? 70) / (heightM * heightM)).toFixed(1));
-    const bmiCat = bmi < 18.5 ? "underweight" : bmi < 25 ? "normal" : bmi < 30 ? "overweight" : "obese";
+    const eng = targetsFromProfile(p as any);
+    const bmi = eng?.bmi ?? Number(((p.weight_kg ?? 70) / Math.pow((p.height_cm ?? 170) / 100, 2)).toFixed(1));
+    const bmiCat = eng?.bmi_category ?? "normal";
+    const ap = eng?.activity_plan;
 
     const prompt = `You are an elite certified strength & conditioning coach. Build a PERSONALIZED 7-day workout split. Return STRICT JSON only (no markdown).
 
@@ -103,13 +105,16 @@ USER
 - Equipment: ${data.equipment} (none = bodyweight only; home = dumbbells/bands; gym = full access)
 - Injuries / limits (AVOID aggravating): ${data.injuries.join(", ") || "none"}
 - Medical: ${(p.medical_conditions ?? []).join(", ") || "none"}
+- Energy pipeline: BMR ${eng?.bmr ?? "?"} kcal → TDEE ${eng?.tdee ?? "?"} kcal → daily intake target ${eng?.calories ?? p.daily_calorie_goal} kcal (already set by the app)
+- Recommended weekly activity: ${ap?.steps_per_day ?? "8,000–10,000 steps"} · ${ap?.strength_sessions_per_week ?? "3–4 strength sessions"} · ${ap?.cardio_minutes_per_week ?? "150 min cardio"}
 
 RULES
 - VENUE IS A HARD CONSTRAINT: home → no machines/barbells, only bodyweight, dumbbells, bands; gym → use gym machines, barbells, cables; hybrid → label each day as (Home) or (Gym) in "focus" and alternate them sensibly.
 - Match split to goal: muscle_gain → PPL or U/L hypertrophy; fat_loss/weight_loss → full-body + HIIT + cardio; maintenance/recomp → balanced split; underweight → strength bias.
 - Beginner: simpler compound lifts, lower volume. Pro: advanced techniques (drop sets, tempo, supersets).
 - 1-2 rest/active-recovery days.
-- Calorie burn estimates realistic for body weight.
+- Calorie burn estimates are INFORMATIONAL only, realistic for body weight. Never set a fixed "calories to burn" target and never tell the user to eat back calories burned.
+- Respect the recommended activity volume above (fat loss → 7k–10k steps + strength 3–4×/week + 150–300 min cardio; underweight/gain → strength 3–5×/week, avoid excessive cardio).
 
 Return ONLY this JSON:
 {

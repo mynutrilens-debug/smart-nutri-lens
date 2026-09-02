@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { targetsFromProfile } from "@/lib/nutrition-engine";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
 
@@ -108,6 +109,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       .limit(20);
     const ordered = ((history ?? []) as unknown as { role: "user" | "assistant"; content: string }[]).reverse();
 
+    const chatEng = targetsFromProfile(p as any);
     const profileBlock = p
       ? `USER PROFILE
 - Name: ${p.display_name ?? "User"}
@@ -118,7 +120,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
 - Region/Cuisine: ${(p as any).region ?? "Global"} / ${(p as any).cuisine ?? "n/a"}
 - Allergies: ${(p.allergies ?? []).join(", ") || "none"}
 - Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
-- Daily targets: ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g`
+- Daily targets: ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g
+- Energy pipeline (single source of truth): BMR ${chatEng?.bmr ?? "?"} kcal (Mifflin-St Jeor) → TDEE ${chatEng?.tdee ?? "?"} kcal (activity factor ${chatEng?.activity_factor ?? "?"}) → goal adjustment ${chatEng?.calorie_adjustment_pct ?? 0}%
+- Recommended activity: ${chatEng?.activity_plan.steps_per_day ?? "8,000–10,000 steps"} · ${chatEng?.activity_plan.strength_sessions_per_week ?? "3–4 strength sessions"} · ${chatEng?.activity_plan.cardio_minutes_per_week ?? "150 min cardio/week"}`
       : "USER PROFILE: not completed yet.";
 
     const system = `You are NutriBot, the friendly in-app nutrition & fitness coach for MyNutriLens.
@@ -131,6 +135,11 @@ STYLE
 - For medical or deficiency questions (e.g. B12, iron, vitamin D, PCOS, diabetes), give food/lifestyle guidance AND clearly recommend consulting a doctor before supplements.
 - Never invent facts about the user. If something isn't in the profile, ask.
 - ALWAYS end your reply with ONE engaging follow-up question to keep the conversation going, on its own line prefixed with "👉".
+
+NUTRITION MATH (never deviate)
+- Calories always come from BMR (Mifflin-St Jeor) → TDEE (activity factor) → goal adjustment. Never quote fixed calorie numbers based on gender or BMI alone.
+- Protein 1.6–2.0 g/kg, fat 25–35% of calories, carbs = remaining calories; macros must match calories within ±5%.
+- Never give a fixed "calories to burn" target and never tell the user to eat back calories burned in exercise.
 
 SAFETY
 - You are not a doctor. Do not diagnose. Flag red-flag symptoms and recommend medical care.
