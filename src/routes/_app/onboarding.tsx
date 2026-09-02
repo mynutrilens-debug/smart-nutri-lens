@@ -11,6 +11,8 @@ import {
 import { toast } from "sonner";
 import { WheelPicker } from "@/components/mobile/WheelPicker";
 import { FitnessRoadmap } from "@/components/mobile/FitnessRoadmap";
+import { computeNutritionTargets } from "@/lib/nutrition-engine";
+
 
 export const Route = createFileRoute("/_app/onboarding")({
   component: Onboarding,
@@ -99,7 +101,8 @@ function Onboarding() {
     });
     const after_bf = Math.max(8, t.body_fat_pct - (goal === "weight_loss" || goal === "fat_loss" ? 4 : 2));
     const after_w = goal === "weight_loss" || goal === "fat_loss"
-      ? weightKg - 4 : goal === "muscle_gain" || goal === "bulking" ? weightKg + 3 : weightKg - 1;
+      ? weightKg - 4 : goal === "muscle_gain" ? weightKg + 3 : weightKg - 1;
+
     return {
       calories: t.calories,
       protein: t.protein_g, fat: t.fat_g, carbs: t.carbs_g,
