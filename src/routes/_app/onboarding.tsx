@@ -64,6 +64,7 @@ function Onboarding() {
     if (profile?.onboarded_at && !edit) navigate({ to: "/home", replace: true });
   }, [profile?.onboarded_at, edit, navigate]);
 
+  const [mode, setMode] = useState<"voice" | "form">(edit ? "form" : "voice");
   const [step, setStep] = useState(0);
   const [name, setName] = useState(profile?.display_name ?? "");
   const [gender, setGender] = useState<Gender>("male");
