@@ -22,7 +22,7 @@ const OnboardingInput = z.object({
   medical_conditions: z.array(z.string().max(60)).max(20).default([]),
   // New lifestyle & personalization inputs
   lifestyle: z.string().max(40).optional().nullable(),
-  meal_frequency: z.number().int().min(2).max(6).optional().nullable(),
+  meal_frequency: z.number().int().min(2).max(5).optional().nullable(),
   sleep_hours: z.number().min(3).max(12).optional().nullable(),
   water_intake_l: z.number().min(0.5).max(8).optional().nullable(),
   workout_habit: z.string().max(40).optional().nullable(),

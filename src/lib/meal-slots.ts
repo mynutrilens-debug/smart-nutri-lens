@@ -24,7 +24,7 @@ const SLOT_LABEL: Record<MealSlot, string> = {
  * Slots are added in priority order: 3 main meals → snack → post → pre workout.
  */
 export function mealSlotsFor(frequency?: number | null, trains = true): MealSlot[] {
-  const freq = Math.max(2, Math.min(6, Math.round(Number(frequency) || 4)));
+  const freq = Math.max(2, Math.min(5, Math.round(Number(frequency) || 4)));
   const order: MealSlot[] = trains
     ? ["breakfast", "lunch", "dinner", "snack", "post_workout", "pre_workout"]
     : ["breakfast", "lunch", "dinner", "snack"];
