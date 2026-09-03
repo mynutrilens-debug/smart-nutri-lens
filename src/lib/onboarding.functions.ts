@@ -262,10 +262,8 @@ export const generateAiPlan = createServerFn({ method: "POST" })
 
     const sleepAvgMin = n > 0 ? avg("sleep_minutes") : 0;
 
-    // Meal frequency → exact slots this plan may contain
-    const mealFreq = Number((p as any).meal_frequency) || 4;
-    const trains = !["sedentary", "none", "never"].includes(String((p as any).workout_habit ?? "").toLowerCase());
-    const slots = mealSlotsFor(mealFreq, trains);
+    // Fixed 5-meal structure for every goal
+    const slots = mealSlotsFor();
     const slotList = mealSlotLabels(slots);
     const micros = `"micronutrients": { "b12_mcg": 0, "vitamin_d_iu": 0, "iron_mg": 0, "calcium_mg": 0, "magnesium_mg": 0, "zinc_mg": 0, "omega3_mg": 0, "vitamin_c_mg": 0 }`;
     const timingFor = (s: string) =>
