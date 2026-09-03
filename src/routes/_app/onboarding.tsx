@@ -170,9 +170,9 @@ function Onboarding() {
 
       {step === 0 && (
         <Card>
-          <Eyebrow icon={Sparkles}>Welcome</Eyebrow>
+          <Eyebrow icon={Sparkles}>About you</Eyebrow>
           <h1 className="text-3xl font-bold leading-tight">Let's Start Your <span className="bg-gradient-to-r from-[oklch(0.82_0.16_215)] to-[oklch(0.62_0.26_260)] bg-clip-text text-transparent">Transformation</span></h1>
-          <p className="mt-2 text-sm text-muted-foreground">A few quick questions and your AI coach will craft a plan only for you.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Four quick sections and your AI coach builds an affordable plan built for fat loss & muscle gain.</p>
 
           <label className="block mt-6 text-xs text-muted-foreground">Your name</label>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="What should we call you?"
@@ -187,13 +187,6 @@ function Onboarding() {
           <div className="mt-1 glass rounded-2xl p-2">
             <WheelPicker min={13} max={90} value={age} onChange={setAge} unit="yrs" />
           </div>
-        </Card>
-      )}
-
-      {step === 1 && (
-        <Card>
-          <Eyebrow icon={Activity}>Body metrics</Eyebrow>
-          <h2 className="text-2xl font-bold">Your body</h2>
 
           <UnitField label="Height" unit={unitH} setUnit={(u: string) => setUnitH(u as "cm" | "ft")} units={["cm", "ft"]}
             value={height} onChange={setHeight} min={unitH === "cm" ? 120 : 4} max={unitH === "cm" ? 220 : 7} step={unitH === "cm" ? 1 : 0.1} />
@@ -204,35 +197,11 @@ function Onboarding() {
         </Card>
       )}
 
-      {step === 2 && (
+      {step === 1 && (
         <Card>
-          <Eyebrow icon={Flame}>Activity level</Eyebrow>
-          <h2 className="text-2xl font-bold">How active are you?</h2>
-          <div className="mt-4 space-y-2">
-            {ACTIVITY.map((a) => (
-              <button key={a.v} onClick={() => setActivity(a.v)} aria-pressed={activity === a.v}
-                className={`relative w-full text-left glass rounded-2xl p-4 border-2 transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] ${activity === a.v ? "z-10 border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.22)] shadow-[0_0_0_4px_oklch(0.72_0.22_240/0.18),0_12px_30px_-12px_oklch(0.72_0.22_240/0.8)]" : "border-white/10 hover:border-white/20"}`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold">{a.l}</div>
-                    <div className="text-xs text-muted-foreground">{a.d}</div>
-                  </div>
-                  {activity === a.v && (
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[oklch(0.72_0.22_240)] text-primary-foreground shadow-md animate-scale-in">
-                      <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
-                    </span>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        </Card>
-      )}
+          <Eyebrow icon={Target}>Goal & activity</Eyebrow>
+          <h2 className="text-2xl font-bold">What are you training for?</h2>
 
-      {step === 3 && (
-        <Card>
-          <Eyebrow icon={Target}>Your goal</Eyebrow>
-          <h2 className="text-2xl font-bold">What's your physique goal?</h2>
           <div className="mt-4 grid grid-cols-2 gap-3">
             {GOALS.map((g) => (
               <button key={g.v} onClick={() => setGoal(g.v)} aria-pressed={goal === g.v}
@@ -247,13 +216,34 @@ function Onboarding() {
               </button>
             ))}
           </div>
+
+          <label className="block mt-6 text-xs text-muted-foreground">How active are you?</label>
+          <div className="mt-2 space-y-2">
+            {ACTIVITY.map((a) => (
+              <button key={a.v} onClick={() => setActivity(a.v)} aria-pressed={activity === a.v}
+                className={`relative w-full text-left glass rounded-2xl p-3.5 border-2 transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.22_240)] active:scale-[0.98] ${activity === a.v ? "z-10 border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.22)] shadow-[0_0_0_4px_oklch(0.72_0.22_240/0.18)]" : "border-white/10 hover:border-white/20"}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-sm">{a.l}</div>
+                    <div className="text-xs text-muted-foreground">{a.d}</div>
+                  </div>
+                  {activity === a.v && (
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[oklch(0.72_0.22_240)] text-primary-foreground shadow-md animate-scale-in">
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
         </Card>
       )}
 
-      {step === 4 && (
+      {step === 2 && (
         <Card>
-          <Eyebrow icon={Apple}>Diet & allergies</Eyebrow>
+          <Eyebrow icon={Apple}>Food</Eyebrow>
           <h2 className="text-2xl font-bold">Your food world</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Everyday, affordable staples — no exotic ingredients.</p>
 
           <label className="block mt-5 text-xs text-muted-foreground">Region</label>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -273,10 +263,17 @@ function Onboarding() {
             </>
           )}
 
-          <label className="block mt-5 text-xs text-muted-foreground">Diet preference</label>
+          <label className="block mt-5 text-xs text-muted-foreground">Meal preference</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {DIETS.map((d) => (
               <Chip key={d} active={diet === d} onClick={() => setDiet(d)}>{d}</Chip>
+            ))}
+          </div>
+
+          <label className="block mt-5 text-xs text-muted-foreground">Meals per day</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {MEAL_FREQ.map((n) => (
+              <Chip key={n} active={mealFrequency === n} onClick={() => setMealFrequency(n)}>{n} meals</Chip>
             ))}
           </div>
 
@@ -289,7 +286,7 @@ function Onboarding() {
         </Card>
       )}
 
-      {step === 5 && (
+      {step === 3 && (
         <Card>
           <Eyebrow icon={Heart}>Health & lifestyle</Eyebrow>
           <h2 className="text-2xl font-bold">Personalize your plan</h2>
@@ -309,28 +306,10 @@ function Onboarding() {
             ))}
           </div>
 
-          <label className="block mt-5 text-xs text-muted-foreground">Budget for groceries</label>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {BUDGETS.map((b) => (
-              <button key={b.v} onClick={() => setBudget(b.v)} aria-pressed={budget === b.v}
-                className={`glass rounded-2xl p-3 text-left border-2 transition-all ${budget === b.v ? "border-[oklch(0.72_0.22_240)] bg-[oklch(0.72_0.22_240/0.18)]" : "border-white/10"}`}>
-                <div className="text-xs font-semibold">{b.l}</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{b.d}</div>
-              </button>
-            ))}
-          </div>
-
           <label className="block mt-5 text-xs text-muted-foreground">Lifestyle</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {LIFESTYLES.map((l) => (
               <Chip key={l} active={lifestyle === l} onClick={() => setLifestyle(l)}>{l}</Chip>
-            ))}
-          </div>
-
-          <label className="block mt-5 text-xs text-muted-foreground">Meals per day</label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {MEAL_FREQ.map((n) => (
-              <Chip key={n} active={mealFrequency === n} onClick={() => setMealFrequency(n)}>{n} meals</Chip>
             ))}
           </div>
 
@@ -351,7 +330,7 @@ function Onboarding() {
         </Card>
       )}
 
-      {step === 6 && (
+      {step === 4 && (
         <FitnessRoadmap
           gender={gender} age={age} weightKg={weightKg} heightCm={heightCm}
           computed={computed} bmiState={bmiState} goal={goal}
