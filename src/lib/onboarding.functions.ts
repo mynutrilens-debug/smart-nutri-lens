@@ -292,7 +292,7 @@ ${cuisineLine}
 - Allergies (STRICTLY AVOID): ${(p.allergies ?? []).join(", ") || "none"}
 - Medical conditions: ${(p.medical_conditions ?? []).join(", ") || "none"}
 - Tracked vitamin/mineral DEFICIENCIES to correct: ${((p as any).deficiencies ?? []).join(", ") || "none reported"}
-- Budget: ${(p as any).budget ?? "medium"} · Lifestyle: ${(p as any).lifestyle ?? "unspecified"} · Workout habit: ${(p as any).workout_habit ?? "unspecified"}
+- Lifestyle: ${(p as any).lifestyle ?? "unspecified"} · Cost target: AFFORDABLE everyday staples only
 - MEAL FREQUENCY (HARD CONSTRAINT): exactly ${slots.length} meals/day — ${slotList}. Output ONLY these meal keys, no more, no fewer.
 - Self-reported sleep: ${(p as any).sleep_hours ?? "?"}h · Water goal: ${(p as any).water_intake_l ?? "?"}L
 - Precomputed daily targets (BMR → TDEE → goal adjustment; protein ${eng?.protein_per_kg ?? 1.8} g/kg of ${eng?.protein_basis_kg ?? p.weight_kg}kg basis, fat ${eng?.fat_pct_of_calories ?? 28}% of calories, rest = carbs): ${p.daily_calorie_goal} kcal · P:${p.protein_goal_g}g C:${p.carbs_goal_g}g F:${p.fat_goal_g}g — match these within ±5% and make meal macros sum to the daily total within ±5%.
