@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Mic, MicOff, Send, SkipForward, RotateCcw, Pencil, Volume2, VolumeX, Loader2, Check } from "lucide-react";
+import { Mic, MicOff, Send, SkipForward, RotateCcw, Pencil, Volume2, VolumeX, Loader2, Check, ChevronUp, ChevronDown } from "lucide-react";
 import { revaTurn } from "@/lib/reva.functions";
-import { VoiceOrb, type OrbState } from "@/components/mobile/VoiceOrb";
+import { VoiceWave, type WaveState } from "@/components/mobile/VoiceWave";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -23,6 +23,79 @@ const FIELD_LABELS: Record<string, string> = {
   lifestyle: "Lifestyle",
   sleep_hours: "Sleep",
   water_intake_l: "Water",
+};
+
+/** Tappable option sets — the user can select, type, or say any of these. */
+const OPTIONS: Record<string, { multi?: boolean; items: { label: string; say: string }[] }> = {
+  gender: { items: [{ label: "Male", say: "I'm male" }, { label: "Female", say: "I'm female" }] },
+  physique_goal: {
+    items: [
+      { label: "🔥 Weight Loss", say: "My goal is weight loss" },
+      { label: "💧 Fat Loss", say: "My goal is fat loss" },
+      { label: "💪 Muscle Gain", say: "My goal is muscle gain" },
+      { label: "⚡ Recomposition", say: "My goal is body recomposition" },
+      { label: "🌿 Maintenance", say: "My goal is maintenance" },
+    ],
+  },
+  activity_level: {
+    items: [
+      { label: "Sedentary", say: "I'm sedentary, little to no exercise" },
+      { label: "Light · 1–2 days", say: "Light activity, 1 to 2 days a week" },
+      { label: "Moderate · 3–5 days", say: "Moderate activity, 3 to 5 days a week" },
+      { label: "Active · 6–7 days", say: "Active, 6 to 7 days a week" },
+      { label: "Athlete", say: "Athlete, I train twice daily" },
+    ],
+  },
+  diet_preference: {
+    items: ["Vegetarian", "Eggetarian", "Non-Veg (No Beef)", "Non-Veg", "Vegan", "High-Protein", "Keto", "Low-Carb", "Diabetic-Friendly", "Gluten-Free", "Pescatarian", "Jain"].map(
+      (d) => ({ label: d, say: `My diet preference is ${d}` }),
+    ),
+  },
+  region: {
+    items: ["India", "Global", "Middle East", "East Asia", "Europe", "Americas"].map((r) => ({
+      label: r,
+      say: `I'm in ${r}`,
+    })),
+  },
+  cuisine: {
+    items: ["Maharashtrian", "Kerala", "Tamil", "Rajasthani", "Punjabi", "Bengali", "Gujarati", "South Indian", "North Indian", "Hyderabadi", "Goan"].map((c) => ({
+      label: c,
+      say: `I prefer ${c} cuisine`,
+    })),
+  },
+  lifestyle: {
+    items: ["Desk-job", "Field-work", "Student", "Home-maker", "Shift-work", "Traveller"].map((l) => ({
+      label: l,
+      say: `My lifestyle is ${l}`,
+    })),
+  },
+  allergies: {
+    multi: true,
+    items: ["Peanuts", "Tree nuts", "Dairy", "Eggs", "Gluten", "Soy", "Shellfish", "Fish", "None"].map((a) => ({ label: a, say: a })),
+  },
+  medical_conditions: {
+    multi: true,
+    items: ["Diabetes", "Hypertension", "PCOS", "Thyroid", "Cholesterol", "Asthma", "None"].map((m) => ({ label: m, say: m })),
+  },
+  deficiencies: {
+    multi: true,
+    items: ["Vitamin B12", "Vitamin D3", "Iron", "Calcium", "Magnesium", "Zinc", "Omega-3", "Vitamin C", "Folate", "None"].map((d) => ({ label: d, say: d })),
+  },
+  sleep_hours: {
+    items: ["5 h", "6 h", "7 h", "8 h", "9 h"].map((s) => ({ label: s, say: `I sleep about ${parseInt(s)} hours` })),
+  },
+  water_intake_l: {
+    items: ["1 L", "1.5 L", "2 L", "2.5 L", "3 L", "4 L"].map((w) => ({
+      label: w,
+      say: `I drink about ${parseFloat(w)} litres of water a day`,
+    })),
+  },
+};
+
+const MULTI_PREFIX: Record<string, string> = {
+  allergies: "My allergies are",
+  medical_conditions: "My conditions are",
+  deficiencies: "My deficiencies are",
 };
 
 const fmt = (k: string, v: any) => {
@@ -49,6 +122,7 @@ export function RevaOnboarding({
   const [collected, setCollected] = useState<Record<string, any>>(
     initialName ? { display_name: initialName } : {},
   );
+  const [nextField, setNextField] = useState<string | null>(null);
   const [thinking, setThinking] = useState(false);
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -58,8 +132,9 @@ export function RevaOnboarding({
   const [interim, setInterim] = useState("");
   const [micError, setMicError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [multiSel, setMultiSel] = useState<string[]>([]);
+  const [showKnown, setShowKnown] = useState(false);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
   const recRef = useRef<any>(null);
   const audioRef = useRef<{ ctx: AudioContext; stream: MediaStream; raf: number } | null>(null);
   const startedRef = useRef(false);
@@ -68,7 +143,7 @@ export function RevaOnboarding({
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
 
-  const orbState: OrbState = speaking ? "speaking" : thinking ? "thinking" : listening ? "listening" : "idle";
+  const waveState: WaveState = speaking ? "speaking" : thinking ? "thinking" : listening ? "listening" : "idle";
 
   const supportsSpeech =
     typeof window !== "undefined" &&
@@ -101,12 +176,14 @@ export function RevaOnboarding({
 
   // Synthetic amplitude envelope while Reva is speaking.
   useEffect(() => {
-    if (!speaking) return;
+    if (!speaking && !thinking) return;
     let raf = 0;
     const t0 = performance.now();
     const tick = () => {
       const t = (performance.now() - t0) / 1000;
-      const v = 0.32 + 0.28 * Math.abs(Math.sin(t * 7.3)) + 0.16 * Math.abs(Math.sin(t * 3.1));
+      const v = thinking && !speaking
+        ? 0.12 + 0.08 * Math.abs(Math.sin(t * 2.2))
+        : 0.32 + 0.28 * Math.abs(Math.sin(t * 7.3)) + 0.16 * Math.abs(Math.sin(t * 3.1));
       setLevel(Math.min(1, v));
       raf = requestAnimationFrame(tick);
     };
@@ -115,7 +192,7 @@ export function RevaOnboarding({
       cancelAnimationFrame(raf);
       setLevel(0);
     };
-  }, [speaking]);
+  }, [speaking, thinking]);
 
   /* ── Mic amplitude meter ────────────────────────────────── */
   const startMeter = useCallback(async () => {
@@ -143,7 +220,7 @@ export function RevaOnboarding({
       audioRef.current = { ctx, stream, raf: 0 };
       audioRef.current.raf = requestAnimationFrame(loop);
     } catch {
-      setMicError("Mic access blocked — you can still type your answers.");
+      setMicError("Mic access blocked — you can still tap an option or type.");
     }
   }, []);
 
@@ -166,11 +243,13 @@ export function RevaOnboarding({
       setMessages(history);
       setThinking(true);
       setInterim("");
+      setMultiSel([]);
       try {
         const res: any = await turn({
           data: { history, collected: collectedRef.current, action: action ?? text ?? "" },
         });
         setCollected(res.collected ?? collectedRef.current);
+        setNextField(res.next_field ?? null);
         setMessages([...history, { role: "assistant", content: res.reply }]);
         speak(res.reply);
         if (res.done) {
@@ -201,7 +280,7 @@ export function RevaOnboarding({
 
   const startListening = useCallback(async () => {
     if (!supportsSpeech) {
-      setMicError("Voice input isn't supported in this browser — type your answer below.");
+      setMicError("Voice input isn't supported here — tap an option or type your answer.");
       return;
     }
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
@@ -225,7 +304,7 @@ export function RevaOnboarding({
       }
       setInterim(live);
     };
-    rec.onerror = () => setMicError("Didn't catch that — try again or type it.");
+    rec.onerror = () => setMicError("Didn't catch that — try again, tap an option, or type it.");
     rec.onend = () => {
       setListening(false);
       stopMeter();
@@ -255,10 +334,6 @@ export function RevaOnboarding({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length, thinking]);
-
   const answered = useMemo(
     () => Object.entries(collected).filter(([, v]) => v !== undefined && v !== null && v !== ""),
     [collected],
@@ -266,16 +341,32 @@ export function RevaOnboarding({
   const progress = Math.min(100, Math.round((answered.length / 16) * 100));
 
   const lastReva = [...messages].reverse().find((m) => m.role === "assistant")?.content ?? "";
+  const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+
+  const opts = !done && nextField ? OPTIONS[nextField] : undefined;
+
+  const submitMulti = () => {
+    if (!nextField) return;
+    const picked = multiSel.length ? multiSel : ["None"];
+    const isNone = picked.length === 1 && picked[0] === "None";
+    send(isNone ? `No ${FIELD_LABELS[nextField]?.toLowerCase() ?? "issues"} — none.` : `${MULTI_PREFIX[nextField] ?? "My answer is"} ${picked.join(", ")}.`);
+  };
 
   return (
-    <div className="flex flex-col h-[100dvh]">
+    <div className="relative flex flex-col h-[100dvh] overflow-hidden bg-[oklch(0.06_0.01_180)]">
+      {/* cinematic backdrop */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-80"
+        style={{
+          background:
+            "radial-gradient(900px 520px at 50% 46%, oklch(0.55 0.13 190 / 16%), transparent 65%), radial-gradient(600px 400px at 50% 100%, oklch(0.62 0.16 160 / 10%), transparent 70%)",
+        }}
+      />
+
       {/* header */}
-      <div className="px-5 pt-8 pb-2 shrink-0">
+      <div className="relative px-5 pt-7 shrink-0">
         <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs uppercase tracking-[0.18em] text-[oklch(0.82_0.16_215)]">Meet Reva</div>
-            <h1 className="text-xl font-bold">Your AI coach</h1>
-          </div>
+          <div className="text-[10px] uppercase tracking-[0.35em] text-[oklch(0.82_0.12_190)]">Reva</div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
@@ -284,105 +375,127 @@ export function RevaOnboarding({
                 setSpeaking(false);
               }}
               aria-label={muted ? "Unmute Reva" : "Mute Reva"}
-              className="glass rounded-full p-2.5"
+              className="rounded-full border border-white/10 bg-white/5 p-2"
             >
-              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
             </button>
-            <button onClick={onSwitchToForm} className="glass rounded-full px-3 py-2 text-xs">
+            <button
+              onClick={onSwitchToForm}
+              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-muted-foreground"
+            >
               Use form
             </button>
           </div>
         </div>
-        <div className="mt-3 h-1 rounded-full bg-white/10 overflow-hidden">
+        <div className="mt-4 h-[2px] rounded-full bg-white/[0.07] overflow-hidden">
           <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${progress}%`, background: "var(--gradient-hero)" }}
+            className="h-full rounded-full transition-all duration-700"
+            style={{ width: `${progress}%`, background: "linear-gradient(90deg, oklch(0.78 0.16 190), oklch(0.85 0.18 150))" }}
           />
         </div>
       </div>
 
-      {/* orb */}
-      <div className="shrink-0 pt-3 pb-1">
-        <VoiceOrb level={level} state={orbState} size={180} onClick={listening ? stopListening : startListening} />
-        <p className="mt-2 text-center text-xs text-muted-foreground">
+      {/* stage — question + audio-reactive wave */}
+      <div className="relative flex-1 min-h-0 flex flex-col items-center justify-center px-7">
+        <p
+          key={lastReva}
+          className="text-center text-[22px] leading-[1.35] font-light tracking-tight animate-fade-in max-w-[22rem]"
+        >
+          {done ? "Perfect. Building your plan…" : lastReva || "…"}
+        </p>
+
+        <VoiceWave level={level} state={waveState} height={200} className="mt-2" />
+
+        <p className="min-h-5 text-center text-[11px] tracking-wide text-muted-foreground animate-fade-in">
           {done
-            ? "All set — building your plan…"
+            ? "Personalising calories, macros & meals"
             : thinking
               ? "Reva is thinking…"
               : listening
                 ? interim || "Listening…"
                 : speaking
                   ? "Reva is speaking…"
-                  : "Tap the orb and speak, or type below"}
+                  : lastUser
+                    ? `You: ${lastUser}`
+                    : "Tap an option, speak, or type"}
         </p>
+        {micError && <p className="mt-2 text-[11px] text-amber-400">{micError}</p>}
       </div>
 
-      {/* transcript */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}>
-            <div
-              className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                m.role === "user"
-                  ? "bg-[oklch(0.72_0.22_240)] text-primary-foreground rounded-br-md"
-                  : "glass rounded-bl-md"
-              }`}
-            >
-              {m.content}
-            </div>
-          </div>
-        ))}
-        {thinking && (
-          <div className="flex justify-start">
-            <div className="glass rounded-2xl rounded-bl-md px-4 py-3 flex gap-1">
-              <span className="h-2 w-2 rounded-full bg-[oklch(0.82_0.16_215)] animate-bounce" />
-              <span className="h-2 w-2 rounded-full bg-[oklch(0.82_0.16_215)] animate-bounce [animation-delay:0.15s]" />
-              <span className="h-2 w-2 rounded-full bg-[oklch(0.82_0.16_215)] animate-bounce [animation-delay:0.3s]" />
-            </div>
-          </div>
-        )}
-        {micError && <p className="text-xs text-amber-400 text-center">{micError}</p>}
-
-        {/* collected chips — tap to edit */}
-        {answered.length > 0 && (
-          <div className="pt-2">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">What Reva knows</div>
-            <div className="flex flex-wrap gap-1.5">
-              {answered.map(([k, v]) => (
-                <button
-                  key={k}
-                  onClick={() => send(`Let's change my ${FIELD_LABELS[k] ?? k}.`, `edit:${k}`)}
-                  className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px]"
-                >
-                  <Check className="h-3 w-3 text-[oklch(0.78_0.20_155)]" />
-                  <span className="text-muted-foreground">{FIELD_LABELS[k] ?? k}:</span>
-                  <span className="font-medium">{fmt(k, v)}</span>
-                  <Pencil className="h-2.5 w-2.5 opacity-50" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* controls */}
+      {/* options + controls */}
       <div
-        className="shrink-0 px-4 pt-2 bg-gradient-to-t from-background via-background/95 to-transparent"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
+        className="relative shrink-0 px-4 pt-2"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.9rem)" }}
       >
-        <div className="flex items-center justify-center gap-2 mb-2">
+        {/* option chips for the current question */}
+        {opts && (
+          <div className="mb-3 animate-fade-in">
+            <div className="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto">
+              {opts.items.map((o) => {
+                const active = opts.multi && multiSel.includes(o.say);
+                return (
+                  <button
+                    key={o.label}
+                    disabled={thinking || done}
+                    onClick={() => {
+                      if (opts.multi) {
+                        setMultiSel((s) =>
+                          o.say === "None"
+                            ? ["None"]
+                            : s.includes(o.say)
+                              ? s.filter((x) => x !== o.say)
+                              : [...s.filter((x) => x !== "None"), o.say],
+                        );
+                      } else {
+                        send(o.say);
+                      }
+                    }}
+                    className={`rounded-full border px-3.5 py-2 text-[12px] transition active:scale-95 disabled:opacity-40 ${
+                      active
+                        ? "border-[oklch(0.82_0.16_190)] bg-[oklch(0.82_0.16_190_/_18%)] text-foreground"
+                        : "border-white/10 bg-white/[0.04] text-muted-foreground hover:border-white/25"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+            {opts.multi && (
+              <button
+                onClick={submitMulti}
+                disabled={thinking || done}
+                className="mx-auto mt-2.5 block rounded-full px-5 py-2 text-[12px] font-medium text-primary-foreground disabled:opacity-40"
+                style={{ background: "linear-gradient(90deg, oklch(0.82 0.16 190), oklch(0.85 0.18 150))" }}
+              >
+                {multiSel.length ? `Confirm ${multiSel.length} selected` : "Nothing applies"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* mic + quick controls */}
+        <div className="flex items-center justify-center gap-2 mb-2.5">
           <ControlBtn icon={SkipForward} label="Skip" onClick={() => send("Let's skip this one.", "skip")} disabled={thinking || done} />
-          <ControlBtn icon={RotateCcw} label="Repeat" onClick={() => (lastReva ? speak(lastReva) : send("Can you repeat that?", "repeat"))} disabled={thinking || done} />
-          <ControlBtn
-            icon={listening ? MicOff : Mic}
-            label={listening ? "Stop" : "Talk"}
+          <button
             onClick={listening ? stopListening : startListening}
             disabled={thinking || done}
-            primary
-          />
+            aria-label={listening ? "Stop listening" : "Talk to Reva"}
+            className="relative h-14 w-14 rounded-full flex items-center justify-center text-primary-foreground disabled:opacity-40 active:scale-95 transition"
+            style={{
+              background: "linear-gradient(135deg, oklch(0.85 0.16 190), oklch(0.82 0.18 155))",
+              boxShadow: listening
+                ? "0 0 0 8px oklch(0.82 0.16 190 / 12%), 0 0 40px -6px oklch(0.82 0.16 190 / 80%)"
+                : "0 0 30px -8px oklch(0.82 0.16 190 / 70%)",
+            }}
+          >
+            {listening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+          </button>
+          <ControlBtn icon={RotateCcw} label="Repeat" onClick={() => (lastReva ? speak(lastReva) : send("Can you repeat that?", "repeat"))} disabled={thinking || done} />
         </div>
 
-        <div className="flex items-end gap-2 rounded-3xl glass p-2">
+        {/* type */}
+        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] p-1.5">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -395,7 +508,7 @@ export function RevaOnboarding({
             }}
             placeholder="Or type your answer…"
             disabled={done}
-            className="flex-1 bg-transparent outline-none px-3 py-2 text-sm placeholder:text-muted-foreground"
+            className="flex-1 bg-transparent outline-none px-3 py-1.5 text-sm placeholder:text-muted-foreground"
           />
           <button
             onClick={() => {
@@ -406,12 +519,41 @@ export function RevaOnboarding({
             }}
             disabled={!input.trim() || thinking || done}
             aria-label="Send answer"
-            className="h-10 w-10 rounded-full flex items-center justify-center text-primary-foreground disabled:opacity-50"
-            style={{ background: "var(--gradient-hero)" }}
+            className="h-9 w-9 rounded-full flex items-center justify-center text-primary-foreground disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg, oklch(0.85 0.16 190), oklch(0.82 0.18 155))" }}
           >
             {thinking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </button>
         </div>
+
+        {/* what Reva knows */}
+        {answered.length > 0 && (
+          <div className="mt-2">
+            <button
+              onClick={() => setShowKnown((s) => !s)}
+              className="mx-auto flex items-center gap-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
+            >
+              What Reva knows · {answered.length}
+              {showKnown ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+            </button>
+            {showKnown && (
+              <div className="mt-2 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto animate-fade-in">
+                {answered.map(([k, v]) => (
+                  <button
+                    key={k}
+                    onClick={() => send(`Let's change my ${FIELD_LABELS[k] ?? k}.`, `edit:${k}`)}
+                    className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px]"
+                  >
+                    <Check className="h-3 w-3 text-[oklch(0.82_0.16_155)]" />
+                    <span className="text-muted-foreground">{FIELD_LABELS[k] ?? k}:</span>
+                    <span className="font-medium">{fmt(k, v)}</span>
+                    <Pencil className="h-2.5 w-2.5 opacity-50" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -422,22 +564,17 @@ function ControlBtn({
   label,
   onClick,
   disabled,
-  primary,
 }: {
   icon: any;
   label: string;
   onClick: () => void;
   disabled?: boolean;
-  primary?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition active:scale-95 disabled:opacity-40 ${
-        primary ? "text-primary-foreground glow-ring" : "glass"
-      }`}
-      style={primary ? { background: "var(--gradient-hero)" } : undefined}
+      className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-[11px] text-muted-foreground transition active:scale-95 disabled:opacity-40"
     >
       <Icon className="h-3.5 w-3.5" /> {label}
     </button>
