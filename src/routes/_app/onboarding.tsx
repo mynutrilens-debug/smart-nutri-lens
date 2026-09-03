@@ -39,9 +39,11 @@ const GOALS: { v: Goal; l: string; emoji: string }[] = [
   { v: "maintenance", l: "Maintenance", emoji: "🌿" },
 ];
 
-// 5 practical, affordable meal preferences
+// Dietary preferences
 const DIETS = [
-  "Vegetarian", "Eggetarian", "Non-Veg (No Beef)", "Vegan", "High-Protein",
+  "Vegetarian", "Eggetarian", "Non-Veg (No Beef)", "Non-Veg", "Vegan",
+  "High-Protein", "Keto", "Low-Carb", "Diabetic-Friendly", "Gluten-Free",
+  "Pescatarian", "Jain",
 ];
 const REGIONS = ["India", "Global", "Middle East", "East Asia", "Europe", "Americas"];
 const INDIAN_CUISINES = ["Maharashtrian", "Kerala", "Tamil", "Rajasthani", "Punjabi", "Bengali", "Gujarati", "South Indian", "North Indian", "Hyderabadi", "Goan"];
@@ -49,7 +51,7 @@ const COMMON_ALLERGIES = ["Peanuts", "Tree nuts", "Dairy", "Eggs", "Gluten", "So
 const COMMON_MEDICAL = ["Diabetes", "Hypertension", "PCOS", "Thyroid", "Cholesterol", "Asthma", "None"];
 const DEFICIENCIES = ["Vitamin B12", "Vitamin D3", "Iron", "Calcium", "Magnesium", "Zinc", "Omega-3", "Vitamin C", "Folate", "Protein"];
 const LIFESTYLES = ["Desk-job", "Field-work", "Student", "Home-maker", "Shift-work", "Traveller"];
-const MEAL_FREQ = [3, 4, 5, 6];
+const MEAL_FREQ = [2, 3, 4, 5];
 
 function Onboarding() {
   const navigate = useNavigate();
