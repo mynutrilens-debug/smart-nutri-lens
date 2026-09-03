@@ -146,6 +146,38 @@ function Onboarding() {
   const next = () => setStep((s) => Math.min(TOTAL, s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
 
+  // Reva → form state, then straight to the 4-week roadmap.
+  const applyReva = (c: Record<string, any>) => {
+    if (c.display_name) setName(String(c.display_name));
+    if (c.gender === "male" || c.gender === "female") setGender(c.gender);
+    if (Number(c.age) > 0) setAge(Math.round(Number(c.age)));
+    if (Number(c.height_cm) > 0) { setUnitH("cm"); setHeight(Math.round(Number(c.height_cm))); }
+    if (Number(c.weight_kg) > 0) { setUnitW("kg"); setWeight(Math.round(Number(c.weight_kg))); }
+    if (ACTIVITY.some((a) => a.v === c.activity_level)) setActivity(c.activity_level);
+    if (GOALS.some((g) => g.v === c.physique_goal)) setGoal(c.physique_goal);
+    if (c.diet_preference) setDiet(String(c.diet_preference));
+    if (c.region) setRegion(String(c.region));
+    if (c.cuisine) setCuisine(String(c.cuisine));
+    if (Array.isArray(c.allergies)) setAllergies(c.allergies.map(String));
+    if (Array.isArray(c.medical_conditions)) setMedical(c.medical_conditions.map(String));
+    if (Array.isArray(c.deficiencies)) setDeficiencies(c.deficiencies.map(String));
+    if (c.lifestyle) setLifestyle(String(c.lifestyle));
+    if (Number(c.sleep_hours) > 0) setSleepHours(Number(c.sleep_hours));
+    if (Number(c.water_intake_l) > 0) setWaterL(Number(c.water_intake_l));
+    setMode("form");
+    setStep(4);
+  };
+
+  if (mode === "voice") {
+    return (
+      <RevaOnboarding
+        initialName={profile?.display_name ?? undefined}
+        onComplete={applyReva}
+        onSwitchToForm={() => setMode("form")}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen pb-32 px-5 pt-10 relative overflow-hidden">
       {/* ambient */}
