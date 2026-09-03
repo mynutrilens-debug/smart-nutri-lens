@@ -39,21 +39,15 @@ const GOALS: { v: Goal; l: string; emoji: string }[] = [
   { v: "maintenance", l: "Maintenance", emoji: "🌿" },
 ];
 
+// 5 practical, affordable meal preferences
 const DIETS = [
-  "Non-Veg (No Beef)", "Non-Veg", "Vegetarian", "Eggetarian", "Vegan",
-  "Keto", "Diabetic-Friendly", "High-Protein", "Low-Carb", "Mediterranean",
-  "Jain", "Pescatarian",
+  "Vegetarian", "Eggetarian", "Non-Veg (No Beef)", "Vegan", "High-Protein",
 ];
 const REGIONS = ["India", "Global", "Middle East", "East Asia", "Europe", "Americas"];
 const INDIAN_CUISINES = ["Maharashtrian", "Kerala", "Tamil", "Rajasthani", "Punjabi", "Bengali", "Gujarati", "South Indian", "North Indian", "Hyderabadi", "Goan"];
 const COMMON_ALLERGIES = ["Peanuts", "Tree nuts", "Dairy", "Eggs", "Gluten", "Soy", "Shellfish", "Fish"];
 const COMMON_MEDICAL = ["Diabetes", "Hypertension", "PCOS", "Thyroid", "Cholesterol", "Asthma", "None"];
 const DEFICIENCIES = ["Vitamin B12", "Vitamin D3", "Iron", "Calcium", "Magnesium", "Zinc", "Omega-3", "Vitamin C", "Folate", "Protein"];
-const BUDGETS: { v: "low" | "medium" | "high"; l: string; d: string }[] = [
-  { v: "low", l: "Budget", d: "Lentils, eggs, seasonal veg" },
-  { v: "medium", l: "Balanced", d: "Add dairy, meats, fruits" },
-  { v: "high", l: "Premium", d: "Salmon, berries, whey" },
-];
 const LIFESTYLES = ["Desk-job", "Field-work", "Student", "Home-maker", "Shift-work", "Traveller"];
 const MEAL_FREQ = [3, 4, 5, 6];
 
@@ -84,7 +78,6 @@ function Onboarding() {
   const [cuisine, setCuisine] = useState("Maharashtrian");
   const [allergies, setAllergies] = useState<string[]>([]);
   const [medical, setMedical] = useState<string[]>([]);
-  const [budget, setBudget] = useState<"low" | "medium" | "high">("medium");
   const [lifestyle, setLifestyle] = useState<string>("Desk-job");
   const [mealFrequency, setMealFrequency] = useState<number>(4);
   const [sleepHours, setSleepHours] = useState<number>(7);
@@ -132,7 +125,7 @@ function Onboarding() {
         region,
         cuisine: region === "India" ? cuisine : "",
         allergies, medical_conditions: medical,
-        budget, lifestyle,
+        lifestyle,
         meal_frequency: mealFrequency,
         sleep_hours: sleepHours,
         water_intake_l: waterL,
@@ -149,7 +142,7 @@ function Onboarding() {
     onError: (e: any) => toast.error(e.message ?? "Failed to save"),
   });
 
-  const TOTAL = 6;
+  const TOTAL = 4;
   const next = () => setStep((s) => Math.min(TOTAL, s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
 
