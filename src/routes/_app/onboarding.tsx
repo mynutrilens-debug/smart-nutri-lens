@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { WheelPicker } from "@/components/mobile/WheelPicker";
 import { FitnessRoadmap } from "@/components/mobile/FitnessRoadmap";
+import { RevaOnboarding } from "@/components/mobile/RevaOnboarding";
 import { computeNutritionTargets } from "@/lib/nutrition-engine";
 
 
