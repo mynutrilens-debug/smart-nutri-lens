@@ -51,7 +51,6 @@ const COMMON_ALLERGIES = ["Peanuts", "Tree nuts", "Dairy", "Eggs", "Gluten", "So
 const COMMON_MEDICAL = ["Diabetes", "Hypertension", "PCOS", "Thyroid", "Cholesterol", "Asthma", "None"];
 const DEFICIENCIES = ["Vitamin B12", "Vitamin D3", "Iron", "Calcium", "Magnesium", "Zinc", "Omega-3", "Vitamin C", "Folate", "Protein"];
 const LIFESTYLES = ["Desk-job", "Field-work", "Student", "Home-maker", "Shift-work", "Traveller"];
-const MEAL_FREQ = [2, 3, 4, 5];
 
 function Onboarding() {
   const navigate = useNavigate();
@@ -81,7 +80,6 @@ function Onboarding() {
   const [allergies, setAllergies] = useState<string[]>([]);
   const [medical, setMedical] = useState<string[]>([]);
   const [lifestyle, setLifestyle] = useState<string>("Desk-job");
-  const [mealFrequency, setMealFrequency] = useState<number>(4);
   const [sleepHours, setSleepHours] = useState<number>(7);
   const [waterL, setWaterL] = useState<number>(2.5);
   const [deficiencies, setDeficiencies] = useState<string[]>([]);
@@ -128,7 +126,6 @@ function Onboarding() {
         cuisine: region === "India" ? cuisine : "",
         allergies, medical_conditions: medical,
         lifestyle,
-        meal_frequency: mealFrequency,
         sleep_hours: sleepHours,
         water_intake_l: waterL,
         deficiencies,
@@ -265,13 +262,6 @@ function Onboarding() {
             ))}
           </div>
 
-          <label className="block mt-5 text-xs text-muted-foreground">Meals per day</label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {MEAL_FREQ.map((n) => (
-              <Chip key={n} active={mealFrequency === n} onClick={() => setMealFrequency(n)}>{n} meals</Chip>
-            ))}
-          </div>
-
           <label className="block mt-5 text-xs text-muted-foreground">Allergies (tap any)</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {COMMON_ALLERGIES.map((a) => (
@@ -331,7 +321,7 @@ function Onboarding() {
           computed={computed} bmiState={bmiState} goal={goal}
           goalLabel={GOALS.find((g) => g.v === goal)?.l ?? "Your goal"}
           activity={activity} sleepHours={sleepHours} waterL={waterL}
-          diet={diet} mealFrequency={mealFrequency}
+          diet={diet} mealFrequency={5}
           deficiencies={deficiencies} medical={medical}
         />
       )}

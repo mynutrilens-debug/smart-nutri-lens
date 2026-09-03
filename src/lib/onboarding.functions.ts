@@ -22,7 +22,6 @@ const OnboardingInput = z.object({
   medical_conditions: z.array(z.string().max(60)).max(20).default([]),
   // New lifestyle & personalization inputs
   lifestyle: z.string().max(40).optional().nullable(),
-  meal_frequency: z.number().int().min(2).max(5).optional().nullable(),
   sleep_hours: z.number().min(3).max(12).optional().nullable(),
   water_intake_l: z.number().min(0.5).max(8).optional().nullable(),
   workout_habit: z.string().max(40).optional().nullable(),
@@ -91,7 +90,6 @@ export const saveOnboarding = createServerFn({ method: "POST" })
         allergies: data.allergies,
         medical_conditions: data.medical_conditions,
         lifestyle: data.lifestyle ?? null,
-        meal_frequency: data.meal_frequency ?? null,
         sleep_hours: data.sleep_hours ?? null,
         water_intake_l: data.water_intake_l ?? null,
         workout_habit: data.workout_habit ?? null,
@@ -342,8 +340,9 @@ MEAL / PERSONALIZATION RULES
 - Lifestyle-aware: ${(p as any).lifestyle ?? "generic"} — desk-job: lighter carbs midday, more protein+fiber; field-work/labor: bigger complex-carb lunch; student: quick 5-min prep options.
 - Workout habit: ${(p as any).workout_habit ?? "unspecified"} — include pre & post workout meals for muscle_gain/bulking/recomp/fat_loss trainees; skip for sedentary.
 - Shakes / drinks tuned to goal:
-  * muscle_gain / bulking / underweight → nutritious HIGH-CALORIE shakes: banana + oats + milk + peanut butter; dates + almonds + banana + milk; mango + oats + milk/curd; sapota (chikoo) + milk + nuts; add whey only if available.
-  * weight_loss / fat_loss → LIGHT low-calorie drinks: warm lemon water, jeera (cumin) water, mint-lemon water, cinnamon water, unsweetened green tea, plain buttermilk. Describe these ONLY as low-calorie, hydrating, appetite-supporting or digestion-friendly — NEVER claim any drink burns fat or melts fat; fat loss comes from the overall calorie deficit.
+  * ALWAYS return at least 3 entries in "shakes" — for fat loss AND for weight/muscle gain.
+  * muscle_gain / bulking / weight gain / underweight → nutritious HIGH-CALORIE whole-food shakes: banana + oats + milk + peanut butter; dates + almonds + banana + milk; mango + oats + milk/curd; sapota (chikoo) + milk + nuts; ragi malt with milk & jaggery; add whey only if available.
+  * weight_loss / fat_loss → LIGHT low-calorie "fat-burner style" metabolism & digestion drinks: warm lemon water, jeera (cumin) water, mint-lemon water, cinnamon water, ajwain water, unsweetened green tea, plain buttermilk, ACV in water; plus 1 high-protein low-cal shake (whey/curd + water/skim milk + berries or banana half) for satiety. Describe them ONLY as low-calorie, hydrating, appetite-supporting, digestion- or metabolism-friendly — NEVER claim any drink burns or melts fat; fat loss comes from the overall calorie deficit.
   * maintenance / recomp → balanced protein smoothies
   * diabetic-friendly → unsweetened, low-GI only
 - Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
