@@ -88,7 +88,7 @@ export function VoiceOrb({
       ))}
 
       {/* orbiting audio dots */}
-      <div className="absolute inset-0" style={{ animation: "spin 18s linear infinite" }}>
+      <div className="absolute inset-0 animate-spin" style={{ animationDuration: "18s" }}>
         {Array.from({ length: DOTS }).map((_, i) => {
           const a = (i / DOTS) * Math.PI * 2;
           const wobble = 0.55 + 0.45 * Math.abs(Math.sin(i * 1.7));
