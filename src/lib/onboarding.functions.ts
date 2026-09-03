@@ -21,7 +21,6 @@ const OnboardingInput = z.object({
   allergies: z.array(z.string().max(40)).max(20).default([]),
   medical_conditions: z.array(z.string().max(60)).max(20).default([]),
   // New lifestyle & personalization inputs
-  budget: z.enum(["low", "medium", "high"]).optional().nullable(),
   lifestyle: z.string().max(40).optional().nullable(),
   meal_frequency: z.number().int().min(2).max(6).optional().nullable(),
   sleep_hours: z.number().min(3).max(12).optional().nullable(),
@@ -91,7 +90,6 @@ export const saveOnboarding = createServerFn({ method: "POST" })
         cuisine: data.cuisine ?? null,
         allergies: data.allergies,
         medical_conditions: data.medical_conditions,
-        budget: data.budget ?? null,
         lifestyle: data.lifestyle ?? null,
         meal_frequency: data.meal_frequency ?? null,
         sleep_hours: data.sleep_hours ?? null,
