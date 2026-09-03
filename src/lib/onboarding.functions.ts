@@ -341,7 +341,8 @@ MEAL / PERSONALIZATION RULES
 - Cover daily micronutrient needs: leafy greens (iron/folate), dairy or fortified plant milk (calcium/B12), colored veg/fruit (A, C, K), nuts/seeds (Mg, Zn, omega-3), whole grains (B-complex, fiber ≥25g).
 - Hydration: recommend water intake in liters (35 ml/kg body weight, adjust up for active users). User's goal is ${(p as any).water_intake_l ?? "auto"}L.
 - Sleep-aware: if sleep <6h (self-reported ${(p as any).sleep_hours ?? "?"}h, tracked avg min: ${sleepAvgMin}), reduce caffeine after noon, add magnesium/tryptophan-rich dinner (banana, oats, dairy, turkey/paneer).
-- Budget-aware: for "${(p as any).budget ?? "medium"}" budget — low → lentils/eggs/seasonal veg/local grains; medium → add lean meats, dairy, seasonal fruits; high → salmon, berries, quinoa, whey/creatine ok.
+- AFFORDABILITY (always): build the plan on cheap, everyday, locally available staples — dals, chana, rajma, soya chunks, eggs, curd/milk, paneer, peanuts, seasonal veg & fruit, atta/rice/millets/oats. No exotic or premium ingredients (salmon, berries, quinoa, imported superfoods) and no mandatory supplements; mention whey/creatine only as an optional extra.
+- EFFECTIVENESS FOCUS: the plan must be optimized for fat loss and lean muscle gain — high protein at every main meal, high fiber and volume for satiety in a deficit, and calorie-dense whole foods when the goal is gain.
 - Lifestyle-aware: ${(p as any).lifestyle ?? "generic"} — desk-job: lighter carbs midday, more protein+fiber; field-work/labor: bigger complex-carb lunch; student: quick 5-min prep options.
 - Workout habit: ${(p as any).workout_habit ?? "unspecified"} — include pre & post workout meals for muscle_gain/bulking/recomp/fat_loss trainees; skip for sedentary.
 - Shakes / drinks tuned to goal:
