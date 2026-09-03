@@ -1,4 +1,4 @@
-// Maps a user's preferred meal frequency to the exact meal slots a plan may contain.
+// Every plan uses the same fixed 5-meal structure (fat loss, weight gain, muscle gain).
 export const ALL_MEAL_SLOTS = [
   "breakfast",
   "pre_workout",
@@ -19,19 +19,18 @@ const SLOT_LABEL: Record<MealSlot, string> = {
   dinner: "Dinner",
 };
 
-/**
- * Returns the meal slots for a given frequency, in chronological order.
- * Slots are added in priority order: 3 main meals → snack → post → pre workout.
- */
-export function mealSlotsFor(frequency?: number | null, trains = true): MealSlot[] {
-  const freq = Math.max(2, Math.min(5, Math.round(Number(frequency) || 4)));
-  const order: MealSlot[] = trains
-    ? ["breakfast", "lunch", "dinner", "snack", "post_workout", "pre_workout"]
-    : ["breakfast", "lunch", "dinner", "snack"];
-  const picked =
-    freq === 2 ? (["lunch", "dinner"] as MealSlot[]) : order.slice(0, freq);
-  return ALL_MEAL_SLOTS.filter((s) => picked.includes(s));
+/** The fixed 5 meals every plan contains, in chronological order. */
+export const FIXED_MEAL_SLOTS: MealSlot[] = [
+  "breakfast",
+  "post_workout",
+  "lunch",
+  "snack",
+  "dinner",
+];
 
+/** Always returns the fixed 5-meal structure. */
+export function mealSlotsFor(): MealSlot[] {
+  return [...FIXED_MEAL_SLOTS];
 }
 
 export function mealSlotLabels(slots: MealSlot[]): string {

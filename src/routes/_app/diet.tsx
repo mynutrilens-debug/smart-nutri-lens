@@ -170,7 +170,7 @@ function Diet() {
   const allowedSlots: string[] =
     Array.isArray(plan?.meal_slots) && plan.meal_slots.length
       ? plan.meal_slots
-      : mealSlotsFor(dash?.profile?.meal_frequency, true);
+      : mealSlotsFor();
   const meals = plan?.meals ? pruneMealsToSlots(plan.meals, allowedSlots as any) : null;
   const mealOrder: { k: string; label: string; icon: any; color: string }[] = [
     { k: "breakfast", label: "Breakfast", icon: Sunrise, color: "#F59E0B" },
