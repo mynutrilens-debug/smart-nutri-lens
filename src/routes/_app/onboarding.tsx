@@ -65,7 +65,9 @@ function Onboarding() {
     if (profile?.onboarded_at && !edit) navigate({ to: "/home", replace: true });
   }, [profile?.onboarded_at, edit, navigate]);
 
-  const [mode, setMode] = useState<"voice" | "form">(edit ? "form" : "voice");
+  // Reva voice onboarding temporarily disabled (AI token usage)
+  const REVA_ENABLED = false;
+  const [mode, setMode] = useState<"voice" | "form">(!REVA_ENABLED || edit ? "form" : "voice");
   const [step, setStep] = useState(0);
   const [name, setName] = useState(profile?.display_name ?? "");
   const [gender, setGender] = useState<Gender>("male");
@@ -169,7 +171,7 @@ function Onboarding() {
     setStep(4);
   };
 
-  if (mode === "voice") {
+  if (REVA_ENABLED && mode === "voice") {
     return (
       <RevaOnboarding
         initialName={profile?.display_name ?? undefined}
