@@ -67,21 +67,48 @@ export const createSquad = createServerFn({ method: "POST" })
     return squad;
   });
 
+/** Accepts a raw code, a "FIT-ABC123" style code, or a full invite link. */
+export function normalizeSquadCode(raw: string): string {
+  let s = (raw ?? "").trim();
+  // Pull the last path segment out of an invite link.
+  const linkMatch = s.match(/squads\/join\/([^/?#\s]+)/i);
+  if (linkMatch?.[1]) s = linkMatch[1];
+  s = s.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  // Strip a leading "FIT"/"MNL" prefix when the remainder is still a full code.
+  const pref = s.match(/^(?:FIT|MNL)([A-Z0-9]{6,})$/);
+  if (pref?.[1]) s = pref[1];
+  return s;
+}
+
 export const joinSquadByCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ code: z.string().trim().min(4).max(12) }).parse(d))
+  .inputValidator((d: unknown) => {
+    const parsed = z.object({ code: z.string().min(1).max(200) }).parse(d);
+    const code = normalizeSquadCode(parsed.code);
+    if (code.length < 4 || code.length > 12) throw new Error("Enter a valid invite code");
+    return { code };
+  })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const code = data.code.toUpperCase();
-    // Owner is exempt from RLS SELECT restriction; general member can only see after joining.
-    // We insert first with a permissive RLS check on user_id = auth.uid(); to find squad_id we need a lookup.
-    // Use a public lookup via service? Simpler: allow a SELECT policy on squads by code.
-    // Workaround: try inserting via subquery.
-    const { data: squad, error: findErr } = await supabase.rpc("find_squad_by_code", { _code: code }).single();
-    if (findErr || !squad) throw new Error("Squad not found");
+    const code = data.code;
+    // Lookup runs through a SECURITY DEFINER function so non-members can resolve the code.
+    const { data: squad, error: findErr } = await supabase
+      .rpc("find_squad_by_code", { _code: code })
+      .maybeSingle();
+    if (findErr) throw new Error("Could not look up that code. Please try again.");
+    if (!squad) throw new Error("No squad found for that code");
 
     const squadRow = squad as { id: string; ends_at: string; finalized_at: string | null };
     if (squadRow.finalized_at) throw new Error("This challenge has ended");
+
+    // Already a member? Treat as success so shared links are idempotent.
+    const { data: existing } = await supabase
+      .from("squad_members")
+      .select("id")
+      .eq("squad_id", squadRow.id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (existing) return { squad_id: squadRow.id, already_member: true };
 
     const { data: profile } = await supabase.from("profiles").select("display_name").eq("user_id", userId).maybeSingle();
     const { error } = await supabase.from("squad_members").insert({
@@ -89,7 +116,8 @@ export const joinSquadByCode = createServerFn({ method: "POST" })
       user_id: userId,
       display_name: profile?.display_name ?? "Athlete",
     });
-    if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+    const isDuplicate = error?.code === "23505" || /duplicate/i.test(error?.message ?? "");
+    if (error && !isDuplicate) throw new Error(error.message);
     if (!error) {
       try {
         const { notifySquadJoin } = await import("@/lib/notify.server");
