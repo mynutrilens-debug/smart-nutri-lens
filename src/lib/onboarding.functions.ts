@@ -367,7 +367,7 @@ Return ONLY this JSON (no markdown). EVERY meal MUST include the "micronutrients
   "deficiency_focus": ["list of deficiencies this plan targets"],
   "meals": ${mealsSchema},
   "shakes": [
-    { "name": "", "ingredients": "", "calories": 0, "protein_g": 0, "when": "morning|pre|post|evening" }
+    { "name": "", "ingredients": "exact portions", "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "slot": "pre_workout|post_workout|anytime", "label": "Pre-Workout|Post-Workout|Anytime", "when": "30-45 min before workout|within 30-45 min after workout|morning|evening", "why": "1 short line on why this fits the goal" }
   ],
   "tips": ["3-5 short, goal & cuisine specific tips — call out any deficiency being addressed"],
   "workout": [
