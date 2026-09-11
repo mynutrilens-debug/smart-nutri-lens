@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { createSquad, joinSquadByCode, listMySquads } from "@/lib/squad.functions";
+import { createSquad, joinSquadByCode, listMySquads, normalizeSquadCode } from "@/lib/squad.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { SquadDetailPanel } from "@/components/mobile/SquadDetailPanel";
 import { Users, Trophy, Plus, ArrowLeft, Sparkles, Target, ChevronRight, ChevronDown, Flame, Copy, Lock, Globe, Gift, Crown, Zap, Calendar, Radio } from "lucide-react";
@@ -76,13 +76,13 @@ function SquadsPage() {
   });
 
   const joinMut = useMutation({
-    mutationFn: () => joinFn({ data: { code: code.trim() } }),
+    mutationFn: () => joinFn({ data: { code } }),
     onSuccess: (r: any) => {
-      toast.success("Joined!");
+      toast.success(r?.already_member ? "You're already in this squad" : "Joined!");
       qc.invalidateQueries({ queryKey: ["squads"] });
       navigate({ to: "/squads/$squadId", params: { squadId: r.squad_id } });
     },
-    onError: (e: any) => toast.error(e.message ?? "Invalid code"),
+    onError: (e: any) => toast.error(e?.message ?? "Invalid code"),
   });
 
   return (
@@ -310,14 +310,27 @@ function SquadsPage() {
         <section className="space-y-4 animate-slide-up">
           <div className="rounded-3xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-5">
             <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Invite code</label>
-            <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={12} placeholder="ABC123" className="mt-1 w-full rounded-2xl bg-white/[0.04] border border-white/[0.06] px-3 py-4 text-lg font-mono tracking-widest text-center focus:outline-none focus:border-emerald-400/40" />
-            <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1.5"><Target className="h-3 w-3" /> 6 characters, letters + numbers</p>
+            <input
+              value={code}
+              onChange={(e) => setCode(normalizeSquadCode(e.target.value))}
+              onPaste={(e) => {
+                e.preventDefault();
+                setCode(normalizeSquadCode(e.clipboardData.getData("text")));
+              }}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              maxLength={12}
+              placeholder="ABC123"
+              className="mt-1 w-full rounded-2xl bg-white/[0.04] border border-white/[0.06] px-3 py-4 text-lg font-mono tracking-widest text-center focus:outline-none focus:border-emerald-400/40"
+            />
+            <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1.5"><Target className="h-3 w-3" /> 6 characters, letters + numbers — you can also paste the full invite link</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <button onClick={() => setMode("none")} className="rounded-2xl py-3 border border-white/[0.06] bg-white/[0.03] text-sm">Cancel</button>
             <button
               onClick={() => joinMut.mutate()}
-              disabled={joinMut.isPending || code.trim().length < 4}
+              disabled={joinMut.isPending || code.length < 4}
               className="rounded-2xl py-3 text-sm font-semibold bg-gradient-to-r from-emerald-400 to-cyan-400 text-black shadow-[0_0_24px_rgba(52,211,153,0.4)] disabled:opacity-50"
             >
               {joinMut.isPending ? "Joining…" : "Join squad"}
