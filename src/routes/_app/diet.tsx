@@ -299,18 +299,56 @@ function Diet() {
                 {Array.isArray(plan?.shakes) && plan.shakes.length > 0 && (
                   <div className="pt-1">
                     <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                      <GlassWater className="h-3 w-3 text-emerald-400" /> Recommended shakes
+                      <GlassWater className="h-3 w-3 text-emerald-400" /> Shakes &amp; drinks
                     </div>
                     <div className="space-y-1.5">
-                      {plan.shakes.map((s: any, i: number) => (
-                        <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-semibold">{s.name}</span>
-                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{s.when}</span>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{s.ingredients}</p>
-                        </div>
-                      ))}
+                      {[...plan.shakes]
+                        .sort((a: any, b: any) => {
+                          const rank = (x: any) =>
+                            x?.slot === "pre_workout" ? 0 : x?.slot === "post_workout" ? 1 : 2;
+                          return rank(a) - rank(b);
+                        })
+                        .map((s: any, i: number) => {
+                          const isPre = s?.slot === "pre_workout";
+                          const isPost = s?.slot === "post_workout";
+                          const label = s?.label || (isPre ? "Pre-Workout" : isPost ? "Post-Workout" : "Anytime");
+                          return (
+                            <div
+                              key={i}
+                              className={`rounded-lg border p-2 ${
+                                isPre
+                                  ? "bg-cyan-400/[0.06] border-cyan-400/20"
+                                  : isPost
+                                    ? "bg-emerald-400/[0.06] border-emerald-400/20"
+                                    : "bg-white/[0.03] border-white/5"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[11px] font-semibold">{s.name}</span>
+                                <span
+                                  className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider ${
+                                    isPre
+                                      ? "bg-cyan-400/15 text-cyan-300"
+                                      : isPost
+                                        ? "bg-emerald-400/15 text-emerald-300"
+                                        : "bg-white/5 text-muted-foreground"
+                                  }`}
+                                >
+                                  {label}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{s.ingredients}</p>
+                              <div className="mt-1 flex flex-wrap items-center gap-2 text-[9px] text-muted-foreground">
+                                {s.when && <span className="uppercase tracking-wider">{s.when}</span>}
+                                {typeof s.calories === "number" && s.calories > 0 && <span>{s.calories} kcal</span>}
+                                {typeof s.protein_g === "number" && s.protein_g > 0 && <span>P {s.protein_g}g</span>}
+                              </div>
+                              {s.why && (
+                                <p className="text-[9px] text-muted-foreground/80 mt-1 italic leading-relaxed">{s.why}</p>
+                              )}
+                            </div>
+                          );
+                        })}
                     </div>
                   </div>
                 )}
