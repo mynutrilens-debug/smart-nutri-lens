@@ -76,13 +76,13 @@ function SquadsPage() {
   });
 
   const joinMut = useMutation({
-    mutationFn: () => joinFn({ data: { code: code.trim() } }),
+    mutationFn: () => joinFn({ data: { code } }),
     onSuccess: (r: any) => {
-      toast.success("Joined!");
+      toast.success(r?.already_member ? "You're already in this squad" : "Joined!");
       qc.invalidateQueries({ queryKey: ["squads"] });
       navigate({ to: "/squads/$squadId", params: { squadId: r.squad_id } });
     },
-    onError: (e: any) => toast.error(e.message ?? "Invalid code"),
+    onError: (e: any) => toast.error(e?.message ?? "Invalid code"),
   });
 
   return (
