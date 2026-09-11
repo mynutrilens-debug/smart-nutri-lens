@@ -339,12 +339,15 @@ MEAL / PERSONALIZATION RULES
 - EFFECTIVENESS FOCUS: the plan must be optimized for fat loss and lean muscle gain — high protein at every main meal, high fiber and volume for satiety in a deficit, and calorie-dense whole foods when the goal is gain.
 - Lifestyle-aware: ${(p as any).lifestyle ?? "generic"} — desk-job: lighter carbs midday, more protein+fiber; field-work/labor: bigger complex-carb lunch; student: quick 5-min prep options.
 - Workout habit: ${(p as any).workout_habit ?? "unspecified"} — include pre & post workout meals for muscle_gain/bulking/recomp/fat_loss trainees; skip for sedentary.
-- Shakes / drinks tuned to goal:
-  * ALWAYS return at least 3 entries in "shakes" — for fat loss AND for weight/muscle gain.
-  * muscle_gain / bulking / weight gain / underweight → nutritious HIGH-CALORIE whole-food shakes: banana + oats + milk + peanut butter; dates + almonds + banana + milk; mango + oats + milk/curd; sapota (chikoo) + milk + nuts; ragi malt with milk & jaggery; add whey only if available.
-  * weight_loss / fat_loss → LIGHT low-calorie "fat-burner style" metabolism & digestion drinks: warm lemon water, jeera (cumin) water, mint-lemon water, cinnamon water, ajwain water, unsweetened green tea, plain buttermilk, ACV in water; plus 1 high-protein low-cal shake (whey/curd + water/skim milk + berries or banana half) for satiety. Describe them ONLY as low-calorie, hydrating, appetite-supporting, digestion- or metabolism-friendly — NEVER claim any drink burns or melts fat; fat loss comes from the overall calorie deficit.
-  * maintenance / recomp → balanced protein smoothies
-  * diabetic-friendly → unsweetened, low-GI only
+- Shakes / drinks tuned to goal (HARD REQUIREMENT):
+  * Return 3–5 entries in "shakes". EXACTLY ONE must have "slot": "pre_workout" (label "Pre-Workout") and EXACTLY ONE must have "slot": "post_workout" (label "Post-Workout"); any others use "slot": "anytime" (label "Anytime").
+  * Choose the pre & post picks INTELLIGENTLY from the goal-appropriate list below using the user's goal, training time, remaining calories and macro gaps — pre-workout = quick-digesting carbs + light protein, low fat/fiber; post-workout = fast protein (≥20g, ≥25g for gain) + carbs to refill glycogen.
+  * Every shake must list EXACT household portions in "ingredients" (e.g. "2 bananas, 300 ml milk, 2 tbsp oats, 1 tbsp peanut butter").
+  * muscle_gain / bulking / weight gain / underweight → nutritious HIGH-CALORIE whole-food shakes, e.g. "2 bananas + 300 ml milk + 2 tbsp oats + 1 tbsp peanut butter"; "4 dates + 8 almonds + 1 banana + 250 ml milk"; "1 cup mango + 2 tbsp oats + 200 ml milk/curd"; "2 chikoo + 250 ml milk + 6 cashews"; "3 tbsp ragi malt + 250 ml milk + 1 tsp jaggery"; add 1 scoop whey only if available. Pre = lighter version (banana + milk / dates + milk), Post = the highest-protein calorie-dense one.
+  * weight_loss / fat_loss → LIGHT low-calorie metabolism & digestion drinks, e.g. "warm water + juice of ½ lemon + 1 tsp honey"; "1 tsp jeera soaked overnight in 250 ml water"; mint-lemon water; cinnamon water; ajwain water; unsweetened green tea; 1 glass plain buttermilk; 1 tsp ACV in 250 ml water. Pre = black coffee / green tea / lemon-honey water (low cal, energising); Post = 1 high-protein low-cal shake (1 scoop whey or 150 g curd + water/skim milk + ½ banana). Describe drinks ONLY as low-calorie, hydrating, appetite-supporting, digestion- or metabolism-friendly — NEVER claim any drink burns or melts fat; fat loss comes from the overall calorie deficit.
+  * maintenance / recomp → balanced protein smoothies (curd/milk + fruit + oats), pre lighter, post protein-forward.
+  * diabetic-friendly → unsweetened, low-GI only (no honey, jaggery, mango, dates).
+  * Shake calories must fit INSIDE the daily calorie target (the post-workout shake may BE the post_workout meal — if so, use the same dish name in both).
 - Provide PORTION guidance (grams, katori, pieces, cups) for EVERY item.
 - Never include allergens. Respect medical conditions and diet preference strictly.
 - VARIETY IS CRITICAL: every meal MUST be DIFFERENT from the AVOID list.
