@@ -13,6 +13,16 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/workout")({
   component: Workout,
+  head: () => ({
+    meta: [
+      { title: "Personalized AI Workouts · MyNutriLens" },
+      { name: "description", content: "Build and track a personalized weekly workout plan matched to your goals, fitness level, location, and equipment." },
+      { property: "og:title", content: "Personalized AI Workouts · MyNutriLens" },
+      { property: "og:description", content: "Build and track a personalized weekly workout plan matched to your goals, fitness level, location, and equipment." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 const types = [
@@ -26,6 +36,17 @@ const types = [
 type TypeKey = typeof types[number]["key"];
 
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const HOME_EQUIPMENT = [
+  ["bodyweight", "Bodyweight"],
+  ["dumbbells", "Dumbbells"],
+  ["resistance_bands", "Bands"],
+  ["kettlebell", "Kettlebell"],
+  ["bench", "Bench"],
+  ["pull_up_bar", "Pull-up bar"],
+  ["jump_rope", "Skipping rope"],
+  ["cardio_machine", "Treadmill / bike"],
+] as const;
+type EquipmentKey = typeof HOME_EQUIPMENT[number][0] | "full_gym";
 const todayIdx = () => (new Date().getDay() + 6) % 7;
 
 const NEON = "oklch(0.84 0.20 145)";
@@ -119,9 +140,21 @@ function Workout() {
   // AI generator sheet
   const [aiOpen, setAiOpen] = useState(false);
   const savedInputs: any = aiPlan?.inputs ?? {};
+  const rawSavedEquipment: EquipmentKey[] = Array.isArray(savedInputs.equipment)
+    ? savedInputs.equipment
+    : savedInputs.equipment === "gym"
+      ? ["full_gym"]
+      : savedInputs.equipment === "none"
+        ? ["bodyweight"]
+        : ["bodyweight", "dumbbells", "resistance_bands"];
+  const savedEquipment = savedInputs.workout_type === "gym"
+    ? (["full_gym"] as EquipmentKey[])
+    : savedInputs.workout_type === "hybrid"
+      ? (Array.from(new Set(["bodyweight", ...rawSavedEquipment, "full_gym"])) as EquipmentKey[])
+      : rawSavedEquipment.filter(item => item !== "full_gym");
   const [level, setLevel] = useState<"beginner"|"intermediate"|"pro">(savedInputs.level ?? "intermediate");
   const [workoutType, setWorkoutType] = useState<"home"|"gym"|"hybrid">(savedInputs.workout_type ?? "home");
-  const [equipment, setEquipment] = useState<"none"|"home"|"gym">(savedInputs.equipment ?? "home");
+  const [equipment, setEquipment] = useState<EquipmentKey[]>(savedEquipment);
   const [injuries, setInjuries] = useState<string>(((savedInputs.injuries ?? []) as string[]).join(", "));
 
   const gen = useMutation({
@@ -746,18 +779,34 @@ function Workout() {
                 {(["home","gym","hybrid"] as const).map(w => (
                   <Chip key={w} active={workoutType===w} onClick={() => {
                     setWorkoutType(w);
-                    setEquipment(w === "gym" ? "gym" : w === "hybrid" ? "gym" : "home");
+                    setEquipment(current => {
+                      if (w === "gym") return ["full_gym"];
+                      const homeItems = current.filter(item => item !== "full_gym");
+                      return homeItems.length ? homeItems : ["bodyweight"];
+                    });
                   }}>{w}</Chip>
                 ))}
               </div>
             </Field>
-            <Field label="Equipment">
-              <div className="flex gap-2">
-                {(["none","home","gym"] as const).map(e => (
-                  <Chip key={e} active={equipment===e} onClick={() => setEquipment(e)}>{e}</Chip>
-                ))}
-              </div>
-            </Field>
+            {workoutType === "gym" ? (
+              <Field label="Equipment">
+                <div className="text-sm rounded-2xl bg-white/5 border border-white/10 px-4 py-3">Full gym access</div>
+              </Field>
+            ) : (
+              <Field label={workoutType === "hybrid" ? "Equipment available at home" : "Equipment available"}>
+                <div className="flex flex-wrap gap-2">
+                  {HOME_EQUIPMENT.map(([key, label]) => (
+                    <Chip key={key} active={equipment.includes(key)} onClick={() => setEquipment(current => {
+                      const homeItems = current.filter(item => item !== "full_gym");
+                      const next = homeItems.includes(key) ? homeItems.filter(item => item !== key) : [...homeItems, key];
+                      const safe = next.length ? next : ["bodyweight" as const];
+                      return workoutType === "hybrid" ? [...safe, "full_gym"] : safe;
+                    })}>{label}</Chip>
+                  ))}
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">Only selected equipment will be used for home sessions.</p>
+              </Field>
+            )}
             <Field label="Injuries / limits (optional)">
               <input value={injuries} onChange={e => setInjuries(e.target.value)}
                 placeholder="e.g. knee, lower back"

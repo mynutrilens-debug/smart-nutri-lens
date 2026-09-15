@@ -41,20 +41,50 @@ export const deleteWorkout = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const EquipmentItem = z.enum([
+  "bodyweight",
+  "dumbbells",
+  "resistance_bands",
+  "kettlebell",
+  "bench",
+  "pull_up_bar",
+  "jump_rope",
+  "cardio_machine",
+  "full_gym",
+]);
+
 const AiWorkoutInput = z.object({
   level: z.enum(["beginner", "intermediate", "pro"]).default("beginner"),
   workout_type: z.enum(["home", "gym", "hybrid"]).default("home"),
-  equipment: z.enum(["none", "home", "gym"]).default("home"),
+  equipment: z.preprocess((value) => {
+    // Backward compatibility for older mobile builds and saved plans.
+    if (value === "none") return ["bodyweight"];
+    if (value === "home") return ["bodyweight", "dumbbells", "resistance_bands"];
+    if (value === "gym") return ["full_gym"];
+    return value;
+  }, z.array(EquipmentItem).min(1).max(9)).default(["bodyweight"]),
   injuries: z.array(z.string().max(60)).max(10).default([]),
   force: z.boolean().default(false),
+}).transform((input) => {
+  const equipment = Array.from(new Set(input.equipment));
+  if (input.workout_type === "home") {
+    const homeEquipment = equipment.filter((item) => item !== "full_gym");
+    return { ...input, equipment: homeEquipment.length ? homeEquipment : ["bodyweight" as const] };
+  }
+  if (input.workout_type === "gym") {
+    return { ...input, equipment: ["full_gym"] as (typeof equipment) };
+  }
+  const hybridEquipment = equipment.some((item) => item !== "full_gym") ? equipment : ["bodyweight" as const, ...equipment];
+  return { ...input, equipment: Array.from(new Set([...hybridEquipment, "full_gym" as const])) };
 });
 
 // Signature of the key inputs that should invalidate a cached weekly plan.
-function planSignature(p: any, data: { level: string; workout_type: string; equipment: string; injuries: string[] }) {
+function planSignature(p: any, data: { level: string; workout_type: string; equipment: string[]; injuries: string[] }) {
   return [
+    "workout-v2",
     data.level,
     data.workout_type,
-    data.equipment,
+    [...data.equipment].sort().join("|"),
     [...data.injuries].sort().join("|"),
     p.gender ?? "",
     p.age ?? "",
@@ -64,6 +94,40 @@ function planSignature(p: any, data: { level: string; workout_type: string; equi
     p.activity_level ?? "",
     (p.medical_conditions ?? []).join("|"),
   ].join("~");
+}
+
+function equipmentLabel(items: string[]) {
+  return items.map((item) => item.replaceAll("_", " ")).join(", ");
+}
+
+function incompatibleExercises(plan: any, venue: string, equipment: string[]) {
+  if (venue === "gym") return [];
+  const available = new Set(equipment);
+  const violations: string[] = [];
+  const rules: Array<[RegExp, string]> = [
+    [/\b(cable|machine|smith|barbell|leg press|lat pulldown|pec deck|hack squat)\b/i, "full_gym"],
+    [/\bdumbbell/i, "dumbbells"],
+    [/\b(resistance band|banded)\b/i, "resistance_bands"],
+    [/\bkettlebell/i, "kettlebell"],
+    [/\b(bench press|incline bench|decline bench|bench dip)\b/i, "bench"],
+    [/\b(pull-up|pull up|chin-up|chin up|dead hang)\b/i, "pull_up_bar"],
+    [/\b(jump rope|skipping rope)\b/i, "jump_rope"],
+    [/\b(treadmill|stationary bike|exercise bike|elliptical|rowing machine)\b/i, "cardio_machine"],
+  ];
+  for (const day of Array.isArray(plan?.days) ? plan.days : []) {
+    const isHomeDay = venue === "home" || /\(home\)/i.test(String(day?.focus ?? ""));
+    if (!isHomeDay) continue;
+    for (const exercise of Array.isArray(day?.exercises) ? day.exercises : []) {
+      const name = String(exercise?.name ?? "");
+      for (const [pattern, requirement] of rules) {
+        if (pattern.test(name) && !available.has(requirement)) {
+          violations.push(`${name} requires ${requirement.replaceAll("_", " ")}`);
+          break;
+        }
+      }
+    }
+  }
+  return violations;
 }
 
 export const generateAiWorkout = createServerFn({ method: "POST" })
@@ -94,6 +158,7 @@ export const generateAiWorkout = createServerFn({ method: "POST" })
     const bmiCat = eng?.bmi_category ?? "normal";
     const ap = eng?.activity_plan;
 
+    const equipment = data.equipment.length ? data.equipment : ["bodyweight"];
     const prompt = `You are an elite certified strength & conditioning coach. Build a PERSONALIZED 7-day workout split. Return STRICT JSON only (no markdown).
 
 USER
@@ -101,17 +166,22 @@ USER
 - Height: ${p.height_cm}cm, Weight: ${p.weight_kg}kg, BMI: ${bmi} (${bmiCat})
 - Goal: ${p.physique_goal}, Activity: ${p.activity_level}
 - Level: ${data.level}
-- Training venue: ${data.workout_type} (home = home-only workouts using bodyweight/minimal gear; gym = full gym workouts with machines & barbells; hybrid = mix of home and gym sessions across the week)
-- Equipment: ${data.equipment} (none = bodyweight only; home = dumbbells/bands; gym = full access)
+- Training venue: ${data.workout_type}
+- EXACT available equipment: ${equipmentLabel(equipment)}
 - Injuries / limits (AVOID aggravating): ${data.injuries.join(", ") || "none"}
 - Medical: ${(p.medical_conditions ?? []).join(", ") || "none"}
 - Energy pipeline: BMR ${eng?.bmr ?? "?"} kcal → TDEE ${eng?.tdee ?? "?"} kcal → daily intake target ${eng?.calories ?? p.daily_calorie_goal} kcal (already set by the app)
 - Recommended weekly activity: ${ap?.steps_per_day ?? "8,000–10,000 steps"} · ${ap?.strength_sessions_per_week ?? "3–4 strength sessions"} · ${ap?.cardio_minutes_per_week ?? "150 min cardio"}
 
 RULES
-- VENUE IS A HARD CONSTRAINT: home → no machines/barbells, only bodyweight, dumbbells, bands; gym → use gym machines, barbells, cables; hybrid → label each day as (Home) or (Gym) in "focus" and alternate them sensibly.
+- LOCATION AND EQUIPMENT ARE HARD CONSTRAINTS, NOT SUGGESTIONS.
+- HOME: every exercise must be possible at home using ONLY the exact available-equipment list. Never prescribe machines, cables, Smith machines, barbells, racks, or any unlisted item. If only bodyweight is listed, every exercise must be bodyweight-only.
+- GYM: full gym equipment is available, but choose exercises appropriate to the user's level and limitations.
+- HYBRID: label every training-day focus with "(Home)" or "(Gym)". Home days may use ONLY the listed home equipment; gym days may use full-gym equipment.
 - Match split to goal: muscle_gain → PPL or U/L hypertrophy; fat_loss/weight_loss → full-body + HIIT + cardio; maintenance/recomp → balanced split; underweight → strength bias.
-- Beginner: simpler compound lifts, lower volume. Pro: advanced techniques (drop sets, tempo, supersets).
+- Personalize weekly frequency, volume, intensity, exercise complexity, sets, reps and recovery from age, gender, BMI classification, current activity, fitness goal and level.
+- Beginner: simple stable movements, technique-first cues and lower volume. Intermediate: progressive overload and moderate volume. Pro: advanced techniques only when safe.
+- Injuries and medical conditions are hard exclusions: replace aggravating movements with safe alternatives and mention the accommodation in the exercise tip.
 - 1-2 rest/active-recovery days.
 - Calorie burn estimates are INFORMATIONAL only, realistic for body weight. Never set a fixed "calories to burn" target and never tell the user to eat back calories burned.
 - Respect the recommended activity volume above (fat loss → 7k–10k steps + strength 3–4×/week + 150–300 min cardio; underweight/gain → strength 3–5×/week, avoid excessive cardio).
@@ -139,13 +209,22 @@ Return ONLY this JSON:
   ],
   "tips": ["3-4 short coaching tips"]
 }`;
-    const text = await callGeminiJson({
-      system: "You are an elite strength coach. Output only valid JSON, no markdown.",
-      user: prompt,
-      model: "gemini-2.5-flash-lite",
-    });
-    let plan: any;
-    try { plan = JSON.parse(text); } catch { throw new Error("Workout plan parse failed"); }
+    const generatePlan = async (correction = "") => {
+      const text = await callGeminiJson({
+        system: "You are an elite strength coach. Equipment and location constraints are absolute. Output only valid JSON, no markdown.",
+        user: `${prompt}${correction}`,
+        model: "gemini-2.5-flash-lite",
+      });
+      try { return JSON.parse(text); } catch { throw new Error("Workout plan parse failed"); }
+    };
+
+    let plan: any = await generatePlan();
+    let violations = incompatibleExercises(plan, data.workout_type, equipment);
+    if (violations.length) {
+      plan = await generatePlan(`\n\nCORRECTION REQUIRED: Your previous plan used unavailable equipment (${violations.join("; ")}). Regenerate the complete plan and obey the location/equipment constraints exactly.`);
+      violations = incompatibleExercises(plan, data.workout_type, equipment);
+    }
+    if (violations.length) throw new Error("The workout could not be matched safely to your available equipment. Please try again.");
 
     const now = new Date();
     const saved = {
@@ -153,7 +232,7 @@ Return ONLY this JSON:
       generated_at: now.toISOString(),
       expires_at: new Date(now.getTime() + 7 * 86400000).toISOString(),
       signature,
-      inputs: { level: data.level, workout_type: data.workout_type, equipment: data.equipment, injuries: data.injuries },
+      inputs: { level: data.level, workout_type: data.workout_type, equipment, injuries: data.injuries },
     };
     const merged = { ...((p as any).ai_plan ?? {}), workout_plan: saved };
     await supabase.from("profiles").update({ ai_plan: merged }).eq("user_id", userId);
