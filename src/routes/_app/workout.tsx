@@ -13,6 +13,16 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/workout")({
   component: Workout,
+  head: () => ({
+    meta: [
+      { title: "Personalized AI Workouts · MyNutriLens" },
+      { name: "description", content: "Build and track a personalized weekly workout plan matched to your goals, fitness level, location, and equipment." },
+      { property: "og:title", content: "Personalized AI Workouts · MyNutriLens" },
+      { property: "og:description", content: "Build and track a personalized weekly workout plan matched to your goals, fitness level, location, and equipment." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 const types = [
@@ -130,13 +140,18 @@ function Workout() {
   // AI generator sheet
   const [aiOpen, setAiOpen] = useState(false);
   const savedInputs: any = aiPlan?.inputs ?? {};
-  const savedEquipment: EquipmentKey[] = Array.isArray(savedInputs.equipment)
+  const rawSavedEquipment: EquipmentKey[] = Array.isArray(savedInputs.equipment)
     ? savedInputs.equipment
     : savedInputs.equipment === "gym"
       ? ["full_gym"]
       : savedInputs.equipment === "none"
         ? ["bodyweight"]
         : ["bodyweight", "dumbbells", "resistance_bands"];
+  const savedEquipment = savedInputs.workout_type === "gym"
+    ? (["full_gym"] as EquipmentKey[])
+    : savedInputs.workout_type === "hybrid"
+      ? (Array.from(new Set(["bodyweight", ...rawSavedEquipment, "full_gym"])) as EquipmentKey[])
+      : rawSavedEquipment.filter(item => item !== "full_gym");
   const [level, setLevel] = useState<"beginner"|"intermediate"|"pro">(savedInputs.level ?? "intermediate");
   const [workoutType, setWorkoutType] = useState<"home"|"gym"|"hybrid">(savedInputs.workout_type ?? "home");
   const [equipment, setEquipment] = useState<EquipmentKey[]>(savedEquipment);

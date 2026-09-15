@@ -68,12 +68,14 @@ const AiWorkoutInput = z.object({
 }).transform((input) => {
   const equipment = Array.from(new Set(input.equipment));
   if (input.workout_type === "home") {
-    return { ...input, equipment: equipment.filter((item) => item !== "full_gym") };
+    const homeEquipment = equipment.filter((item) => item !== "full_gym");
+    return { ...input, equipment: homeEquipment.length ? homeEquipment : ["bodyweight" as const] };
   }
   if (input.workout_type === "gym") {
     return { ...input, equipment: ["full_gym"] as (typeof equipment) };
   }
-  return { ...input, equipment: Array.from(new Set([...equipment, "full_gym" as const])) };
+  const hybridEquipment = equipment.some((item) => item !== "full_gym") ? equipment : ["bodyweight" as const, ...equipment];
+  return { ...input, equipment: Array.from(new Set([...hybridEquipment, "full_gym" as const])) };
 });
 
 // Signature of the key inputs that should invalidate a cached weekly plan.
