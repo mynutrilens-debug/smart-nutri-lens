@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          payload: Json
+          processed_at: string
+          provider_subscription_id: string | null
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          payload: Json
+          processed_at?: string
+          provider_subscription_id?: string | null
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          payload?: Json
+          processed_at?: string
+          provider_subscription_id?: string | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -269,40 +293,55 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          billing_reason: string | null
           created_at: string
           currency: string
+          failure_reason: string | null
           id: string
+          paid_at: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
+          provider_event_id: string | null
           raw_event: Json | null
-          razorpay_order_id: string
+          razorpay_order_id: string | null
           razorpay_payment_id: string | null
           razorpay_signature: string | null
+          razorpay_subscription_id: string | null
           status: string
           user_id: string
         }
         Insert: {
           amount: number
+          billing_reason?: string | null
           created_at?: string
           currency?: string
+          failure_reason?: string | null
           id?: string
+          paid_at?: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
+          provider_event_id?: string | null
           raw_event?: Json | null
-          razorpay_order_id: string
+          razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
           razorpay_signature?: string | null
+          razorpay_subscription_id?: string | null
           status?: string
           user_id: string
         }
         Update: {
           amount?: number
+          billing_reason?: string | null
           created_at?: string
           currency?: string
+          failure_reason?: string | null
           id?: string
+          paid_at?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          provider_event_id?: string | null
           raw_event?: Json | null
-          razorpay_order_id?: string
+          razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
           razorpay_signature?: string | null
+          razorpay_subscription_id?: string | null
           status?: string
           user_id?: string
         }
@@ -606,17 +645,30 @@ export type Database = {
       subscriptions: {
         Row: {
           amount_paid: number | null
+          cancel_at_period_end: boolean
+          cancelled_at: string | null
           created_at: string
           currency: string | null
           current_period_expires_at: string | null
           current_period_started_at: string | null
+          first_charge_at: string | null
+          grace_expires_at: string | null
           id: string
+          last_payment_failed_at: string | null
+          last_webhook_at: string | null
+          mandate_status: string
+          next_charge_at: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
+          provider_status: string | null
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
+          razorpay_plan_id: string | null
           razorpay_subscription_id: string | null
+          retry_count: number
           silver_plans_used: number
           status: Database["public"]["Enums"]["subscription_status"]
+          trial_authorized_at: string | null
+          trial_consumed: boolean
           trial_expires_at: string
           trial_started_at: string
           updated_at: string
@@ -624,17 +676,30 @@ export type Database = {
         }
         Insert: {
           amount_paid?: number | null
+          cancel_at_period_end?: boolean
+          cancelled_at?: string | null
           created_at?: string
           currency?: string | null
           current_period_expires_at?: string | null
           current_period_started_at?: string | null
+          first_charge_at?: string | null
+          grace_expires_at?: string | null
           id?: string
+          last_payment_failed_at?: string | null
+          last_webhook_at?: string | null
+          mandate_status?: string
+          next_charge_at?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          provider_status?: string | null
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
+          razorpay_plan_id?: string | null
           razorpay_subscription_id?: string | null
+          retry_count?: number
           silver_plans_used?: number
           status?: Database["public"]["Enums"]["subscription_status"]
+          trial_authorized_at?: string | null
+          trial_consumed?: boolean
           trial_expires_at?: string
           trial_started_at?: string
           updated_at?: string
@@ -642,17 +707,30 @@ export type Database = {
         }
         Update: {
           amount_paid?: number | null
+          cancel_at_period_end?: boolean
+          cancelled_at?: string | null
           created_at?: string
           currency?: string | null
           current_period_expires_at?: string | null
           current_period_started_at?: string | null
+          first_charge_at?: string | null
+          grace_expires_at?: string | null
           id?: string
+          last_payment_failed_at?: string | null
+          last_webhook_at?: string | null
+          mandate_status?: string
+          next_charge_at?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          provider_status?: string | null
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
+          razorpay_plan_id?: string | null
           razorpay_subscription_id?: string | null
+          retry_count?: number
           silver_plans_used?: number
           status?: Database["public"]["Enums"]["subscription_status"]
+          trial_authorized_at?: string | null
+          trial_consumed?: boolean
           trial_expires_at?: string
           trial_started_at?: string
           updated_at?: string
@@ -754,7 +832,14 @@ export type Database = {
         | "custom"
       squad_period: "weekly" | "monthly"
       subscription_plan: "trial" | "silver" | "gold" | "platinum" | "expired"
-      subscription_status: "active" | "expired" | "cancelled" | "pending"
+      subscription_status:
+        | "active"
+        | "expired"
+        | "cancelled"
+        | "pending"
+        | "retrying"
+        | "halted"
+        | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -894,7 +979,15 @@ export const Constants = {
       ],
       squad_period: ["weekly", "monthly"],
       subscription_plan: ["trial", "silver", "gold", "platinum", "expired"],
-      subscription_status: ["active", "expired", "cancelled", "pending"],
+      subscription_status: [
+        "active",
+        "expired",
+        "cancelled",
+        "pending",
+        "retrying",
+        "halted",
+        "completed",
+      ],
     },
   },
 } as const
