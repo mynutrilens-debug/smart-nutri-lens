@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { callGeminiJson } from "@/lib/ai-gemini.server";
+import { requireBillingFeature } from "@/lib/subscription-access";
 
 const RecipeInput = z.object({
   meal_key: z.string().min(1).max(40),
@@ -18,6 +19,7 @@ export const generateRecipe = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => RecipeInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await requireBillingFeature(supabase, userId, "diet", "Recipes require an active subscription with diet access.");
     const { data: p } = await supabase.from("profiles").select("diet_preference,region,cuisine,allergies,medical_conditions").eq("user_id", userId).single();
 
     const diet = (p as any)?.diet_preference || "balanced";

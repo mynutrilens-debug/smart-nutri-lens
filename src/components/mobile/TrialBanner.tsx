@@ -34,9 +34,18 @@ export function TrialBanner() {
         }`}
       >
         <span className="flex items-center gap-1.5 font-semibold">
-          <Clock className="h-3 w-3" /> Trial ends in {formatCountdown(ms)}
+          <Clock className="h-3 w-3" /> {sub.plan} trial · {formatCountdown(ms)}
         </span>
         <span className="font-bold tracking-wide">Upgrade →</span>
+      </Link>
+    );
+  }
+
+  if (sub.status === "retrying") {
+    return (
+      <Link to="/pricing" className="fixed top-2 left-1/2 -translate-x-1/2 z-30 w-[min(420px,calc(100vw-16px))] rounded-full px-3 py-1.5 flex items-center justify-between text-[11px] backdrop-blur-xl bg-amber-500/15 border border-amber-400/30 text-amber-100 shadow-lg">
+        <span className="flex items-center gap-1.5 font-semibold"><Clock className="h-3 w-3" /> Payment retry in progress</span>
+        <span className="font-bold">Manage →</span>
       </Link>
     );
   }

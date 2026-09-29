@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { targetsFromProfile } from "@/lib/nutrition-engine";
 import { callGeminiJson } from "@/lib/ai-gemini.server";
+import { requireBillingFeature } from "@/lib/subscription-access";
 
 const WorkoutInput = z.object({
   name: z.string().min(1).max(200),
@@ -135,6 +136,7 @@ export const generateAiWorkout = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => AiWorkoutInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await requireBillingFeature(supabase, userId, "workout", "AI workout plans require an active Gold or Platinum subscription.");
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
     if (!p) throw new Error("Profile not found");
 

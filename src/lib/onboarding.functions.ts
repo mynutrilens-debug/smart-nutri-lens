@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { callGeminiJson } from "@/lib/ai-gemini.server";
 import { mealSlotsFor, mealSlotLabels, pruneMealsToSlots } from "@/lib/meal-slots";
 import { computeNutritionTargets, targetsFromProfile } from "@/lib/nutrition-engine";
+import { requireBillingFeature } from "@/lib/subscription-access";
 
 
 const OnboardingInput = z.object({
@@ -117,16 +118,8 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
     if (!p) throw new Error("Profile not found");
 
-    // Subscription gating
-    const { data: sub } = await supabase.from("subscriptions").select("*").eq("user_id", userId).maybeSingle();
     const now = new Date();
-    const trialActive = sub?.plan === "trial" && sub?.status === "active" && new Date(sub.trial_expires_at) > now;
-    const goldOrPlat = (sub?.plan === "gold" || sub?.plan === "platinum") && sub?.status === "active" &&
-      (!sub.current_period_expires_at || new Date(sub.current_period_expires_at) > now);
-    const silverActive = sub?.plan === "silver" && sub?.status === "active" && (sub.silver_plans_used ?? 0) < 15;
-    if (!trialActive && !goldOrPlat && !silverActive) {
-      throw new Error("Your plan does not include diet plan generation. Please upgrade.");
-    }
+    await requireBillingFeature(supabase, userId, "diet", "Your plan does not include diet plan generation. Please upgrade.");
 
     // Once-per-day gate: strictly one plan per UTC day. `force` is ignored
     // so users cannot regenerate multiple times in the same day.
