@@ -3,170 +3,198 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const PLAN_PRICES = {
-  silver: { amount: 9900, label: "Silver", inr: 99, recurring: false },
-  gold: { amount: 19900, label: "Gold", inr: 199, recurring: true },
-  platinum: { amount: 39900, label: "Platinum", inr: 399, recurring: true },
+  silver: { amount: 9900, label: "Silver", inr: 99 },
+  gold: { amount: 19900, label: "Gold", inr: 199 },
+  platinum: { amount: 39900, label: "Platinum", inr: 399 },
 } as const;
 
 export type PaidPlan = keyof typeof PLAN_PRICES;
 
-export const getRazorpayPublicKey = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async () => {
-    return { keyId: process.env.RAZORPAY_KEY_ID ?? "" };
+function razorpayAuth() {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (!keyId || !keySecret) throw new Error("Razorpay is not configured");
+  return { keyId, keySecret, authorization: `Basic ${btoa(`${keyId}:${keySecret}`)}` };
+}
+
+async function razorpayRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const { authorization } = razorpayAuth();
+  const response = await fetch(`https://api.razorpay.com/v1${path}`, {
+    ...init,
+    headers: { Authorization: authorization, "Content-Type": "application/json", ...init?.headers },
   });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    console.error("Razorpay request failed", response.status, detail);
+    throw new Error("Razorpay could not start the subscription. Please try again.");
+  }
+  return response.json() as Promise<T>;
+}
+
+async function hmacSha256Hex(secret: string, message: string) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function timingSafeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let difference = 0;
+  for (let index = 0; index < a.length; index += 1) difference |= a.charCodeAt(index) ^ b.charCodeAt(index);
+  return difference === 0;
+}
+
+type RazorpayPlan = { id: string; period: string; interval: number; item: { name: string; amount: number; currency: string } };
+type RazorpaySubscription = {
+  id: string;
+  plan_id: string;
+  status: string;
+  start_at: number;
+  charge_at: number;
+  current_start: number | null;
+  current_end: number | null;
+  notes?: Record<string, string>;
+};
+
+async function findOrCreatePlan(plan: PaidPlan) {
+  const config = PLAN_PRICES[plan];
+  const plans = await razorpayRequest<{ items: RazorpayPlan[] }>("/plans?count=100");
+  const existing = plans.items.find((item) =>
+    item.period === "monthly" && item.interval === 1 && item.item.amount === config.amount &&
+    item.item.currency === "INR" && item.item.name === `MyNutriLens ${config.label}`,
+  );
+  if (existing) return existing.id;
+  const created = await razorpayRequest<RazorpayPlan>("/plans", {
+    method: "POST",
+    body: JSON.stringify({
+      period: "monthly",
+      interval: 1,
+      item: {
+        name: `MyNutriLens ${config.label}`,
+        description: `${config.label} monthly membership`,
+        amount: config.amount,
+        currency: "INR",
+      },
+    }),
+  });
+  return created.id;
+}
 
 export const getMySubscription = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    const { data, error } = await context.supabase.from("subscriptions").select("*").eq("user_id", context.userId).maybeSingle();
     if (error) throw new Error(error.message);
-
-    // Auto-expire logic (client-derived, but also persisted lazily)
-    if (data) {
-      const now = new Date();
-      let needsUpdate = false;
-      const patch: any = {};
-
-      if (data.plan === "trial" && data.status === "active" &&
-          new Date(data.trial_expires_at) < now) {
-        patch.status = "expired";
-        needsUpdate = true;
-      }
-      if ((data.plan === "gold" || data.plan === "platinum") &&
-          data.status === "active" &&
-          data.current_period_expires_at &&
-          new Date(data.current_period_expires_at) < now) {
-        patch.status = "expired";
-        needsUpdate = true;
-      }
-      if (needsUpdate) {
-        await supabase.from("subscriptions").update(patch).eq("user_id", userId);
-        return { ...data, ...patch };
-      }
-    }
     return data;
   });
 
-export const createRazorpayOrder = createServerFn({ method: "POST" })
+export const createRazorpaySubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({ plan: z.enum(["silver", "gold", "platinum"]) }).parse(d),
-  )
+  .inputValidator((input: unknown) => z.object({ plan: z.enum(["silver", "gold", "platinum"]) }).parse(input))
   .handler(async ({ data, context }) => {
-    const { userId, supabase } = context;
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keyId || !keySecret) throw new Error("Razorpay not configured");
+    const { data: current, error } = await context.supabase.from("subscriptions").select("*").eq("user_id", context.userId).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!current) throw new Error("Complete your profile before selecting a plan.");
+    if (current.razorpay_subscription_id && ["active", "pending", "retrying"].includes(current.status)) {
+      throw new Error("You already have a subscription or mandate in progress.");
+    }
+    if (current.trial_consumed) throw new Error("Your free trial has already been used. Please contact support to restart billing.");
 
-    const cfg = PLAN_PRICES[data.plan];
-    const receipt = `rcpt_${Date.now().toString(36)}_${userId.slice(0, 8)}`;
-
-    const res = await fetch("https://api.razorpay.com/v1/orders", {
+    const { keyId } = razorpayAuth();
+    const providerPlanId = await findOrCreatePlan(data.plan);
+    const firstCharge = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expireBy = Math.floor(Date.now() / 1000) + 60 * 60;
+    const providerSubscription = await razorpayRequest<RazorpaySubscription>("/subscriptions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Basic " + btoa(`${keyId}:${keySecret}`),
-      },
       body: JSON.stringify({
-        amount: cfg.amount,
-        currency: "INR",
-        receipt,
-        notes: { user_id: userId, plan: data.plan },
+        plan_id: providerPlanId,
+        total_count: 100,
+        quantity: 1,
+        customer_notify: 1,
+        start_at: Math.floor(firstCharge.getTime() / 1000),
+        expire_by: expireBy,
+        notes: { user_id: context.userId, plan: data.plan, trial_days: "7" },
       }),
     });
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(`Razorpay order failed: ${t}`);
-    }
-    const order = (await res.json()) as { id: string; amount: number; currency: string };
 
-    await supabase.from("payments").insert({
-      user_id: userId,
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: updateError } = await supabaseAdmin.from("subscriptions").update({
       plan: data.plan,
-      razorpay_order_id: order.id,
-      amount: cfg.amount,
-      currency: "INR",
-      status: "created",
-    });
+      status: "pending",
+      provider_status: providerSubscription.status,
+      mandate_status: "authorizing",
+      razorpay_plan_id: providerPlanId,
+      razorpay_subscription_id: providerSubscription.id,
+      trial_started_at: new Date().toISOString(),
+      trial_expires_at: firstCharge.toISOString(),
+      first_charge_at: firstCharge.toISOString(),
+      next_charge_at: firstCharge.toISOString(),
+      cancel_at_period_end: false,
+      cancelled_at: null,
+      retry_count: 0,
+      grace_expires_at: null,
+    }).eq("user_id", context.userId);
+    if (updateError) throw new Error(updateError.message);
 
-    return { orderId: order.id, amount: order.amount, currency: order.currency, plan: data.plan, keyId };
+    return { subscriptionId: providerSubscription.id, keyId, plan: data.plan, firstChargeAt: firstCharge.toISOString() };
   });
 
-async function hmacSha256Hex(secret: string, message: string) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
-  return Array.from(new Uint8Array(sig))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-export const verifyRazorpayPayment = createServerFn({ method: "POST" })
+export const verifyRazorpaySubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({
-      razorpay_order_id: z.string(),
-      razorpay_payment_id: z.string(),
-      razorpay_signature: z.string(),
-      plan: z.enum(["silver", "gold", "platinum"]),
-    }).parse(d),
-  )
+  .inputValidator((input: unknown) => z.object({
+    razorpay_payment_id: z.string().min(1),
+    razorpay_subscription_id: z.string().min(1),
+    razorpay_signature: z.string().min(1),
+  }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const secret = process.env.RAZORPAY_KEY_SECRET;
-    if (!secret) throw new Error("Razorpay not configured");
+    const { data: stored, error } = await context.supabase.from("subscriptions").select("*").eq("user_id", context.userId).maybeSingle();
+    if (error || !stored) throw new Error("Subscription record not found.");
+    if (stored.razorpay_subscription_id !== data.razorpay_subscription_id) throw new Error("Subscription verification failed.");
 
-    const expected = await hmacSha256Hex(
-      secret,
-      `${data.razorpay_order_id}|${data.razorpay_payment_id}`,
-    );
-    if (expected !== data.razorpay_signature) {
-      await supabase.from("payments").update({ status: "failed" })
-        .eq("razorpay_order_id", data.razorpay_order_id);
-      throw new Error("Invalid signature");
+    const { keySecret } = razorpayAuth();
+    const expected = await hmacSha256Hex(keySecret, `${data.razorpay_payment_id}|${data.razorpay_subscription_id}`);
+    if (!timingSafeEqual(expected, data.razorpay_signature)) throw new Error("Subscription verification failed.");
+
+    const provider = await razorpayRequest<RazorpaySubscription>(`/subscriptions/${encodeURIComponent(data.razorpay_subscription_id)}`);
+    if (provider.id !== stored.razorpay_subscription_id || !["authenticated", "active"].includes(provider.status)) {
+      throw new Error("The payment mandate is not authorized yet.");
     }
 
-    await supabase.from("payments").update({
+    const trialEnd = new Date((provider.start_at || provider.charge_at) * 1000).toISOString();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: updateError } = await supabaseAdmin.from("subscriptions").update({
+      status: provider.status === "active" ? "active" : "pending",
+      provider_status: provider.status,
+      mandate_status: "authorized",
+      trial_authorized_at: new Date().toISOString(),
+      trial_expires_at: trialEnd,
+      first_charge_at: trialEnd,
+      next_charge_at: new Date(provider.charge_at * 1000).toISOString(),
       razorpay_payment_id: data.razorpay_payment_id,
-      razorpay_signature: data.razorpay_signature,
-      status: "paid",
-    }).eq("razorpay_order_id", data.razorpay_order_id);
+      trial_consumed: true,
+    }).eq("user_id", context.userId).eq("razorpay_subscription_id", data.razorpay_subscription_id);
+    if (updateError) throw new Error(updateError.message);
+    return { ok: true, plan: stored.plan, trialExpiresAt: trialEnd };
+  });
 
-    const now = new Date();
-    const periodEnd =
-      data.plan === "silver"
-        ? null
-        : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-    const patch: any = {
-      plan: data.plan,
-      status: "active",
-      razorpay_order_id: data.razorpay_order_id,
-      razorpay_payment_id: data.razorpay_payment_id,
-      current_period_started_at: now.toISOString(),
-      current_period_expires_at: periodEnd,
-      amount_paid: PLAN_PRICES[data.plan].amount,
-      currency: "INR",
-    };
-    if (data.plan === "silver") patch.silver_plans_used = 0;
-
-    const { error } = await supabase
-      .from("subscriptions")
-      .update(patch)
-      .eq("user_id", userId);
-    if (error) throw new Error(error.message);
-
-    return { ok: true, plan: data.plan };
+export const cancelMySubscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: stored, error } = await context.supabase.from("subscriptions").select("*").eq("user_id", context.userId).maybeSingle();
+    if (error || !stored?.razorpay_subscription_id) throw new Error("No recurring subscription was found.");
+    const inTrial = stored.mandate_status === "authorized" && new Date(stored.trial_expires_at).getTime() > Date.now();
+    const cancelled = await razorpayRequest<RazorpaySubscription>(`/subscriptions/${encodeURIComponent(stored.razorpay_subscription_id)}/cancel`, {
+      method: "POST",
+      body: JSON.stringify({ cancel_at_cycle_end: !inTrial }),
+    });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("subscriptions").update({
+      status: inTrial ? "cancelled" : stored.status,
+      provider_status: cancelled.status,
+      mandate_status: inTrial ? "cancelled" : stored.mandate_status,
+      cancel_at_period_end: !inTrial,
+      cancelled_at: inTrial ? new Date().toISOString() : null,
+    }).eq("user_id", context.userId);
+    return { ok: true, immediate: inTrial };
   });
