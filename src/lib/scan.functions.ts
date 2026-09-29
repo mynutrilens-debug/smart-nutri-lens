@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireBillingFeature } from "@/lib/subscription-access";
 
 const ScanInput = z.object({
   image_base64: z.string().min(50),
@@ -42,7 +43,8 @@ ALWAYS estimate realistic micronutrient values based on the food type (e.g. spin
 export const analyzeFood = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ScanInput.parse(d))
-  .handler(async ({ data }): Promise<Analysis> => {
+  .handler(async ({ data, context }): Promise<Analysis> => {
+    await requireBillingFeature(context.supabase, context.userId, "scanner", "Nutri Scanner requires an active Platinum subscription.");
     const key = process.env.GEMINI_API_KEY;
     if (!key) throw new Error("Missing GEMINI_API_KEY");
 
@@ -105,6 +107,7 @@ export const generateInsight = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    await requireBillingFeature(supabase, userId, "scanner", "AI insights require an active Platinum subscription.");
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const [foods, profile] = await Promise.all([
       supabase.from("food_logs").select("name,calories,protein_g,carbs_g,fat_g,meal_type").eq("user_id", userId).gte("logged_at", today.toISOString()),

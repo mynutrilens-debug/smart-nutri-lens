@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { targetsFromProfile } from "@/lib/nutrition-engine";
+import { requireBillingFeature } from "@/lib/subscription-access";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
 
@@ -85,17 +86,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Subscription gate: ai_chat = platinum or active trial
-    const { data: sub } = await supabase.from("subscriptions").select("*").eq("user_id", userId).maybeSingle();
-    const now = new Date();
-    const trialActive = sub?.plan === "trial" && sub?.status === "active" && new Date(sub.trial_expires_at) > now;
-    const platActive =
-      sub?.plan === "platinum" &&
-      sub?.status === "active" &&
-      (!sub.current_period_expires_at || new Date(sub.current_period_expires_at) > now);
-    if (!trialActive && !platActive) {
-      throw new Error("NutriBot is included with the Platinum plan. Please upgrade to chat.");
-    }
+    await requireBillingFeature(supabase, userId, "ai_chat", "NutriBot requires an active Platinum subscription.");
 
     // Profile context
     const { data: p } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
