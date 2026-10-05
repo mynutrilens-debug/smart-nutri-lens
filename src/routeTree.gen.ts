@@ -9,71 +9,41 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppWorkoutRouteImport } from './routes/_app/workout'
-import { Route as AppSquadsRouteImport } from './routes/_app/squads'
-import { Route as AppScanRouteImport } from './routes/_app/scan'
-import { Route as AppProfileRouteImport } from './routes/_app/profile'
-import { Route as AppPricingRouteImport } from './routes/_app/pricing'
-import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
-import { Route as AppHomeRouteImport } from './routes/_app/home'
-import { Route as AppDietRouteImport } from './routes/_app/diet'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
-import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
-import { Route as ApiPublicFirebaseConfigRouteImport } from './routes/api/public/firebase-config'
+import { Route as AppDietRouteImport } from './routes/_app/diet'
+import { Route as AppHomeRouteImport } from './routes/_app/home'
+import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
+import { Route as AppPricingRouteImport } from './routes/_app/pricing'
+import { Route as AppProfileRouteImport } from './routes/_app/profile'
+import { Route as AppScanRouteImport } from './routes/_app/scan'
+import { Route as AppSquadsRouteImport } from './routes/_app/squads'
+import { Route as AppWorkoutRouteImport } from './routes/_app/workout'
 import { Route as AppSquadsSquadIdRouteImport } from './routes/_app/squads.$squadId'
-import { Route as ApiPublicNotificationsRunRouteImport } from './routes/api/public/notifications/run'
+import { Route as ApiPublicFirebaseConfigRouteImport } from './routes/api/public/firebase-config'
+import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
 import { Route as AppSquadsJoinCodeRouteImport } from './routes/_app/squads.join.$code'
+import { Route as ApiPublicNotificationsRunRouteImport } from './routes/api/public/notifications/run'
 
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppWorkoutRoute = AppWorkoutRouteImport.update({
-  id: '/workout',
-  path: '/workout',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSquadsRoute = AppSquadsRouteImport.update({
-  id: '/squads',
-  path: '/squads',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppScanRoute = AppScanRouteImport.update({
-  id: '/scan',
-  path: '/scan',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProfileRoute = AppProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPricingRoute = AppPricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppOnboardingRoute = AppOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppHomeRoute = AppHomeRouteImport.update({
-  id: '/home',
-  path: '/home',
+const AppChatRoute = AppChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDietRoute = AppDietRouteImport.update({
@@ -81,10 +51,50 @@ const AppDietRoute = AppDietRouteImport.update({
   path: '/diet',
   getParentRoute: () => AppRoute,
 } as any)
-const AppChatRoute = AppChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
+const AppHomeRoute = AppHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
   getParentRoute: () => AppRoute,
+} as any)
+const AppOnboardingRoute = AppOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPricingRoute = AppPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppScanRoute = AppScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSquadsRoute = AppSquadsRouteImport.update({
+  id: '/squads',
+  path: '/squads',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWorkoutRoute = AppWorkoutRouteImport.update({
+  id: '/workout',
+  path: '/workout',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSquadsSquadIdRoute = AppSquadsSquadIdRouteImport.update({
+  id: '/$squadId',
+  path: '/$squadId',
+  getParentRoute: () => AppSquadsRoute,
+} as any)
+const ApiPublicFirebaseConfigRoute = ApiPublicFirebaseConfigRouteImport.update({
+  id: '/api/public/firebase-config',
+  path: '/api/public/firebase-config',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRazorpayWebhookRoute =
   ApiPublicRazorpayWebhookRouteImport.update({
@@ -92,14 +102,9 @@ const ApiPublicRazorpayWebhookRoute =
     path: '/api/public/razorpay-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicFirebaseConfigRoute = ApiPublicFirebaseConfigRouteImport.update({
-  id: '/api/public/firebase-config',
-  path: '/api/public/firebase-config',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppSquadsSquadIdRoute = AppSquadsSquadIdRouteImport.update({
-  id: '/$squadId',
-  path: '/$squadId',
+const AppSquadsJoinCodeRoute = AppSquadsJoinCodeRouteImport.update({
+  id: '/join/$code',
+  path: '/join/$code',
   getParentRoute: () => AppSquadsRoute,
 } as any)
 const ApiPublicNotificationsRunRoute =
@@ -108,11 +113,6 @@ const ApiPublicNotificationsRunRoute =
     path: '/api/public/notifications/run',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AppSquadsJoinCodeRoute = AppSquadsJoinCodeRouteImport.update({
-  id: '/join/$code',
-  path: '/join/$code',
-  getParentRoute: () => AppSquadsRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -239,11 +239,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -253,60 +253,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/workout': {
-      id: '/_app/workout'
-      path: '/workout'
-      fullPath: '/workout'
-      preLoaderRoute: typeof AppWorkoutRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/squads': {
-      id: '/_app/squads'
-      path: '/squads'
-      fullPath: '/squads'
-      preLoaderRoute: typeof AppSquadsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/scan': {
-      id: '/_app/scan'
-      path: '/scan'
-      fullPath: '/scan'
-      preLoaderRoute: typeof AppScanRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/profile': {
-      id: '/_app/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AppProfileRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/pricing': {
-      id: '/_app/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof AppPricingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/onboarding': {
-      id: '/_app/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof AppOnboardingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/home': {
-      id: '/_app/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AppHomeRouteImport
+    '/_app/chat': {
+      id: '/_app/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AppChatRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/diet': {
@@ -316,26 +274,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDietRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/chat': {
-      id: '/_app/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof AppChatRouteImport
+    '/_app/home': {
+      id: '/_app/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AppHomeRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/public/razorpay-webhook': {
-      id: '/api/public/razorpay-webhook'
-      path: '/api/public/razorpay-webhook'
-      fullPath: '/api/public/razorpay-webhook'
-      preLoaderRoute: typeof ApiPublicRazorpayWebhookRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/onboarding': {
+      id: '/_app/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AppOnboardingRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/api/public/firebase-config': {
-      id: '/api/public/firebase-config'
-      path: '/api/public/firebase-config'
-      fullPath: '/api/public/firebase-config'
-      preLoaderRoute: typeof ApiPublicFirebaseConfigRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/pricing': {
+      id: '/_app/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof AppPricingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/scan': {
+      id: '/_app/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof AppScanRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/squads': {
+      id: '/_app/squads'
+      path: '/squads'
+      fullPath: '/squads'
+      preLoaderRoute: typeof AppSquadsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/workout': {
+      id: '/_app/workout'
+      path: '/workout'
+      fullPath: '/workout'
+      preLoaderRoute: typeof AppWorkoutRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/squads/$squadId': {
       id: '/_app/squads/$squadId'
@@ -344,11 +330,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSquadsSquadIdRouteImport
       parentRoute: typeof AppSquadsRoute
     }
-    '/api/public/notifications/run': {
-      id: '/api/public/notifications/run'
-      path: '/api/public/notifications/run'
-      fullPath: '/api/public/notifications/run'
-      preLoaderRoute: typeof ApiPublicNotificationsRunRouteImport
+    '/api/public/firebase-config': {
+      id: '/api/public/firebase-config'
+      path: '/api/public/firebase-config'
+      fullPath: '/api/public/firebase-config'
+      preLoaderRoute: typeof ApiPublicFirebaseConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/razorpay-webhook': {
+      id: '/api/public/razorpay-webhook'
+      path: '/api/public/razorpay-webhook'
+      fullPath: '/api/public/razorpay-webhook'
+      preLoaderRoute: typeof ApiPublicRazorpayWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/squads/join/$code': {
@@ -357,6 +350,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/squads/join/$code'
       preLoaderRoute: typeof AppSquadsJoinCodeRouteImport
       parentRoute: typeof AppSquadsRoute
+    }
+    '/api/public/notifications/run': {
+      id: '/api/public/notifications/run'
+      path: '/api/public/notifications/run'
+      fullPath: '/api/public/notifications/run'
+      preLoaderRoute: typeof ApiPublicNotificationsRunRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
