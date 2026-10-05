@@ -7,8 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { SquadDetailPanel } from "@/components/mobile/SquadDetailPanel";
 import { Users, Trophy, Plus, ArrowLeft, Sparkles, Target, ChevronRight, ChevronDown, Flame, Copy, Lock, Globe, Gift, Crown, Zap, Calendar, Radio } from "lucide-react";
 import { toast } from "sonner";
+import { routeHead } from "@/lib/route-head";
 
 export const Route = createFileRoute("/_app/squads")({
+  head: () => routeHead("Squad Challenges — MyNutriLens", "Create or join fitness squads, climb live leaderboards, earn rewards, and complete challenges together."),
   component: SquadsPage,
 });
 

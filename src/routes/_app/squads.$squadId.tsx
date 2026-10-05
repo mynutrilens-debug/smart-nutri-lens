@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { SquadDetailPanel } from "@/components/mobile/SquadDetailPanel";
+import { routeHead } from "@/lib/route-head";
 
 export const Route = createFileRoute("/_app/squads/$squadId")({
+  head: () => routeHead("Squad Details — MyNutriLens", "Follow your squad challenge, live standings, member progress, and earned rewards."),
   component: SquadDetail,
 });
 

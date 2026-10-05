@@ -9,10 +9,14 @@ import {
 } from "lucide-react";
 import heroBg from "@/assets/fitness-hero-dark.jpg";
 import brandLogo from "@/assets/mynutrilens-logo-light.png";
+import { routeHead } from "@/lib/route-head";
 
 
 
-export const Route = createFileRoute("/login")({ component: Login });
+export const Route = createFileRoute("/login")({
+  head: () => routeHead("Sign in — MyNutriLens", "Sign in or create your MyNutriLens account to access personalized meals, workouts, and progress tracking."),
+  component: Login,
+});
 
 function Login() {
   const navigate = useNavigate();

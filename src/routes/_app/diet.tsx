@@ -10,8 +10,10 @@ import { RecipeSheet } from "@/components/mobile/RecipeSheet";
 import { MealThumb } from "@/components/mobile/MealThumb";
 import { VitaminBadges } from "@/components/mobile/VitaminBadges";
 import { useState } from "react";
+import { routeHead } from "@/lib/route-head";
 
 export const Route = createFileRoute("/_app/diet")({
+  head: () => routeHead("My Diet — MyNutriLens", "View your personalized meal plan, daily macros, recipes, vitamins, and logged meals."),
   component: Diet,
 });
 
