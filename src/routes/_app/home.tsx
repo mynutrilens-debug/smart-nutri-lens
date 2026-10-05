@@ -12,8 +12,10 @@ import {
 import { generateInsight } from "@/lib/scan.functions";
 import { listMySquads } from "@/lib/squad.functions";
 import { toast } from "sonner";
+import { routeHead } from "@/lib/route-head";
 
 export const Route = createFileRoute("/_app/home")({
+  head: () => routeHead("Fitness Dashboard — MyNutriLens", "See your daily nutrition, workouts, missions, streak, progress, and personalized coaching insights."),
   component: Home,
 });
 

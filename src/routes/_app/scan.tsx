@@ -7,8 +7,12 @@ import { logFood, listFoods } from "@/lib/food.functions";
 import { hapticTap, pickNativeFoodImage } from "@/lib/native";
 import { VitaminBadges } from "@/components/mobile/VitaminBadges";
 import { toast } from "sonner";
+import { routeHead } from "@/lib/route-head";
 
-export const Route = createFileRoute("/_app/scan")({ component: Scan });
+export const Route = createFileRoute("/_app/scan")({
+  head: () => routeHead("Nutri Scanner — MyNutriLens", "Scan a meal to estimate calories, macros, vitamins, ingredients, and healthier alternatives."),
+  component: Scan,
+});
 
 const examples = [
   { emoji: "🍕", name: "Pizza" }, { emoji: "🥗", name: "Salad" },

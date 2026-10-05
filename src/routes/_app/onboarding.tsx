@@ -13,9 +13,11 @@ import { WheelPicker } from "@/components/mobile/WheelPicker";
 import { FitnessRoadmap } from "@/components/mobile/FitnessRoadmap";
 import { RevaOnboarding } from "@/components/mobile/RevaOnboarding";
 import { computeNutritionTargets } from "@/lib/nutrition-engine";
+import { routeHead } from "@/lib/route-head";
 
 
 export const Route = createFileRoute("/_app/onboarding")({
+  head: () => routeHead("Personalize Your Plan — MyNutriLens", "Set your body metrics, goals, food preferences, health needs, and lifestyle for a personalized plan."),
   component: Onboarding,
   validateSearch: (s: Record<string, unknown>) => ({ edit: s.edit ? 1 : undefined }),
 });

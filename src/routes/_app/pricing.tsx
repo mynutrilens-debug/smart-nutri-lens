@@ -159,7 +159,7 @@ function PricingPage() {
         <h1 className="text-xl font-bold">Choose your plan</h1>
       </div>
 
-      {trial && (
+      {trial && sub && (
         <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 p-3 mb-4 text-center">
           <div className="text-[11px] uppercase tracking-wider text-emerald-300/80">Free trial</div>
           <div className="text-2xl font-bold tabular-nums">{formatCountdown(ms)}</div>

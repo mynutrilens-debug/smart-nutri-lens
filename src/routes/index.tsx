@@ -6,8 +6,12 @@ import {
   ScanLine, Target, Zap, CheckCircle2, Leaf,
 } from "lucide-react";
 import heroBg from "@/assets/fitness-hero-dark.jpg";
+import { routeHead } from "@/lib/route-head";
 
-export const Route = createFileRoute("/")({ component: Welcome });
+export const Route = createFileRoute("/")({
+  head: () => routeHead("MyNutriLens — Personalized Nutrition & Fitness", "Track meals, follow personalized nutrition, and train toward your fitness goals with MyNutriLens."),
+  component: Welcome,
+});
 
 function Welcome() {
   const navigate = useNavigate();

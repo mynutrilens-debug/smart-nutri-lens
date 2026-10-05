@@ -90,7 +90,7 @@ export const Route = createFileRoute("/api/public/razorpay-webhook")({
           patch.current_period_expires_at = iso(providerSub?.ended_at) ?? subscription.current_period_expires_at;
         }
 
-        const { error: updateError } = await supabaseAdmin.from("subscriptions").update(patch).eq("id", subscription.id);
+        const { error: updateError } = await supabaseAdmin.from("subscriptions").update(patch as any).eq("id", subscription.id);
         if (updateError) {
           console.error("Subscription webhook update failed", updateError.message);
           return new Response("Processing failed", { status: 500 });

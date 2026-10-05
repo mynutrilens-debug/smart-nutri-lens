@@ -119,7 +119,7 @@ export const generateAiPlan = createServerFn({ method: "POST" })
     if (!p) throw new Error("Profile not found");
 
     const now = new Date();
-    await requireBillingFeature(supabase, userId, "diet", "Your plan does not include diet plan generation. Please upgrade.");
+    const billing = await requireBillingFeature(supabase, userId, "diet", "Your plan does not include diet plan generation. Please upgrade.");
 
     // Once-per-day gate: strictly one plan per UTC day. `force` is ignored
     // so users cannot regenerate multiple times in the same day.
@@ -388,10 +388,11 @@ Return ONLY this JSON (no markdown). EVERY meal MUST include the "micronutrients
       .eq("user_id", userId);
 
     // Increment silver usage counter (only when generating a new plan on Silver)
-    if (silverActive) {
-      await supabase
+    if (billing.plan === "silver") {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin
         .from("subscriptions")
-        .update({ silver_plans_used: (sub!.silver_plans_used ?? 0) + 1 })
+        .update({ silver_plans_used: (billing.silver_plans_used ?? 0) + 1 })
         .eq("user_id", userId);
     }
     return plan;
