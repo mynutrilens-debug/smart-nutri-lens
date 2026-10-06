@@ -113,6 +113,19 @@ function PricingPage() {
         subscription_id: order.subscriptionId,
         method: method === "upi" ? { upi: true, card: false } : { card: true, upi: false },
         recurring: true,
+        notes: { plan, plan_price_inr: String(PLAN_META[plan].price ?? "") },
+        config: method === "upi" ? {
+          display: {
+            blocks: {
+              autopay: {
+                name: "UPI AutoPay — ₹5 refundable verification",
+                instruments: [{ method: "upi", flows: ["intent", "collect"] }],
+              },
+            },
+            sequence: ["block.autopay"],
+            preferences: { show_default_blocks: false },
+          },
+        } : undefined,
         theme: { color: "#10b981" },
         handler: async (resp: any) => {
           try {
@@ -189,7 +202,7 @@ function PricingPage() {
           <Button variant={method === "upi" ? "default" : "ghost"} onClick={() => setMethod("upi")} className={method === "upi" ? "bg-emerald-500 text-black hover:bg-emerald-400" : "text-zinc-300"}><Smartphone className="h-4 w-4" /> UPI AutoPay</Button>
           <Button variant={method === "card" ? "default" : "ghost"} onClick={() => setMethod("card")} className={method === "card" ? "bg-emerald-500 text-black hover:bg-emerald-400" : "text-zinc-300"}><CreditCard className="h-4 w-4" /> Card</Button>
         </div>
-        <div className="mt-2 flex items-start gap-2 text-[11px] text-zinc-400"><ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" /><span>Authorize today. No plan fee now; the first monthly charge is on Day 8.</span></div>
+        <div className="mt-2 flex items-start gap-2 text-[11px] text-zinc-400"><ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" /><span>Razorpay shows a small ₹5 verification amount to set up AutoPay — it's refunded. No plan fee now; your plan price is charged automatically on Day 8. For UPI, choose your UPI app or enter your UPI ID.</span></div>
       </div>
 
       <div className="space-y-3">
