@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { verifiedPaidCycle, type CyclePayment } from "@/lib/billing-cycle";
 
 async function hmacHex(secret: string, message: string) {
   const enc = new TextEncoder();
@@ -57,25 +58,17 @@ export const Route = createFileRoute("/api/public/razorpay-webhook")({
         };
 
         if (eventType === "subscription.authenticated") {
-          patch.status = "pending";
+          if (subscription.status !== "active") patch.status = "pending";
           patch.mandate_status = "authorized";
           patch.trial_authorized_at = subscription.trial_authorized_at ?? new Date().toISOString();
           patch.trial_consumed = true;
-        } else if (eventType === "subscription.activated" || eventType === "subscription.charged") {
-          patch.status = "active";
-          patch.mandate_status = "authorized";
-          patch.current_period_started_at = iso(providerSub?.current_start) ?? new Date().toISOString();
-          patch.current_period_expires_at = iso(providerSub?.current_end);
-          patch.retry_count = 0;
-          patch.last_payment_failed_at = null;
-          patch.grace_expires_at = null;
         } else if (eventType === "subscription.pending" || eventType === "payment.failed") {
           patch.status = "retrying";
           patch.retry_count = (subscription.retry_count ?? 0) + 1;
           patch.last_payment_failed_at = new Date().toISOString();
           patch.grace_expires_at = subscription.current_period_expires_at && new Date(subscription.current_period_expires_at).getTime() > Date.now()
             ? subscription.current_period_expires_at
-            : new Date(Date.now() + 3 * 86400000).toISOString();
+            : null;
         } else if (eventType === "subscription.halted") {
           patch.status = "halted";
           patch.grace_expires_at = null;
@@ -88,6 +81,44 @@ export const Route = createFileRoute("/api/public/razorpay-webhook")({
           patch.status = "completed";
           patch.mandate_status = "completed";
           patch.current_period_expires_at = iso(providerSub?.ended_at) ?? subscription.current_period_expires_at;
+        }
+
+        if (["subscription.authenticated", "subscription.activated", "subscription.charged", "payment.captured"].includes(eventType) && payment?.id) {
+          const keyId = process.env.RAZORPAY_KEY_ID;
+          const keySecret = process.env.RAZORPAY_KEY_SECRET;
+          if (!keyId || !keySecret) return new Response("Misconfigured", { status: 500 });
+          const headers = { Authorization: `Basic ${btoa(`${keyId}:${keySecret}`)}` };
+          const [providerResponse, paymentResponse] = await Promise.all([
+            fetch(`https://api.razorpay.com/v1/subscriptions/${encodeURIComponent(subscriptionId)}`, { headers }),
+            fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(payment.id)}`, { headers }),
+          ]);
+          if (!providerResponse.ok || !paymentResponse.ok) return new Response("Payment confirmation unavailable", { status: 500 });
+          const provider = await providerResponse.json() as any;
+          const confirmedPayment = await paymentResponse.json() as CyclePayment;
+          if (provider.plan_id !== subscription.razorpay_plan_id) return new Response("Plan mismatch", { status: 400 });
+          const planResponse = await fetch(`https://api.razorpay.com/v1/plans/${encodeURIComponent(provider.plan_id)}`, { headers });
+          if (!planResponse.ok) return new Response("Plan confirmation unavailable", { status: 500 });
+          const plan = await planResponse.json() as any;
+          if (confirmedPayment.status === "captured" && confirmedPayment.amount === plan.item.amount && plan.item.currency === "INR" &&
+              ["active", "authenticated"].includes(provider.status)) {
+            const cycle = verifiedPaidCycle(provider, confirmedPayment, plan.item.amount);
+            if (!subscription.current_period_started_at || new Date(cycle.startedAt) >= new Date(subscription.current_period_started_at)) {
+              patch.status = "active";
+              patch.provider_status = provider.status;
+              patch.mandate_status = "authorized";
+              patch.current_period_started_at = cycle.startedAt;
+              patch.current_period_expires_at = cycle.expiresAt;
+              patch.trial_expires_at = cycle.startedAt;
+              patch.amount_paid = confirmedPayment.amount;
+              patch.currency = confirmedPayment.currency;
+              patch.razorpay_payment_id = confirmedPayment.id;
+              patch.next_charge_at = iso(provider.charge_at) ?? cycle.expiresAt;
+              patch.retry_count = 0;
+              patch.last_payment_failed_at = null;
+              patch.grace_expires_at = null;
+              if (cycle.startedAt !== subscription.current_period_started_at) patch.silver_plans_used = 0;
+            }
+          }
         }
 
         const { error: updateError } = await supabaseAdmin.from("subscriptions").update(patch as any).eq("id", subscription.id);
