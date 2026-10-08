@@ -12,9 +12,9 @@ export const Route = createFileRoute("/_app/pricing")({
   component: PricingPage,
   head: () => ({ meta: [
     { title: "Plans & Billing — MyNutriLens" },
-    { name: "description", content: "Choose a MyNutriLens plan with a seven-day trial and secure monthly UPI AutoPay or card billing." },
+    { name: "description", content: "Choose Silver ₹199, Gold ₹399, or Platinum ₹599 per month with immediate access after payment." },
     { property: "og:title", content: "Plans & Billing — MyNutriLens" },
-    { property: "og:description", content: "Choose a MyNutriLens plan with a seven-day trial and secure monthly billing." },
+    { property: "og:description", content: "Monthly MyNutriLens memberships from ₹199 with immediate access after successful payment." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
@@ -24,7 +24,7 @@ const PLANS = [
   {
     id: "silver" as const,
     name: "Silver",
-    price: 99,
+    price: PLAN_META.silver.price,
     period: "/month",
     icon: Sparkles,
     accent: "from-zinc-300 to-zinc-500",
@@ -33,14 +33,14 @@ const PLANS = [
       "15 personalized diet plans",
       "BMI & macro targets",
       "Region & cuisine matching",
-      "Renews monthly after trial",
+      "15 diet plans each month",
     ],
     locked: ["Workout plans", "Nutri Scanner", "AI Coach"],
   },
   {
     id: "gold" as const,
     name: "Gold",
-    price: 199,
+    price: PLAN_META.gold.price,
     period: "/month",
     icon: Crown,
     accent: "from-amber-300 to-yellow-600",
@@ -57,7 +57,7 @@ const PLANS = [
   {
     id: "platinum" as const,
     name: "Platinum",
-    price: 399,
+    price: PLAN_META.platinum.price,
     period: "/month",
     icon: Zap,
     accent: "from-emerald-300 to-emerald-600",
@@ -109,7 +109,7 @@ function PricingPage() {
       const rzp = new (window as any).Razorpay({
         key: order.keyId,
         name: "MyNutriLens",
-        description: `${PLAN_META[plan].name} monthly plan · 7 days free`,
+        description: `${PLAN_META[plan].name} · ₹${PLAN_META[plan].price}/month`,
         subscription_id: order.subscriptionId,
         method: method === "upi" ? { upi: true, card: false } : { card: true, upi: false },
         recurring: true,
@@ -118,7 +118,7 @@ function PricingPage() {
           display: {
             blocks: {
               autopay: {
-                name: "UPI AutoPay — ₹5 refundable verification",
+                name: `UPI AutoPay — ₹${PLAN_META[plan].price}/month`,
                 instruments: [{ method: "upi", flows: ["intent", "collect"] }],
               },
             },
@@ -129,13 +129,13 @@ function PricingPage() {
         theme: { color: "#10b981" },
         handler: async (resp: any) => {
           try {
-            await verify({ data: {
+            const result = await verify({ data: {
               razorpay_payment_id: resp.razorpay_payment_id,
               razorpay_subscription_id: resp.razorpay_subscription_id,
               razorpay_signature: resp.razorpay_signature,
             }});
-            toast.success(`${PLAN_META[plan].name} trial activated. First charge is in 7 days.`);
-            await qc.invalidateQueries({ queryKey: ["subscription"] });
+            toast.success(`${PLAN_META[result.plan as keyof typeof PLAN_META].name} activated for one month.`);
+            await qc.invalidateQueries();
             navigate({ to: "/home" });
           } catch (e: any) {
             toast.error(e?.message ?? "Verification failed");
@@ -143,7 +143,7 @@ function PricingPage() {
         },
         modal: { ondismiss: () => setPaying(null) },
       });
-       rzp.on("payment.failed", () => toast.error("Mandate authorization failed. You have not been charged."));
+       rzp.on("payment.failed", () => toast.error("Payment failed. Your subscription has not been activated."));
       rzp.open();
     } catch (e: any) {
       toast.error(e?.message ?? "Could not start payment");
@@ -156,7 +156,7 @@ function PricingPage() {
     try {
       setCancelling(true);
       const result = await cancelSubscription();
-      toast.success(result.immediate ? "Trial cancelled. You will not be charged." : "Renewal cancelled. Access remains until your current period ends.");
+      toast.success(result.immediate ? "Subscription cancelled." : "Renewal cancelled. Access remains until your current period ends.");
       await qc.invalidateQueries({ queryKey: ["subscription"] });
     } catch (error: any) {
       toast.error(error?.message ?? "Could not cancel subscription");
@@ -197,18 +197,18 @@ function PricingPage() {
       )}
 
       <div className="mb-4">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">Authorize with</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">Pay with</div>
         <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-zinc-900/70 p-1.5">
           <Button variant={method === "upi" ? "default" : "ghost"} onClick={() => setMethod("upi")} className={method === "upi" ? "bg-emerald-500 text-black hover:bg-emerald-400" : "text-zinc-300"}><Smartphone className="h-4 w-4" /> UPI AutoPay</Button>
           <Button variant={method === "card" ? "default" : "ghost"} onClick={() => setMethod("card")} className={method === "card" ? "bg-emerald-500 text-black hover:bg-emerald-400" : "text-zinc-300"}><CreditCard className="h-4 w-4" /> Card</Button>
         </div>
-        <div className="mt-2 flex items-start gap-2 text-[11px] text-zinc-400"><ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" /><span>Razorpay shows a small ₹5 verification amount to set up AutoPay — it's refunded. No plan fee now; your plan price is charged automatically on Day 8. For UPI, choose your UPI app or enter your UPI ID.</span></div>
+        <div className="mt-2 flex items-start gap-2 text-[11px] text-zinc-400"><ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" /><span>Pay your selected plan price today for one month of access. Renews monthly until cancelled.</span></div>
       </div>
 
       <div className="space-y-3">
         {PLANS.map((p) => {
           const Icon = p.icon;
-          const isCurrent = currentPlan === p.id && sub?.status === "active";
+           const isCurrent = currentPlan === p.id && sub?.status === "active" && !!sub.current_period_expires_at && new Date(sub.current_period_expires_at).getTime() > Date.now();
           return (
             <div
               key={p.id}
@@ -257,7 +257,7 @@ function PricingPage() {
                   "bg-zinc-200 hover:bg-white text-black"
                 }`}
               >
-                {isCurrent ? "Current plan" : paying === p.id ? "Opening authorization…" : <><CalendarClock className="h-4 w-4" /> Start 7-day trial</>}
+                {isCurrent ? "Current plan" : paying === p.id ? "Opening checkout…" : <><CalendarClock className="h-4 w-4" /> Pay ₹{p.price} · Get {p.name}</>}
               </Button>
             </div>
           );
@@ -265,7 +265,7 @@ function PricingPage() {
       </div>
 
       <p className="text-[10px] text-zinc-500 text-center mt-4">
-        Secured by Razorpay · Cancel before Day 8 to avoid the first charge · Prices in INR
+        Secured by Razorpay · One month of access per payment · Prices in INR
       </p>
     </div>
   );

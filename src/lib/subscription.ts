@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMySubscription } from "@/lib/subscription.functions";
 import { hasBillingAccess } from "@/lib/subscription-access";
+import { MONTHLY_PLANS } from "@/lib/billing-cycle";
 
 export type Feature = "diet" | "workout" | "scanner" | "ai_chat";
 
@@ -22,11 +23,7 @@ export type SubscriptionRow = {
   silver_plans_used: number;
 } | null;
 
-export const PLAN_META = {
-  silver: { name: "Silver", price: 99, recurring: true, blurb: "15 diet plans · monthly" },
-  gold: { name: "Gold", price: 199, recurring: true, blurb: "Unlimited diet + workout plans" },
-  platinum: { name: "Platinum", price: 399, recurring: true, blurb: "Everything + Scanner + AI Coach" },
-} as const;
+export const PLAN_META = MONTHLY_PLANS;
 
 export function isTrialActive(sub: SubscriptionRow): boolean {
   if (!sub) return false;

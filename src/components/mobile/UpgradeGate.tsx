@@ -36,7 +36,7 @@ export function UpgradeModal({
           <DialogTitle className="text-lg">Unlock {labels[feature]}</DialogTitle>
         </div>
         <DialogDescription className="text-zinc-400 text-sm">
-          Your trial has ended or this feature isn't in your current plan. Upgrade to keep going.
+          Choose an active monthly plan that includes this feature to keep going.
         </DialogDescription>
         <div className="mt-3 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-700/5 border border-emerald-500/20 p-3 flex items-center gap-3">
           <Crown className="h-5 w-5 text-emerald-400" />
