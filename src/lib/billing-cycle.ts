@@ -12,6 +12,9 @@ export function verifiedPaidCycle(provider: ProviderCycle, payment: CyclePayment
     throw new Error("Full monthly payment has not been completed yet. Your plan will activate once payment is confirmed.");
   }
   const start = new Date((provider.current_start || payment.created_at) * 1000);
+  if (provider.current_start && payment.created_at < provider.current_start - 300) {
+    throw new Error("This payment does not belong to the current billing month.");
+  }
   const end = new Date(start);
   const day = end.getUTCDate();
   end.setUTCDate(1);
