@@ -21,7 +21,7 @@ describe("Paid monthly memberships", () => {
   });
   test("access is bounded and matches each tier", () => {
     const now = new Date("2026-02-01T00:00:00Z");
-    const cycle = { status: "active" as const, current_period_expires_at: "2026-02-28T12:00:00Z" };
+    const cycle = { status: "active", current_period_expires_at: "2026-02-28T12:00:00Z" };
     expect(hasBillingAccess({ ...cycle, plan: "silver" }, "diet", now)).toBe(true);
     expect(hasBillingAccess({ ...cycle, plan: "silver" }, "workout", now)).toBe(false);
     expect(hasBillingAccess({ ...cycle, plan: "gold" }, "workout", now)).toBe(true);
