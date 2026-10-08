@@ -16,8 +16,8 @@ export function hasBillingAccess(sub: BillingSubscription | null | undefined, fe
   const trialActive = sub.mandate_status === "authorized" &&
     !!sub.trial_expires_at && new Date(sub.trial_expires_at).getTime() > now.getTime() &&
     (sub.status === "active" || sub.status === "pending");
-  const paidActive = sub.status === "active" &&
-    (!sub.current_period_expires_at || new Date(sub.current_period_expires_at).getTime() > now.getTime());
+  const paidActive = (sub.status === "active" || sub.status === "cancelled" || sub.status === "completed") &&
+    !!sub.current_period_expires_at && new Date(sub.current_period_expires_at).getTime() > now.getTime();
   const retryGrace = sub.status === "retrying" && !!sub.grace_expires_at &&
     new Date(sub.grace_expires_at).getTime() > now.getTime();
 
