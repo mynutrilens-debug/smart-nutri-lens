@@ -57,7 +57,7 @@ export function TrialBanner() {
       className="fixed top-2 left-1/2 -translate-x-1/2 z-30 w-[min(420px,calc(100vw-16px))] rounded-full px-3 py-1.5 flex items-center justify-between text-[11px] backdrop-blur-xl bg-amber-500/15 border border-amber-400/30 text-amber-100 shadow-lg"
     >
       <span className="flex items-center gap-1.5 font-semibold">
-        <Crown className="h-3 w-3" /> Trial ended — choose a plan
+        <Crown className="h-3 w-3" /> Choose a monthly plan
       </span>
       <span className="font-bold">View plans →</span>
     </Link>
